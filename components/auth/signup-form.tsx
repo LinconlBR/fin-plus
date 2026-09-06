@@ -29,6 +29,10 @@ export function SignupForm({
                 </p>
               </div>
               <Field>
+                <FieldLabel htmlFor="name">Full Name</FieldLabel>
+                <Input id="name" type="text" placeholder="Francisgleison Filho" required />
+              </Field>
+              <Field>
                 <FieldLabel htmlFor="email">E-mail</FieldLabel>
                 <Input
                   id="email"

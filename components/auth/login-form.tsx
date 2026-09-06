@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils"
 import Link from "next/link"
+import { login } from "@/lib/actions/auth"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -20,7 +21,7 @@ export function LoginForm({
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card className="overflow-hidden p-0">
         <CardContent className="grid p-0 md:grid-cols-2">
-          <form className="p-6 md:p-8">
+          <form action={login} className="p-6 md:p-8">
             <FieldGroup>
               <div className="flex flex-col items-center gap-2 text-center">
                 <h1 className="text-2xl font-bold">Que bom ter você de volta</h1>
@@ -32,6 +33,7 @@ export function LoginForm({
                 <FieldLabel htmlFor="email">E-mail</FieldLabel>
                 <Input
                   id="email"
+                  name="email"
                   type="email"
                   placeholder="example@example.com"
                   required
@@ -47,7 +49,12 @@ export function LoginForm({
                     Esqueceu sua senha?
                   </a>
                 </div>
-                <Input id="password" type="password" required />
+                <Input 
+                  name="password" 
+                  id="password" 
+                  type="password" 
+                  required 
+                />
               </Field>
               <Field>
                 <Button type="submit">Entrar na minha conta</Button>
