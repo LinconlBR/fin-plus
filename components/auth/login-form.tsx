@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 
- {/* image credit: https://www.svgrepo.com/svg/512187/finance-illustration */}
+  {/* crédito da imagem: https://www.svgrepo.com/svg/512187/finance-illustration */}
 const financeIllustration = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1200" role="img" aria-label="Pessoa organizando finanças">
   <defs>
