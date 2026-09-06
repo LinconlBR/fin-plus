@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils"
+import Image from "next/image"
 import Link from "next/link"
 
 import { Button } from "@/components/ui/button"
@@ -11,6 +12,8 @@ import {
   FieldSeparator,
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
+import { signup } from "@/lib/actions/auth"
+
 
 export function SignupForm({
   className,
@@ -20,7 +23,7 @@ export function SignupForm({
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card className="overflow-hidden p-0">
         <CardContent className="grid p-0 md:grid-cols-2">
-          <form className="p-6 md:p-8">
+          <form action={signup}  className="p-6 md:p-8">
             <FieldGroup>
               <div className="flex flex-col items-center gap-2 text-center">
                 <h1 className="text-2xl font-bold">Crie sua conta Fin+</h1>
@@ -30,11 +33,12 @@ export function SignupForm({
               </div>
               <Field>
                 <FieldLabel htmlFor="name">Full Name</FieldLabel>
-                <Input id="name" type="text" placeholder="Francisgleison Filho" required />
+                <Input name="name" id="name" type="text" placeholder="Francisgleison Filho" required />
               </Field>
               <Field>
                 <FieldLabel htmlFor="email">E-mail</FieldLabel>
                 <Input
+                  name="email"
                   id="email"
                   type="email"
                   placeholder="example@domain.com"
@@ -48,13 +52,13 @@ export function SignupForm({
                 <Field className="grid grid-cols-2 gap-4">
                   <Field>
                     <FieldLabel htmlFor="password">Senha</FieldLabel>
-                    <Input id="password" type="password" required />
+                    <Input name="password" id="password" type="password" required />
                   </Field>
                   <Field>
                     <FieldLabel htmlFor="confirm-password">
                       Confirme sua senha
                     </FieldLabel>
-                    <Input id="confirm-password" type="password" required />
+                    <Input name="confirm-password" id="confirm-password" type="password" required />
                   </Field>
                 </Field>
                 <FieldDescription>
@@ -102,10 +106,14 @@ export function SignupForm({
             </FieldGroup>
           </form>
           <div className="relative hidden bg-muted md:block">
-            <img
-              src="/placeholder.svg"
+            <Image
+              src="https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&w=1200&q=80"
               alt="Visão organizada das finanças pessoais no Fin+"
-              className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
+              fill
+              priority
+              unoptimized
+              sizes="(max-width: 768px) 0px, 50vw"
+              className="object-cover dark:brightness-[0.2] dark:grayscale"
             />
           </div>
         </CardContent>

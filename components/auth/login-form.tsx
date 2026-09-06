@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils"
+import Image from "next/image"
 import Link from "next/link"
 import { login } from "@/lib/actions/auth"
 
@@ -12,6 +13,58 @@ import {
   FieldSeparator,
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
+
+ {/* image credit: https://www.svgrepo.com/svg/512187/finance-illustration */}
+const financeIllustration = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1200" role="img" aria-label="Pessoa organizando finanças">
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#e0f2fe"/>
+      <stop offset="100%" stop-color="#dbeafe"/>
+    </linearGradient>
+    <linearGradient id="card" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#f8fafc"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="1200" fill="url(#bg)"/>
+  <circle cx="905" cy="220" r="92" fill="#bfdbfe" opacity="0.7"/>
+  <circle cx="272" cy="174" r="52" fill="#dbeafe" opacity="0.7"/>
+  <rect x="140" y="180" width="920" height="780" rx="36" fill="url(#card)" opacity="0.9"/>
+  <rect x="206" y="262" width="360" height="210" rx="24" fill="#eff6ff"/>
+  <rect x="248" y="318" width="128" height="18" rx="9" fill="#93c5fd"/>
+  <rect x="248" y="354" width="220" height="16" rx="8" fill="#cbd5e1"/>
+  <rect x="248" y="390" width="170" height="16" rx="8" fill="#cbd5e1"/>
+  <path d="M246 420 C320 342, 390 292, 480 318 L480 420 Z" fill="#7dd3fc" opacity="0.8"/>
+  <rect x="610" y="265" width="320" height="200" rx="24" fill="#f8fafc" stroke="#dbeafe" stroke-width="4"/>
+  <path d="M650 420 L710 370 L770 392 L845 328 L900 358 L900 430 L650 430 Z" fill="#93c5fd" opacity="0.9"/>
+  <path d="M650 420 L710 370 L770 392 L845 328 L900 358" fill="none" stroke="#2563eb" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="238" y="560" width="742" height="248" rx="26" fill="#f8fafc" stroke="#dbeafe" stroke-width="4"/>
+  <rect x="282" y="610" width="220" height="134" rx="18" fill="#2563eb"/>
+  <path d="M322 670 L360 628 L410 693 L468 620" fill="none" stroke="#dbeafe" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="546" y="612" width="180" height="20" rx="10" fill="#cbd5e1"/>
+  <rect x="546" y="656" width="250" height="18" rx="9" fill="#e2e8f0"/>
+  <rect x="546" y="694" width="210" height="18" rx="9" fill="#e2e8f0"/>
+  <circle cx="860" cy="430" r="48" fill="#fef3c7"/>
+  <path d="M844 430 L856 446 L882 406" fill="none" stroke="#f59e0b" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+  <g transform="translate(470 118)">
+    <rect x="0" y="0" width="220" height="260" rx="140" fill="#f0fdf4"/>
+    <circle cx="110" cy="82" r="52" fill="#f6c7ae"/>
+    <path d="M66 222 C78 170, 144 165, 156 222 L156 250 L66 250 Z" fill="#2563eb"/>
+    <path d="M56 108 C58 44, 168 50, 176 100 L164 115 C150 80, 92 74, 70 120 Z" fill="#1e293b"/>
+    <rect x="40" y="128" width="142" height="16" rx="8" fill="#dbeafe"/>
+    <rect x="90" y="150" width="88" height="12" rx="6" fill="#dbeafe"/>
+  </g>
+  <g transform="translate(266 132)">
+    <rect x="0" y="0" width="180" height="120" rx="18" fill="#ffffff"/>
+    <path d="M32 78 L74 48 L116 70 L154 40" fill="none" stroke="#22c55e" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="32" cy="78" r="10" fill="#22c55e"/>
+    <circle cx="74" cy="48" r="10" fill="#22c55e"/>
+    <circle cx="116" cy="70" r="10" fill="#22c55e"/>
+    <circle cx="154" cy="40" r="10" fill="#22c55e"/>
+  </g>
+</svg>
+`)}`
 
 export function LoginForm({
   className,
@@ -97,10 +150,13 @@ export function LoginForm({
             </FieldGroup>
           </form>
           <div className="relative hidden bg-muted md:block">
-            <img
-              src="/placeholder.svg"
+            <Image
+              src={financeIllustration}
               alt="Pessoa organizando suas finanças no Fin+"
-              className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
+              fill
+              sizes="(max-width: 768px) 0px, 50vw"
+              className="object-cover dark:brightness-[0.2] dark:grayscale"
+              priority
             />
           </div>
         </CardContent>
