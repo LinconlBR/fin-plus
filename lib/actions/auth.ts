@@ -1,6 +1,8 @@
 "use server"
 
 import { createClient } from '@/lib/supabase/server'
+import { redirect } from 'next/navigation'
+
 
 export async function login(formData: FormData) {
   const email = formData.get("email")?.toString() ?? ""
@@ -15,6 +17,8 @@ export async function login(formData: FormData) {
   if (error) {
     throw new Error(error.message)
   }
+
+  redirect("/dashboard")
   
   
 }
@@ -30,7 +34,7 @@ export async function signup(formData: FormData) {
     password,
   options: {
     data: {
-      name,
+     full_name: name,
     },
   },
   })
@@ -39,5 +43,5 @@ export async function signup(formData: FormData) {
     throw new Error(error.message)
   }
   
-  
+  redirect("/auth/login")
 }
