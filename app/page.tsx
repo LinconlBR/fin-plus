@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BadgeSwissFranc } from 'lucide-react';
+import { BadgeSwissFranc } from 'lucide-react'; 
 import { Button } from "@/components/ui/button";
 
 
