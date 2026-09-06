@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
 import Navbar from "@/components/navbar";
 
 
@@ -13,7 +12,7 @@ export default function Home() {
             <span className="h-2 w-2 rounded-full bg-emerald-500" /> Seu dinheiro, no controle</p>
           <h1 className="max-w-xl text-5xl font-bold leading-tight tracking-tight sm:text-6xl">Uma vida financeira mais <span className="text-primary">leve e consciente.</span></h1>
           <p className="mt-6 max-w-lg text-lg leading-8 text-muted-foreground">Acompanhe seus gastos, organize seu orçamento e alcance seus objetivos sem complicação. O Fin+ transforma números em decisões melhores.</p>
-          <div className="mt-8 flex flex-col gap-3 sm:flex-row"><Link href="#comecar" className="rounded-full bg-primary px-6 py-3 text-center text-sm font-semibold text-primary-foreground">Criar minha conta grátis →</Link>
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row"><Link href="/auth/signup" className="rounded-full bg-primary px-6 py-3 text-center text-sm font-semibold text-primary-foreground">Criar minha conta grátis →</Link>
           <Link href="#recursos" className="rounded-full border border-border px-6 py-3 text-center text-sm font-semibold">Conhecer o Fin+</Link></div>
           <p className="mt-5 text-xs text-muted-foreground">Grátis para começar · Sem cartão de crédito</p>
         </div>
@@ -76,7 +75,7 @@ export default function Home() {
         <p className="mx-auto mt-4 max-w-md text-muted-foreground">
           Comece hoje a construir uma relação mais saudável com o seu dinheiro.
         </p>
-        <Link href="#inicio" className="mt-7 inline-block rounded-full bg-primary px-7 py-3 text-sm font-semibold text-primary-foreground">
+        <Link href="/auth/signup" className="mt-7 inline-block rounded-full bg-primary px-7 py-3 text-sm font-semibold text-primary-foreground">
           Começar gratuitamente →
         </Link>
       </section>

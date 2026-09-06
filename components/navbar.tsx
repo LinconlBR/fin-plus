@@ -24,7 +24,7 @@ export default function  navbar() {
           </svg>
         </button>
         <div className=" gap-2 md:flex">
-          <Button variant="link"><Link href="/auth/login">Login</Link></Button>
+          <Button variant="link"><Link href="/auth/login">Entrar</Link></Button>
           <Button variant="default"><Link href="/auth/signup">Começar agora</Link></Button>
         </div>
       </header>
