@@ -1,43 +1,18 @@
 import Link from "next/link";
-import { BadgeSwissFranc } from 'lucide-react'; 
-import { Button } from "@/components/ui/button";
+import Navbar from "@/components/navbar";
 
 
 export default function Home() {
   return (
     <main className="min-h-screen bg-background text-foreground">
-      <header className="mx-auto flex max-w-7xl items-center justify-between px-6 py-6">
-        <Link href="#inicio" className="flex items-center gap-2 text-xl font-bold"> 
-        <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-          <BadgeSwissFranc className="h-5 w-5" />
-        </span>
-         Fin<span className="relative -ml-2 -top-1 text-primary">+</span>
-         </Link>
-        <nav className="hidden gap-8 text-sm text-muted-foreground md:flex">
-          <Link href="#inicio">Início</Link>
-          <Link href="#recursos">Recursos</Link>
-          <Link href="#como-funciona">Como funciona</Link>
-          <Link href="#seguranca">Segurança</Link>
-        </nav>
-        {/* Mobile menu button */}
-        <button className="md:hidden">
-          <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-          </svg>
-        </button>
-        <div className=" gap-2 md:flex">
-          <Button variant="link"><Link href="#comecar">Login</Link></Button>
-          <Button variant="default"><Link href="#comecar">Começar agora</Link></Button>
-        </div>
-      </header>
-
+      <Navbar />
       <section id="inicio" className="mx-auto grid max-w-7xl items-center gap-14 px-6 py-16 lg:grid-cols-2 lg:py-28">
         <div>
           <p className="mb-6 inline-flex items-center gap-2 rounded-full border border-border bg-muted px-3 py-1.5 text-xs font-medium text-muted-foreground">
             <span className="h-2 w-2 rounded-full bg-emerald-500" /> Seu dinheiro, no controle</p>
           <h1 className="max-w-xl text-5xl font-bold leading-tight tracking-tight sm:text-6xl">Uma vida financeira mais <span className="text-primary">leve e consciente.</span></h1>
           <p className="mt-6 max-w-lg text-lg leading-8 text-muted-foreground">Acompanhe seus gastos, organize seu orçamento e alcance seus objetivos sem complicação. O Fin+ transforma números em decisões melhores.</p>
-          <div className="mt-8 flex flex-col gap-3 sm:flex-row"><Link href="#comecar" className="rounded-full bg-primary px-6 py-3 text-center text-sm font-semibold text-primary-foreground">Criar minha conta grátis →</Link>
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row"><Link href="/auth/signup" className="rounded-full bg-primary px-6 py-3 text-center text-sm font-semibold text-primary-foreground">Criar minha conta grátis →</Link>
           <Link href="#recursos" className="rounded-full border border-border px-6 py-3 text-center text-sm font-semibold">Conhecer o Fin+</Link></div>
           <p className="mt-5 text-xs text-muted-foreground">Grátis para começar · Sem cartão de crédito</p>
         </div>
@@ -100,7 +75,7 @@ export default function Home() {
         <p className="mx-auto mt-4 max-w-md text-muted-foreground">
           Comece hoje a construir uma relação mais saudável com o seu dinheiro.
         </p>
-        <Link href="#inicio" className="mt-7 inline-block rounded-full bg-primary px-7 py-3 text-sm font-semibold text-primary-foreground">
+        <Link href="/auth/signup" className="mt-7 inline-block rounded-full bg-primary px-7 py-3 text-sm font-semibold text-primary-foreground">
           Começar gratuitamente →
         </Link>
       </section>
