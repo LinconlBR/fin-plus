@@ -8,6 +8,8 @@ import {
 } from "@/components/ui/sidebar"
 import { createClient } from "@/lib/supabase/server"
 
+
+
 export default async function Layout({ children }: { children: React.ReactNode }) {
   
   const supabase = await createClient()
@@ -16,7 +18,7 @@ export default async function Layout({ children }: { children: React.ReactNode }
 
   return (
     <SidebarProvider>
-      <AppSidebar user={{ name: profile?.full_name ?? "", email: user?.email ?? "", avatar: "/avatars/shadcn.jpg" }} />
+      <AppSidebar user={{ name: profile?.full_name ?? "", email: user?.email ?? "", avatar: "public/avatar.svg"}} />
       <main>
         <SidebarInset>
             <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
