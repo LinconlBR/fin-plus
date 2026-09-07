@@ -7,8 +7,11 @@ import { redirect } from 'next/navigation'
 // TODA função exportada aqui roda exclusivamente no servidor — nunca no navegador.
 // É por isso que <form action={login}> funciona sem fetch() manual: o Next.js cria,
 // no build, um endpoint interno pra cada função e cuida do transporte de rede sozinho.
+export type LoginState = {
+  error: string | null
+}
 
-export async function login(prevState: any, formData: FormData) {
+export async function login(prevState: LoginState, formData: FormData) {
   // formData.get() pode retornar null se o campo não existir no form (por isso o
   // atributo name="email" no <Input> é obrigatório — sem ele, isso aqui vira sempre
   // null). O ?? "" garante um fallback seguro em vez de deixar passar null adiante.

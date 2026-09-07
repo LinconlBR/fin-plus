@@ -3,7 +3,7 @@
 import { cn } from "@/lib/utils"
 import Image from "next/image"
 import Link from "next/link"
-import { login } from "@/lib/actions/auth"
+import { login , LoginState } from "@/lib/actions/auth"
 import { useActionState } from "react"
 
 import { Button } from "@/components/ui/button"
@@ -73,7 +73,7 @@ export function LoginForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
-  const [state, formAction] = useActionState(login, { error: null })
+  const [state, formAction] = useActionState(login, { error: null } as LoginState)
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
