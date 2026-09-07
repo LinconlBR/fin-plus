@@ -10,12 +10,12 @@ export default function SubmitButton({ tipo}: { tipo: "login" | "signup" }) {
   return (
     <Button type="submit" disabled={pending}>
       {pending ?
-       
+
       // se esta pendente , analise as props para decidir o texto do botão
       (tipo === "login" ? "Entrando..." : "Criando conta...") 
 
       // se não esta pendente, analise as props para decidir o texto do botão
-      : (tipo === "signup" ? "Entrar na minha conta" : "Criar minha conta")}
+      : (tipo === "signup" ? "Criar minha conta" : "Entrar na minha conta") }
     </Button>
   )
 }
