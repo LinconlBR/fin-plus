@@ -2,7 +2,7 @@ import Link from "next/link";
 import { BadgeSwissFranc } from 'lucide-react'; 
 import { Button } from "@/components/ui/button";
 
-export default function  navbar() {
+export default function  Navbar() {
     return (
         <header className="mx-auto flex max-w-7xl items-center justify-between px-6 py-6">
         <Link href="/#inicio" className="flex items-center gap-2 text-xl font-bold"> 
