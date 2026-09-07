@@ -6,6 +6,8 @@ import { createClient } from "@/lib/supabase/server"
 // navegador), buscando dados sem useEffect nem estado de loading manual.
 export default async function Dashboard() {
     const supabase = await createClient()
+
+    // pega o usuário autenticado
     const { data: { user } } = await supabase.auth.getUser()
 
     // RLS EM AÇÃO: a policy da tabela profiles só permite SELECT onde
