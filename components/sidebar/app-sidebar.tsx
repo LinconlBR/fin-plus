@@ -13,7 +13,7 @@ import {
   SidebarHeader,
   SidebarRail,
 } from "@/components/ui/sidebar"
-import { GalleryVerticalEndIcon, AudioLinesIcon, TerminalIcon, TerminalSquareIcon, BotIcon, BookOpenIcon, Settings2Icon, FrameIcon, PieChartIcon, MapIcon } from "lucide-react"
+import { GalleryVerticalEndIcon, AudioLinesIcon, TerminalIcon, LayoutDashboard, ArrowRightLeft, HandCoins, Goal, FrameIcon, PieChartIcon ,ChartColumn, MapIcon, BadgeSwissFranc } from "lucide-react"
 
 // This is sample data.
 const data = {
@@ -22,113 +22,64 @@ const data = {
     email: "m@example.com",
     avatar: "/avatars/shadcn.jpg",
   },
-  teams: [
-    {
-      name: "Acme Inc",
-      logo: (
-        <GalleryVerticalEndIcon
-        />
-      ),
-      plan: "Enterprise",
-    },
-    {
-      name: "Acme Corp.",
-      logo: (
-        <AudioLinesIcon
-        />
-      ),
-      plan: "Startup",
-    },
-    {
-      name: "Evil Corp.",
-      logo: (
-        <TerminalIcon
-        />
-      ),
-      plan: "Free",
-    },
-  ],
   navMain: [
     {
-      title: "Playground",
-      url: "#",
+      title: "Dashboard",
+      url: "/dashboard",
       icon: (
-        <TerminalSquareIcon
+        <LayoutDashboard
         />
       ),
       isActive: true,
       items: [],
     },
     {
-      title: "Models",
-      url: "#",
+      title: "Transações",
+      url: "/transactions",
       icon: (
-        <BotIcon
+        <ArrowRightLeft
         />
       ),
       items: [
-        {
-          title: "Genesis",
-          url: "#",
-        },
-        {
-          title: "Explorer",
-          url: "#",
-        },
-        {
-          title: "Quantum",
-          url: "#",
-        },
+       
       ],
     },
     {
-      title: "Documentation",
-      url: "#",
+      title: "Orçamentos",
+      url: "/dashboard",
       icon: (
-        <BookOpenIcon
+        <HandCoins
         />
       ),
       items: [
-        {
-          title: "Introduction",
-          url: "#",
-        },
-        {
-          title: "Get Started",
-          url: "#",
-        },
-        {
-          title: "Tutorials",
-          url: "#",
-        },
-        {
-          title: "Changelog",
-          url: "#",
-        },
+       
       ],
     },
     {
-      title: "Settings",
-      url: "#",
+      title: "Metas",
+      url: "/dashboard",
       icon: (
-        <Settings2Icon
+        <Goal
+        />
+      ),
+      items: [
+        
+      ],
+    },
+    {
+      title: "Relatorios",
+      url: "/dashboard",
+      icon: (
+        <ChartColumn
         />
       ),
       items: [
         {
-          title: "General",
+          title: "Relatório de Vendas",
           url: "#",
         },
         {
-          title: "Team",
-          url: "#",
-        },
-        {
-          title: "Billing",
-          url: "#",
-        },
-        {
-          title: "Limits",
+          title: "Relatório de Desempenho",
           url: "#",
         },
       ],
@@ -166,7 +117,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
-        
+        <div className="flex items-center gap-2 text-xl font-bold"> 
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+              <BadgeSwissFranc className="h-5 w-5" />
+            </span>
+            Fin<span className="relative -ml-2 -top-1 text-primary">+</span>
+         </div>
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
