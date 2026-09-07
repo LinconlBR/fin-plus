@@ -3,7 +3,7 @@
 import { cn } from "@/lib/utils"
 import Image from "next/image"
 import Link from "next/link"
-import { login , LoginState } from "@/lib/actions/auth"
+import { login , authState } from "@/lib/actions/auth"
 import { useActionState } from "react"
 
 import { Button } from "@/components/ui/button"
@@ -74,7 +74,7 @@ export function LoginForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
-  const [state, formAction] = useActionState<LoginState, FormData>(login, { error: null })
+  const [state, formAction] = useActionState<authState, FormData>(login, { error: null })
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
@@ -119,7 +119,7 @@ export function LoginForm({
                     <p className="text-sm text-destructive">{state.error}</p>
                   )}
               <Field>
-                <SubmitButton /> 
+                <SubmitButton tipo="login" /> 
               </Field>
               <FieldSeparator className="*:data-[slot=field-separator-content]:bg-card">
                 Ou entre com

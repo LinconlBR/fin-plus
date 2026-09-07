@@ -1,13 +1,21 @@
+"use client"
+
 import { useFormStatus } from "react-dom"
 import { Button } from "@/components/ui/button"
 
-export default function SubmitButton() {
+export default function SubmitButton({ tipo}: { tipo: "login" | "signup" }) {
 
   const { pending } = useFormStatus()
 
   return (
     <Button type="submit" disabled={pending}>
-      {pending ? "Entrando..." : "Entrar na minha conta"}
+      {pending ?
+       
+      // se esta pendente , analise as props para decidir o texto do botão
+      (tipo === "login" ? "Entrando..." : "Criando conta...") 
+
+      // se não esta pendente, analise as props para decidir o texto do botão
+      : (tipo === "signup" ? "Entrar na minha conta" : "Criar minha conta")}
     </Button>
   )
 }

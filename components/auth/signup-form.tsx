@@ -1,3 +1,5 @@
+"use client"
+
 import { cn } from "@/lib/utils"
 import Image from "next/image"
 import Link from "next/link"
@@ -12,18 +14,22 @@ import {
   FieldSeparator,
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
-import { signup } from "@/lib/actions/auth"
+import { signup, authState } from "@/lib/actions/auth"
+import { useActionState } from "react"
+import SubmitButton from "./submit-button"
 
 
 export function SignupForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
+  const [state, formAction] = useActionState<authState, FormData>(signup, { error: null })
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card className="overflow-hidden p-0">
         <CardContent className="grid p-0 md:grid-cols-2">
-          <form action={signup}  className="p-6 md:p-8">
+          <form action={formAction}  className="p-6 md:p-8">
+            
             <FieldGroup>
               <div className="flex flex-col items-center gap-2 text-center">
                 <h1 className="text-2xl font-bold">Crie sua conta Fin+</h1>
@@ -66,7 +72,12 @@ export function SignupForm({
                 </FieldDescription>
               </Field>
               <Field>
-                <Button type="submit">Criar minha conta</Button>
+                <FieldDescription>
+                  {state.error && (
+                    <p className="text-sm text-destructive">{state.error}</p>
+                  )}
+                </FieldDescription>
+                <SubmitButton tipo="signup" />
               </Field>
               <FieldSeparator className="*:data-[slot=field-separator-content]:bg-card">
                 Ou cadastre-se com
