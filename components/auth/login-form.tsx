@@ -7,6 +7,7 @@ import { login , LoginState } from "@/lib/actions/auth"
 import { useActionState } from "react"
 
 import { Button } from "@/components/ui/button"
+import SubmitButton  from "@/components/auth/submit-button" 
 import { Card, CardContent } from "@/components/ui/card"
 import {
   Field,
@@ -118,7 +119,7 @@ export function LoginForm({
                     <p className="text-sm text-destructive">{state.error}</p>
                   )}
               <Field>
-                <Button type="submit">Entrar na minha conta</Button>
+                <SubmitButton /> 
               </Field>
               <FieldSeparator className="*:data-[slot=field-separator-content]:bg-card">
                 Ou entre com
