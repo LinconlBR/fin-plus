@@ -68,7 +68,7 @@ const data = {
     },
     {
       title: "Relatórios",
-      url: "reports",
+      url: "/reports",
       icon: (
         <ChartColumn
         />
@@ -76,11 +76,11 @@ const data = {
       items: [
         {
           title: "Gastos por categoria",
-          url: "/app/reports/category-expenses",
+          url: "/reports/category-expenses",
         },
         {
           title: "Receitas vs despesas",
-          url: "/app/reports/income-vs-expenses",
+          url: "/reports/income-vs-expenses",
         },
       ],
     },
