@@ -42,13 +42,21 @@ function generateCardData(totalIncome: number, totalExpenses: number, balance: n
 
 export default async function Dashboard() {
 
+  // Cria o cliente(server) Supabase
+const supabase = await createClient()
+
+// Obtém a data atual e calcula o primeiro e último dia do mês (para os cards) 
 const now = new Date()
 const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
 const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0)
 
-const supabase = await createClient()
+// Obtém a data atual e calcula a data de 90 dias atrás( para o gráfico) 
+const ninetyDaysAgo = new Date()
+ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90)
 
-const { data: transactions } = await supabase
+
+  //------------ Busca as transações do mês atual no Supabase (para os cards) --------------
+  const { data: transactions } = await supabase
   .from("transactions")
   .select("*")
     /*.toISOString() transforma o objeto Date num texto completo, tipo "2026-09-08T00:00:00.000Z"
@@ -72,10 +80,18 @@ const { data: transactions } = await supabase
 
   // Gera os dados dos cards
   const cardData = generateCardData(totalIncome, totalExpenses, balance)
+  //------------ Fim da busca das transações do mês atual no Supabase (para os cards) --------------
+
+
+  // -------- Busca as transações dos últimos 90 dias no Supabase (para o gráfico)
+  const { data: transactions90Days } = await supabase
+  .from("transactions")
+  .select("*")
+  .gte("date", ninetyDaysAgo.toISOString().split("T")[0])
   
   // Agrupa as transações por dia para o gráfico
   const grouped: Record<string, { income: number; expense: number }> = {}
-  for (const t of transactions ?? []) {
+  for (const t of transactions90Days ?? []) {
     const day = t.date // já vem como "AAAA-MM-DD"
     // Se ainda não existe um registro para esse dia, inicializa com 0
     if (!grouped[day]) {
