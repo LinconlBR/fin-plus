@@ -34,7 +34,15 @@ export function SectionCards({ cards }: { cards: CardData[] }) {
             </CardTitle>
             <CardAction>
               <Badge variant="outline">
-                {card.trend === "up" ? <TrendingUp /> : <TrendingDown />}
+                {card.trend === "up" ? 
+                <span className="--color-success">
+                <TrendingUp className="text-success" />
+                </span> 
+                : 
+                <span className="text-destructive">
+                <TrendingDown />
+                </span>
+                }
                 {card.trendLabel}
               </Badge>
             </CardAction>

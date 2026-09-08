@@ -35,7 +35,7 @@ function generateCardData(totalIncome: number, totalExpenses: number, balance: n
       trend: balance >= 0 ? "up" : "down",
       trendLabel: "",
       description: " saldo líquido para o mês atual",
-      comment: "Esté é o saldo líquido após subtrair as despesas totais das receitas totais para o mês atual.",
+      comment: "Este é o saldo líquido após subtrair as despesas totais das receitas totais para o mês atual.",
     },
   ]
 }
