@@ -32,6 +32,30 @@ const cardData: CardData[] = [
   },
 ]
 
+const now = new Date()
+const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+
+const supabase = await createClient()
+
+const { data: transactions } = await supabase
+  .from("transactions")
+  .select("*")
+    /*.toISOString() transforma o objeto Date num texto completo, tipo "2026-09-08T00:00:00.000Z"
+      .split("T") quebra esse texto em duas partes, usando a letra "T" como ponto de corte — vira um array: ["2026-09-08", "00:00:00.000Z"]
+      [0] pega só o primeiro pedaço do array — a data pura, sem hora: "2026-09-08"*/
+  .gte("date", startOfMonth.toISOString().split("T")[0])
+  .lte("date", endOfMonth.toISOString().split("T")[0])
+
+  const totalIncome = transactions?.filter((t) => t.type === "income").reduce((acc, transaction) => {
+      return acc + Number(transaction.amount)
+  }, 0) ?? 0
+
+  const totalExpenses = transactions?.filter((t) => t.type === "expense").reduce((acc, transaction) => {
+      return acc + Number(transaction.amount)
+  }, 0) ?? 0
+
+  const balance = totalIncome - totalExpenses  
   return (
     <div className="flex flex-1 flex-col">
           <div className="@container/main flex flex-1 flex-col gap-2">
