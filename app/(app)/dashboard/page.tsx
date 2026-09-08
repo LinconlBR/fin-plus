@@ -1,9 +1,8 @@
-import { SectionCards } from "@/components/ui/section-cards"
+import { SectionCards } from "@/components/dashboard/section-cards"
 import { createClient } from "@/lib/supabase/server"
-import { ChartAreaInteractive } from "@/components/ui/chart-interactive"
+import { ChartAreaInteractive } from "@/components/dashboard/chart-interactive"
 
 export default async function Dashboard() {
-    const supabase = await createClient()
 
   return (
     <div className="flex flex-1 flex-col">

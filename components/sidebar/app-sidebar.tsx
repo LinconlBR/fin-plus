@@ -13,7 +13,7 @@ import {
   SidebarHeader,
   SidebarRail,
 } from "@/components/ui/sidebar"
-import {  LayoutDashboard, ArrowRightLeft, HandCoins, Goal  ,ChartColumn , BadgeSwissFranc, SquarePen, Settings } from "lucide-react"
+import {  LayoutDashboard, ArrowRightLeft, HandCoins, Goal  ,ChartColumn , BadgeSwissFranc, Settings, Lightbulb } from "lucide-react"
 
 // This is sample data.
 const data = {
@@ -88,7 +88,7 @@ const data = {
       title: "Dicas financeiras",
       url: "/tips",
       icon: (
-        <SquarePen
+        <Lightbulb
         />
       ),
       items: [
