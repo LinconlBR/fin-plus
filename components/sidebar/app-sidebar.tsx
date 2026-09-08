@@ -13,7 +13,7 @@ import {
   SidebarHeader,
   SidebarRail,
 } from "@/components/ui/sidebar"
-import { GalleryVerticalEndIcon, AudioLinesIcon, TerminalIcon, LayoutDashboard, ArrowRightLeft, HandCoins, Goal, FrameIcon, PieChartIcon ,ChartColumn, MapIcon, BadgeSwissFranc } from "lucide-react"
+import {  LayoutDashboard, ArrowRightLeft, HandCoins, Goal, FrameIcon, PieChartIcon ,ChartColumn, MapIcon, BadgeSwissFranc } from "lucide-react"
 
 // This is sample data.
 const data = {
@@ -46,7 +46,7 @@ const data = {
     },
     {
       title: "Orçamentos",
-      url: "/dashboard",
+      url: "/budgets",
       icon: (
         <HandCoins
         />
@@ -57,7 +57,7 @@ const data = {
     },
     {
       title: "Metas",
-      url: "/dashboard",
+      url: "/goals",
       icon: (
         <Goal
         />
@@ -67,20 +67,20 @@ const data = {
       ],
     },
     {
-      title: "Relatorios",
-      url: "/dashboard",
+      title: "Relatórios",
+      url: "/reports",
       icon: (
         <ChartColumn
         />
       ),
       items: [
         {
-          title: "Relatório de Vendas",
-          url: "#",
+          title: "Gastos por categoria",
+          url: "/reports/category-expenses",
         },
         {
-          title: "Relatório de Desempenho",
-          url: "#",
+          title: "Receitas vs despesas",
+          url: "/reports/income-vs-expenses",
         },
       ],
     },
@@ -113,7 +113,13 @@ const data = {
   ],
 }
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+export function AppSidebar({
+  user,
+  ...props
+}: React.ComponentProps<typeof Sidebar> & {
+  user: { name: string; email: string; avatar: string }
+}) {
+
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
@@ -129,7 +135,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavProjects projects={data.projects} />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser user={user} />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

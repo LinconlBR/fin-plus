@@ -8,7 +8,11 @@ import { redirect } from 'next/navigation'
 // É por isso que <form action={login}> funciona sem fetch() manual: o Next.js cria,
 // no build, um endpoint interno pra cada função e cuida do transporte de rede sozinho.
 
-export async function login(formData: FormData) {
+export type authState = {
+  error: string | null
+}
+
+export async function login(prevState: authState, formData: FormData) {
   // formData.get() pode retornar null se o campo não existir no form (por isso o
   // atributo name="email" no <Input> é obrigatório — sem ele, isso aqui vira sempre
   // null). O ?? "" garante um fallback seguro em vez de deixar passar null adiante.
@@ -28,7 +32,7 @@ export async function login(formData: FormData) {
   })
 
   if (error) {
-    throw new Error(error.message)
+    return { error: error.message }
   }
 
   // redirect() não é um return normal: por baixo dos panos ele lança uma exceção
@@ -38,7 +42,7 @@ export async function login(formData: FormData) {
   redirect("/dashboard")
 }
 
-export async function signup(formData: FormData) {
+export async function signup(prevState: authState,formData: FormData) {
   const name = formData.get("name")?.toString() ?? ""
   const email = formData.get("email")?.toString() ?? ""
   const password = formData.get("password")?.toString() ?? ""
@@ -60,7 +64,7 @@ export async function signup(formData: FormData) {
   })
 
   if (error) {
-    throw new Error(error.message)
+    return { error: error.message }
   }
 
   // Redireciona pro login (não pro dashboard) porque o Supabase exige confirmação de

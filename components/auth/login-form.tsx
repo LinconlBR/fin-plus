@@ -1,9 +1,13 @@
+"use client"
+
 import { cn } from "@/lib/utils"
 import Image from "next/image"
 import Link from "next/link"
-import { login } from "@/lib/actions/auth"
+import { login , authState } from "@/lib/actions/auth"
+import { useActionState } from "react"
 
 import { Button } from "@/components/ui/button"
+import SubmitButton  from "@/components/auth/submit-button" 
 import { Card, CardContent } from "@/components/ui/card"
 import {
   Field,
@@ -70,11 +74,13 @@ export function LoginForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
+  const [state, formAction] = useActionState<authState, FormData>(login, { error: null })
+
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card className="overflow-hidden p-0">
         <CardContent className="grid p-0 md:grid-cols-2">
-          <form action={login} className="p-6 md:p-8">
+          <form action={formAction} className="p-6 md:p-8">
             <FieldGroup>
               <div className="flex flex-col items-center gap-2 text-center">
                 <h1 className="text-2xl font-bold">Que bom ter você de volta</h1>
@@ -109,8 +115,11 @@ export function LoginForm({
                   required 
                 />
               </Field>
+                  {state?.error && (
+                    <p className="text-sm text-destructive">{state.error}</p>
+                  )}
               <Field>
-                <Button type="submit">Entrar na minha conta</Button>
+                <SubmitButton tipo="login" /> 
               </Field>
               <FieldSeparator className="*:data-[slot=field-separator-content]:bg-card">
                 Ou entre com
