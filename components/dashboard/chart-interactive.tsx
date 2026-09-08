@@ -69,6 +69,8 @@ export function ChartAreaInteractive({ data }: { data: ChartPoint[] }) {
     return date >= startDate
   })
 
+  console.log(data );
+  
   return (
     <Card className="@container/card">
       <CardHeader>

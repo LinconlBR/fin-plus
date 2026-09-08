@@ -57,17 +57,44 @@ const { data: transactions } = await supabase
   .gte("date", startOfMonth.toISOString().split("T")[0])
   .lte("date", endOfMonth.toISOString().split("T")[0])
 
+  // Calcula o total de receitas, despesas e saldo
   const totalIncome = transactions?.filter((t) => t.type === "income").reduce((acc, transaction) => {
       return acc + Number(transaction.amount)
   }, 0) ?? 0
 
+  // Calcula o total de despesas
   const totalExpenses = transactions?.filter((t) => t.type === "expense").reduce((acc, transaction) => {
       return acc + Number(transaction.amount)
   }, 0) ?? 0
+  
+  // Calcula o saldo
+  const balance = totalIncome - totalExpenses
 
-  const balance = totalIncome - totalExpenses  
-
+  // Gera os dados dos cards
   const cardData = generateCardData(totalIncome, totalExpenses, balance)
+  
+  // Agrupa as transações por dia para o gráfico
+  const grouped: Record<string, { income: number; expense: number }> = {}
+  for (const t of transactions ?? []) {
+    const day = t.date // já vem como "AAAA-MM-DD"
+    // Se ainda não existe um registro para esse dia, inicializa com 0
+    if (!grouped[day]) {
+      grouped[day] = { income: 0, expense: 0 }
+    }
+    // Adiciona o valor da transação ao total do dia, dependendo do tipo
+    if (t.type === "income") {
+      grouped[day].income += Number(t.amount)
+    } else {
+      grouped[day].expense += Number(t.amount)
+    }
+  }
+  // Converte o objeto agrupado em um array de pontos para o gráfico
+  const chartPoints = Object.entries(grouped).map(([date, values]) => ({
+    date,
+    income: values.income,
+    expense: values.expense,
+  }))
+
 
   return (
     <div className="flex flex-1 flex-col">
@@ -75,7 +102,7 @@ const { data: transactions } = await supabase
             <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
               <SectionCards  cards={cardData}  />
               <div className="px-4 lg:px-6">
-                <ChartAreaInteractive /> 
+                <ChartAreaInteractive data={chartPoints} /> 
               </div>
             </div>
           </div>
