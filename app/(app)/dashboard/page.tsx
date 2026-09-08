@@ -68,11 +68,7 @@ const { data: transactions } = await supabase
   const balance = totalIncome - totalExpenses  
 
   const cardData = generateCardData(totalIncome, totalExpenses, balance)
-
-  console.log("Total Income:", totalIncome)
-  console.log("Total Expenses:", totalExpenses)
-  console.log("Balance:", balance)
-  console.log("Transactions:", transactions)
+  
   return (
     <div className="flex flex-1 flex-col">
           <div className="@container/main flex flex-1 flex-col gap-2">
