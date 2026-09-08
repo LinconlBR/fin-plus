@@ -2,8 +2,6 @@ import { SectionCards } from "@/components/dashboard/section-cards"
 import { createClient } from "@/lib/supabase/server"
 import { ChartAreaInteractive } from "@/components/dashboard/chart-interactive"
 
-export default async function Dashboard() {
-
 interface CardData {
   label: string
   value: string
@@ -13,24 +11,36 @@ interface CardData {
   comment?: string
 }
 
-const cardData: CardData[] = [
-  {
-    label: "Ganhos",
-    value: " R$ 1500",
-    trend: "up",
-    trendLabel: "10%",
-    description:  "+ R$ 200 em relação ao mês anterior",
-    comment: "Ganhos do mês",
-  },
-  {
-    label: "Despesas",
-    value: " R$ 600",
-    trend: "down",
-    trendLabel: " 33%",
-    description:  "- R$ 300 em relação ao mês anterior",
-    comment: "despesas do mês",
-  },
-]
+function generateCardData(totalIncome: number, totalExpenses: number, balance: number): CardData[] {
+  return [
+    {
+      label: "Total Income",
+      value: totalIncome.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }),
+      trend: "up",
+      trendLabel: "Positive",
+      description: "Total income for the current month",
+      comment: "This is the total income generated from all sources for the current month.",
+    },
+    {
+      label: "Total Expenses",
+      value: totalExpenses.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }),
+      trend: "down",
+      trendLabel: "Negative",
+      description: "Total expenses for the current month",
+      comment: "This is the total amount spent on various expenses for the current month.",
+    },
+    {
+      label: "Balance",
+      value: balance.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }),
+      trend: balance >= 0 ? "up" : "down",
+      trendLabel: balance >= 0 ? "Positive" : "Negative",
+      description: "Current balance for the current month",
+      comment: "This is the net balance after subtracting total expenses from total income for the current month.",
+    },
+  ]
+}
+
+export default async function Dashboard() {
 
 const now = new Date()
 const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
@@ -56,6 +66,8 @@ const { data: transactions } = await supabase
   }, 0) ?? 0
 
   const balance = totalIncome - totalExpenses  
+
+  const cardData = generateCardData(totalIncome, totalExpenses, balance)
 
   console.log("Total Income:", totalIncome)
   console.log("Total Expenses:", totalExpenses)
