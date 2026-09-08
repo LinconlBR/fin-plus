@@ -32,7 +32,7 @@ import {
 } from "@/components/ui/toggle-group"
 
 export const description = "Este gráfico interativo mostra a evolução das receitas e despesas ao longo do tempo. Você pode selecionar diferentes intervalos de tempo para visualizar os dados correspondentes. As áreas coloridas representam as receitas (em verde) e as despesas (em vermelho), permitindo uma comparação visual clara entre os dois fluxos financeiros."
-
+/*
 const chartData = [
   { date: "2024-04-01", income: 222, expense: 150 },
   { date: "2024-04-02", income: 97, expense: 180 },
@@ -126,6 +126,7 @@ const chartData = [
   { date: "2024-06-29", income: 103, expense: 160 },
   { date: "2024-06-30", income: 446, expense: 400 },
 ]
+  */
 
 const chartConfig = {
   income: {
@@ -138,13 +139,20 @@ const chartConfig = {
   },
 } satisfies ChartConfig
 
-export function ChartAreaInteractive() {
+
+type ChartPoint = {
+  date: string
+  income: number
+  expense: number
+}
+
+export function ChartAreaInteractive({ data }: { data: ChartPoint[] }) {
   const isMobile = useIsMobile()
   const [timeRange, setTimeRange] = useState(isMobile ? "7d" : "90d")
 
-  const filteredData = chartData.filter((item) => {
+  const filteredData = data.filter((item) => {
     const date = new Date(item.date)
-    const referenceDate = new Date("2024-06-30")
+    const referenceDate = new Date()
     let daysToSubtract = 90
     if (timeRange === "30d") {
       daysToSubtract = 30
