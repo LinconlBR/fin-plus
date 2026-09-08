@@ -170,7 +170,7 @@ const columns = columnHelper.columns([
         <Checkbox
           checked={
             table.getIsAllPageRowsSelected() ||
-            (table.getIsSomePageRowsSelected() && "indeterminate")
+            table.getIsSomePageRowsSelected()
           }
           onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
           aria-label="Select all"
@@ -304,7 +304,7 @@ const columns = columnHelper.columns([
     id: "actions",
     cell: () => (
       <DropdownMenu>
-        <DropdownMenuTrigger asChild>
+        <DropdownMenuTrigger>
           <Button
             variant="ghost"
             className="flex size-8 text-muted-foreground data-[state=open]:bg-muted"
@@ -451,7 +451,7 @@ export function DataTable({
         </TabsList>
         <div className="flex items-center gap-2">
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
+            <DropdownMenuTrigger>
               <Button variant="outline" size="sm">
                 <IconLayoutColumns />
                 <span className="hidden lg:inline">Customize Columns</span>
@@ -660,8 +660,8 @@ function TableCellViewer({ item }: { item: z.infer<typeof schema> }) {
   const isMobile = useIsMobile()
 
   return (
-    <Drawer direction={isMobile ? "bottom" : "right"}>
-      <DrawerTrigger asChild>
+    <Drawer>
+      <DrawerTrigger>
         <Button variant="link" className="w-fit px-0 text-left text-foreground">
           {item.header}
         </Button>
@@ -806,7 +806,7 @@ function TableCellViewer({ item }: { item: z.infer<typeof schema> }) {
         </div>
         <DrawerFooter>
           <Button>Submit</Button>
-          <DrawerClose asChild>
+          <DrawerClose >
             <Button variant="outline">Done</Button>
           </DrawerClose>
         </DrawerFooter>
