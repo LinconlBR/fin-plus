@@ -151,7 +151,9 @@ export function AppSidebar({
             <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground">
               <BadgeSwissFranc className="h-5 w-5" />
             </span>
-            Fin<span className="relative -ml-2 -top-1 text-primary">+</span>
+            <div className="flex flex-col group-data-[collapsible=icon]:hidden">
+              <span className="truncate font-bold ">Fin <span className="text-primary">+</span></span>
+            </div>
          </div>
       </SidebarHeader>
       <SidebarContent>
