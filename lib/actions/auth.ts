@@ -72,3 +72,9 @@ export async function signup(prevState: authState,formData: FormData) {
   // "logado de verdade" só por ter se cadastrado.
   redirect("/auth/login")
 }
+
+export async function signOut() {
+  const supabase = await createClient()
+  await supabase.auth.signOut()
+  redirect("/auth/login")
+}
