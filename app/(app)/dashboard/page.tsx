@@ -14,28 +14,28 @@ interface CardData {
 function generateCardData(totalIncome: number, totalExpenses: number, balance: number): CardData[] {
   return [
     {
-      label: "Total Income",
+      label: "Receitas",
       value: totalIncome.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }),
       trend: "up",
-      trendLabel: "Positive",
-      description: "Total income for the current month",
-      comment: "This is the total income generated from all sources for the current month.",
+      trendLabel: "",
+      description: "receitas totais para o mês atual",
+      comment: "Estas são as receitas totais para o mês atual.",
     },
     {
-      label: "Total Expenses",
+      label: "Despesas",
       value: totalExpenses.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }),
       trend: "down",
-      trendLabel: "Negative",
-      description: "Total expenses for the current month",
-      comment: "This is the total amount spent on various expenses for the current month.",
+      trendLabel: "",
+      description: "despesas totais para o mês atual",
+      comment: "Estas são as despesas totais para o mês atual.",
     },
     {
-      label: "Balance",
+      label: "Saldo",
       value: balance.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }),
       trend: balance >= 0 ? "up" : "down",
-      trendLabel: balance >= 0 ? "Positive" : "Negative",
-      description: "Current balance for the current month",
-      comment: "This is the net balance after subtracting total expenses from total income for the current month.",
+      trendLabel: "",
+      description: " saldo líquido para o mês atual",
+      comment: "Esté é o saldo líquido após subtrair as despesas totais das receitas totais para o mês atual.",
     },
   ]
 }
@@ -68,7 +68,7 @@ const { data: transactions } = await supabase
   const balance = totalIncome - totalExpenses  
 
   const cardData = generateCardData(totalIncome, totalExpenses, balance)
-  
+
   return (
     <div className="flex flex-1 flex-col">
           <div className="@container/main flex flex-1 flex-col gap-2">
