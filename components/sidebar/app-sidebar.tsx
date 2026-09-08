@@ -3,7 +3,7 @@
 import * as React from "react"
 
 import { NavMain } from "@/components/sidebar/nav-main"
-import { NavProjects } from "@/components/sidebar/nav-projects"
+//import { NavProjects } from "@/components/sidebar/nav-projects"
 import { NavUser } from "@/components/sidebar/nav-user"
 
 import {
@@ -13,7 +13,7 @@ import {
   SidebarHeader,
   SidebarRail,
 } from "@/components/ui/sidebar"
-import {  LayoutDashboard, ArrowRightLeft, HandCoins, Goal, FrameIcon, PieChartIcon ,ChartColumn, MapIcon, BadgeSwissFranc } from "lucide-react"
+import {  LayoutDashboard, ArrowRightLeft, HandCoins, Goal  ,ChartColumn , BadgeSwissFranc, SquarePen, Settings } from "lucide-react"
 
 // This is sample data.
 const data = {
@@ -84,7 +84,30 @@ const data = {
         },
       ],
     },
+    {
+      title: "Dicas financeiras",
+      url: "/tips",
+      icon: (
+        <SquarePen
+        />
+      ),
+      items: [
+        
+      ],
+    },
+    {
+      title: "Configurações",
+      url: "/settings",
+      icon: (
+        <Settings
+        />
+      ),
+      items: [
+        
+      ],
+    },
   ],
+  /*
   projects: [
     {
       name: "Design Engineering",
@@ -111,6 +134,7 @@ const data = {
       ),
     },
   ],
+  */
 }
 
 export function AppSidebar({
@@ -132,7 +156,7 @@ export function AppSidebar({
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
-        <NavProjects projects={data.projects} />
+        {/* <NavProjects projects={data.projects} /> */}
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={user} />
