@@ -14,11 +14,9 @@ type Categories = {
 
 async function fetchCategories(): Promise<Categories[]> { 
     const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser() 
     const { data, error } = await supabase
     .from("categories")
     .select("*")
-    .eq("user_id", user?.id)
 
     if (error) {
         throw new Error(error.message)

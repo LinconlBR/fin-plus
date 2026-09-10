@@ -52,10 +52,14 @@ async function fetchTransactions(): Promise<Transaction[]> {
     throw new Error(error.message)
   }
 
+  if (!data) {
+        throw new Error("No data returned from transactions query")
+    }
+
   // Aqui é onde a "tradução" de formato acontece: pegamos cada linha crua
   // (TransactionRow) e devolvemos no formato achatado (Transaction) que a
   // tabela sabe exibir.
-  
+
   return (data as TransactionRow[]).map((row) => ({
     id: row.id,
     title: row.description ?? "Sem descrição",
