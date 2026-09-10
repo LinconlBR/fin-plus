@@ -13,14 +13,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { ArrowDownLeft, ArrowUpRight, CalendarDays, Tags, Text } from "lucide-react";
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
 
-type Transaction = {
-  id: string;
-  title: string;
-  category: string;
-  createdAt: string;
-  type: "income" | "expense";
-  amount: number;
-};
+import { useTransactions, type Transaction } from "@/hooks/use-transactions";
 
 const categoryOptions = [
   { label: "Moradia", value: "Moradia" },
@@ -35,20 +28,6 @@ const typeOptions = [
   { label: "Despesa", value: "expense" },
 ];
 
-const data: Transaction[] = [
-  { id: "1", title: "Salário mensal", category: "Salário", createdAt: "2026-09-05", type: "income", amount: 8500 },
-  { id: "2", title: "Aluguel", category: "Moradia", createdAt: "2026-09-04", type: "expense", amount: 2400 },
-  { id: "3", title: "Supermercado Pão de Açúcar", category: "Alimentação", createdAt: "2026-09-03", type: "expense", amount: 386.42 },
-  { id: "4", title: "Corrida de aplicativo", category: "Transporte", createdAt: "2026-09-02", type: "expense", amount: 32.9 },
-  { id: "5", title: "Restaurante Vila", category: "Alimentação", createdAt: "2026-09-01", type: "expense", amount: 124.8 },
-  { id: "6", title: "Freelance de design", category: "Salário", createdAt: "2026-08-30", type: "income", amount: 1250 },
-  { id: "7", title: "Cinema e streaming", category: "Lazer", createdAt: "2026-08-28", type: "expense", amount: 79.9 },
-  { id: "8", title: "Conta de energia", category: "Moradia", createdAt: "2026-08-26", type: "expense", amount: 218.67 },
-  { id: "9", title: "Passagem de ônibus", category: "Transporte", createdAt: "2026-08-25", type: "expense", amount: 96 },
-  { id: "10", title: "Reembolso da empresa", category: "Salário", createdAt: "2026-08-23", type: "income", amount: 180 },
-  { id: "11", title: "Padaria Central", category: "Alimentação", createdAt: "2026-08-21", type: "expense", amount: 28.5 },
-  { id: "12", title: "Show no teatro", category: "Lazer", createdAt: "2026-08-20", type: "expense", amount: 210 },
-];
 
 const currencyFormatter = new Intl.NumberFormat("pt-BR", {
   style: "currency",
@@ -127,17 +106,25 @@ const columns: ColumnDef<Transaction>[] = [
 
 
 function TransactionsContent() {
-	const { table } = useDataTable({
-		data,
-		columns,
-    pageCount: Math.ceil(data.length / 10),
-		initialState: {
-		sorting: [{ id: "createdAt", desc: true }],
-    pagination: { pageIndex: 0, pageSize: 10 },
-		},
-		// Unique identifier for rows, can be used for unique row selection
-    getRowId: (row: Transaction) => row.id, 
-  	});
+     const { data, isLoading, isError } = useTransactions() ;
+     const PAGE_SIZE = 10 ;
+     const transactions = data ?? [];
+
+     const { table } = useDataTable({
+    data: transactions,
+    columns,
+    pageCount: Math.ceil(transactions.length / PAGE_SIZE),
+    initialState: {
+    sorting: [{ id: "createdAt", desc: true }],
+    pagination: { pageIndex: 0, pageSize: PAGE_SIZE },
+    },
+    // Unique identifier for rows, can be used for unique row selection
+    getRowId: (row: Transaction) => row.id,
+    });
+
+     //checando se os dados estão sendo carregados ou se houve algum erro na requisição
+        if (isLoading) return <div>Carregando transações...</div>
+        if (isError) return <div>Erro ao carregar transações.</div>
 
   return (
     <DataTable table={table}>
