@@ -138,10 +138,21 @@ function TransactionsContent() {
 }
 
 export default function Transactions() {
-  return (
+  return (  
     <NuqsAdapter>
-      <NewTransactionDialog />
+          
+
+      <div className="flex items-center justify-between  ">
+        <span className="text-sm text-muted-foreground">
+          
+        </span>
+        <h1 className="text-2xl font-bold  ">
+          Transações
+        </h1>
+        <NewTransactionDialog />
+      </div>
       <TransactionsContent />
+      
     </NuqsAdapter>
   );
 }

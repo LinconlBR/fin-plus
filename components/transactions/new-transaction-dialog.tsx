@@ -15,9 +15,7 @@ export function NewTransactionDialog() {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger>
-        <Button>+ Nova transação</Button>
-      </DialogTrigger>
+      <DialogTrigger render={<Button>+ Nova transação</Button>} />
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Nova transação</DialogTitle>
