@@ -1,7 +1,5 @@
 "use client";
 
-
-
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 
 import { DataTable } from "@/components/data-table/data-table";
@@ -15,6 +13,7 @@ import { DataTableColumnHeader } from "@/components/data-table/data-table-column
 
 import { useTransactions, type Transaction } from "@/hooks/use-transactions";
 
+// Opções de categoria e tipo para os filtros
 const categoryOptions = [
   { label: "Moradia", value: "Moradia" },
   { label: "Alimentação", value: "Alimentação" },
@@ -23,23 +22,25 @@ const categoryOptions = [
   { label: "Salário", value: "Salário" },
 ];
 
+// Opções de tipo para os filtros
 const typeOptions = [
   { label: "Receita", value: "income" },
   { label: "Despesa", value: "expense" },
 ];
 
-
+// Formatadores para moeda e data
 const currencyFormatter = new Intl.NumberFormat("pt-BR", {
   style: "currency",
   currency: "BRL",
 });
-
+// Formatador de data para exibir no formato "dd/MM/yyyy"
 const dateFormatter = new Intl.DateTimeFormat("pt-BR", {
   day: "2-digit",
   month: "short",
   year: "numeric",
 });
 
+// Define as colunas da tabela de transações
 const columns: ColumnDef<Transaction>[] = [
   {
     id: "title", 
@@ -104,7 +105,7 @@ const columns: ColumnDef<Transaction>[] = [
 ];
 
 
-
+// Componente principal que renderiza o conteúdo das transações
 function TransactionsContent() {
      const { data, isLoading, isError } = useTransactions() ;
      const PAGE_SIZE = 10 ;
