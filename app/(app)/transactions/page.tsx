@@ -13,6 +13,7 @@ import { DataTableColumnHeader } from "@/components/data-table/data-table-column
 
 import { useTransactions, type Transaction } from "@/hooks/use-transactions";
 import { NewTransactionDialog } from "@/components/transactions/new-transaction-dialog";
+
 // Opções de categoria e tipo para os filtros
 const categoryOptions = [
   { label: "Moradia", value: "Moradia" },

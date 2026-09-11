@@ -1,3 +1,4 @@
+// Hook de consulta que busca, transforma e disponibiliza as transações financeiras do usuário.
 "use client"
 // "use client" é obrigatório aqui: useQuery é um hook, e hooks só rodam em Client Components.
 

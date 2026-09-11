@@ -1,3 +1,4 @@
+// Hook de consulta que busca e disponibiliza as categorias financeiras pelo cache do TanStack Query.
 "use client"
 
 import { useQuery } from "@tanstack/react-query"

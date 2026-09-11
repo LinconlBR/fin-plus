@@ -1,4 +1,5 @@
 
+// Schema Zod que valida os campos obrigatórios e os valores permitidos de uma transação.
 import { z } from "zod"
 
 export const transactionSchema = z.object({

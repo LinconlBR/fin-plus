@@ -1,3 +1,4 @@
+// Utilitário que formata datas para exibição e retorna vazio quando o valor é inválido.
 export function formatDate(
   date: Date | string | number | undefined,
   opts: Intl.DateTimeFormatOptions = {},

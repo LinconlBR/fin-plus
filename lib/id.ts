@@ -1,3 +1,4 @@
+// Utilitário que gera identificadores aleatórios usando alfabeto e tamanho configuráveis.
 const DEFAULT_ALPHABET =
   "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 

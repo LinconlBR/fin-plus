@@ -1,3 +1,4 @@
+// Funções auxiliares para estilos de colunas, operadores e validação de filtros de tabelas.
 import type { Column } from "@tanstack/react-table";
 import { dataTableConfig } from "@/config/data-table"; 
 import type { 

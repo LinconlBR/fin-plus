@@ -1,3 +1,4 @@
+// Hook que integra tabelas TanStack com paginação, filtros, ordenação e estado persistido na URL.
 import {
   type ColumnFiltersState,
   getCoreRowModel,
@@ -29,7 +30,19 @@ import * as React from "react";
 
 import { useDebouncedCallback } from "@/hooks/use-debounced-callback";
 import { getSortingStateParser } from "@/lib/parsers";
-import type { ExtendedColumnSort, QueryKeys } from "@/components/data-table/data-table";
+
+type ExtendedColumnSort<TData> = {
+  id: Extract<keyof TData, string>;
+  desc: boolean;
+};
+
+type QueryKeys = {
+  page: string;
+  perPage: string;
+  sort: string;
+  filters: string;
+  joinOperator: string;
+};
 
 const PAGE_KEY = "page";
 const PER_PAGE_KEY = "perPage";
@@ -265,6 +278,8 @@ export function useDataTable<TData>(props: UseDataTableProps<TData>) {
     [debouncedSetFilterValues, filterableColumns, enableAdvancedFilter],
   );
 
+  // TanStack Table returns mutable API functions that React Compiler cannot safely memoize.
+  // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
     ...tableProps,
     columns,

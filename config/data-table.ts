@@ -1,3 +1,4 @@
+// Configuração central dos operadores, variantes de filtro e opções de ordenação das tabelas.
 export type DataTableConfig = typeof dataTableConfig;
 
 export const dataTableConfig = {

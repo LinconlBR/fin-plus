@@ -1,3 +1,4 @@
+// Hook utilitário que mantém uma referência estável para callbacks sem provocar renderizações extras.
 import * as React from "react";
 
 /**

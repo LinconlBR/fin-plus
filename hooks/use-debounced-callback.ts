@@ -1,3 +1,4 @@
+// Hook que executa um callback somente após o intervalo definido sem novas chamadas.
 import * as React from "react";
 
 import { useCallbackRef } from "@/hooks/use-callback-ref";

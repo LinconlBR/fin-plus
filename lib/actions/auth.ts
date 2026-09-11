@@ -1,6 +1,8 @@
+// Server Actions responsáveis por autenticar, cadastrar e desconectar usuários no Supabase.
 "use server"
 
 import { createClient } from '@/lib/supabase/server'
+import { signupSchema } from '@/lib/schema/signupSchema'
 import { redirect } from 'next/navigation'
 
 // SERVER ACTIONS: essa diretiva "use server" no topo do arquivo diz ao Next.js que
@@ -42,13 +44,22 @@ export async function login(prevState: authState, formData: FormData) {
   redirect("/dashboard")
 }
 
-export async function signup(prevState: authState,formData: FormData) {
-  const name = formData.get("name")?.toString() ?? ""
-  const email = formData.get("email")?.toString() ?? ""
-  const password = formData.get("password")?.toString() ?? ""
+export async function signup(formData: FormData) {
+  const parsed = signupSchema.safeParse({
+    name: formData.get("name")?.toString() ?? "",
+    email: formData.get("email")?.toString() ?? "",
+    password: formData.get("password")?.toString() ?? "",
+    confirm_password: formData.get("confirm_password")?.toString() ?? "",
+  })
+
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Dados inválidos" }
+  }
+
+  const { name, email, password } = parsed.data
   const supabase = await createClient()
 
-  const { error } = await supabase.auth.signUp({
+  const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
@@ -64,7 +75,17 @@ export async function signup(prevState: authState,formData: FormData) {
   })
 
   if (error) {
+    if (error.status === 429 || error.message.toLowerCase().includes("rate limit")) {
+      return {
+        error: "Limite de envio de e-mails atingido. Aguarde alguns minutos e tente novamente.",
+      }
+    }
+
     return { error: error.message }
+  }
+
+  if (!data.user?.identities?.length) {
+    return { error: "Este e-mail já está cadastrado." }
   }
 
   // Redireciona pro login (não pro dashboard) porque o Supabase exige confirmação de

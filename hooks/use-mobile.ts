@@ -1,3 +1,4 @@
+// Hook que identifica se a viewport atual está abaixo do breakpoint de dispositivo móvel.
 import * as React from "react"
 
 /** from sidebar shadcn

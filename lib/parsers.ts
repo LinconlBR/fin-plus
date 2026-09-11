@@ -1,3 +1,4 @@
+// Parsers que validam e serializam estados de ordenação e filtros das tabelas na URL.
 import { createParser } from "nuqs/server";
 import { z } from "zod";
 
