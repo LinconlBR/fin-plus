@@ -7,12 +7,6 @@ import { redirect } from 'next/navigation'
 import { loginSchema } from '../schema/loginSchema'
 
 
-// ATENÇÃO: Server Actions não podem ser chamadas de dentro de Client Components. Se você tentar fazer isso, vai dar erro de compilação. Server Actions só podem ser chamadas de:
-// 1. <form action={serverAction}> (como login/signup fazem)
-// 2. Outras Server Actions (uma Server Action pode chamar outra, sem problemas)
-// 3. API Routes (uma API Route pode chamar uma Server Action, sem problemas)
-
-
 export async function login( formData: FormData) {
   // Valida os dados do formulário usando o schema Zod. Se os dados forem inválidos, retorna um objeto com a mensagem de erro.
   const parsed = loginSchema.safeParse({
