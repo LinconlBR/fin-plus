@@ -4,22 +4,27 @@
 import { createClient } from '@/lib/supabase/server'
 import { signupSchema } from '@/lib/schema/signupSchema'
 import { redirect } from 'next/navigation'
+import { loginSchema } from '../schema/loginSchema'
 
-// SERVER ACTIONS: essa diretiva "use server" no topo do arquivo diz ao Next.js que
-// TODA função exportada aqui roda exclusivamente no servidor — nunca no navegador.
-// É por isso que <form action={login}> funciona sem fetch() manual: o Next.js cria,
-// no build, um endpoint interno pra cada função e cuida do transporte de rede sozinho.
 
-export type authState = {
-  error: string | null
-}
+// ATENÇÃO: Server Actions não podem ser chamadas de dentro de Client Components. Se você tentar fazer isso, vai dar erro de compilação. Server Actions só podem ser chamadas de:
+// 1. <form action={serverAction}> (como login/signup fazem)
+// 2. Outras Server Actions (uma Server Action pode chamar outra, sem problemas)
+// 3. API Routes (uma API Route pode chamar uma Server Action, sem problemas)
 
-export async function login(prevState: authState, formData: FormData) {
-  // formData.get() pode retornar null se o campo não existir no form (por isso o
-  // atributo name="email" no <Input> é obrigatório — sem ele, isso aqui vira sempre
-  // null). O ?? "" garante um fallback seguro em vez de deixar passar null adiante.
-  const email = formData.get("email")?.toString() ?? ""
-  const password = formData.get("password")?.toString() ?? ""
+
+export async function login( formData: FormData) {
+  // Valida os dados do formulário usando o schema Zod. Se os dados forem inválidos, retorna um objeto com a mensagem de erro.
+  const parsed = loginSchema.safeParse({
+    email: formData.get("email")?.toString() ?? "",
+    password: formData.get("password")?.toString() ?? "",
+  })
+  // Se os dados forem inválidos, retorna um objeto com a mensagem de erro.
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Dados inválidos" }
+  }
+  // Se os dados forem válidos, extrai o email e a senha do objeto validado.
+  const { email, password } = parsed.data
 
   // ATENÇÃO AO AWAIT: createClient() é uma função async, ou seja, ela SEMPRE retorna
   // uma Promise, nunca o valor direto. Esquecer o `await` aqui faz `supabase` virar
@@ -41,7 +46,7 @@ export async function login(prevState: authState, formData: FormData) {
   // especial que o Next.js intercepta para navegar o usuário. Por isso qualquer
   // código escrito DEPOIS dessa linha nunca executaria — ele precisa vir depois do
   // `if (error)`, fora dele, pra só rodar quando o login realmente deu certo.
-  redirect("/dashboard")
+
 }
 
 export async function signup(formData: FormData) {
@@ -91,7 +96,7 @@ export async function signup(formData: FormData) {
   // Redireciona pro login (não pro dashboard) porque o Supabase exige confirmação de
   // e-mail antes da sessão ser considerada válida — o usuário ainda não está
   // "logado de verdade" só por ter se cadastrado.
-  redirect("/auth/login")
+
 }
 
 export async function signOut() {

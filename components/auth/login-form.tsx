@@ -3,15 +3,14 @@
 import { cn } from "@/lib/utils"
 import Image from "next/image"
 import Link from "next/link"
-import { login , authState } from "@/lib/actions/auth"
-import { useActionState } from "react"
+import { redirect } from "next/navigation"
 
-import { Button } from "@/components/ui/button"
-import SubmitButton  from "@/components/auth/submit-button" 
+import { Button } from "@/components/ui/button" 
 import { Card, CardContent } from "@/components/ui/card"
 import {
   Field,
   FieldDescription,
+  FieldError,
   FieldGroup,
   FieldLabel,
   FieldSeparator,
@@ -70,17 +69,65 @@ const financeIllustration = `data:image/svg+xml;charset=UTF-8,${encodeURICompone
 </svg>
 `)}`
 
+
+import { login } from "@/lib/actions/auth"
+import { useForm } from "@tanstack/react-form"
+import { useMutation } from "@tanstack/react-query"
+import { loginSchema } from "@/lib/schema/loginSchema"
+
+
 export function LoginForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
-  const [state, formAction] = useActionState<authState, FormData>(login, { error: null })
+  
+  const mutation = useMutation({
+      mutationFn: async (formData: FormData) => {
+        const result = await login(formData)
+            if (result?.error) {
+          throw new Error(result.error)
+        }
+  
+        return result
+      },
+      // onSuccess é o que acontece quando a mutation é bem-sucedida. Aqui você pode redirecionar o usuário para outra página, mostrar uma mensagem de sucesso, etc.
+      onSuccess: () => {  
+        redirect("/dashboard") 
+      },
+    })
+
+    const form = useForm({
+        defaultValues: {
+              email: "",
+              password: "",
+          },
+        
+      
+        // validators é onde você define a validação do formulário. Aqui estamos usando o loginSchema que criamos com Zod.
+        validators: {
+          onSubmit: loginSchema,
+        },
+        onSubmit: async ({ value }) => {
+          // pega os valores do formulário e monta o FormData que a Server Action espera. 
+          //Repare que o nome dos campos no FormData precisa bater com os nomes que a Server Action espera.
+          const formData = new FormData()
+          formData.set("email", value.email)
+          formData.set("password", value.password)
+          await mutation.mutateAsync(formData)
+        },
+      })
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card className="overflow-hidden p-0">
         <CardContent className="grid p-0 md:grid-cols-2">
-          <form action={formAction} className="p-6 md:p-8">
+          <form 
+           className="p-6 md:p-8"
+           onSubmit={(e) => {
+              e.preventDefault()
+              form.handleSubmit()
+            }}
+          >
             <FieldGroup>
               <div className="flex flex-col items-center gap-2 text-center">
                 <h1 className="text-2xl font-bold">Que bom ter você de volta</h1>
@@ -88,38 +135,75 @@ export function LoginForm({
                   Entre na sua conta Fin+ e retome o controle das suas finanças
                 </p>
               </div>
-              <Field>
-                <FieldLabel htmlFor="email">E-mail</FieldLabel>
-                <Input
-                  id="email"
+              <form.Field
                   name="email"
-                  type="email"
-                  placeholder="example@example.com"
-                  required
-                />
-              </Field>
+                >
+                  {(field) => {
+                    const isInvalid =
+                      field.state.meta.isTouched && !field.state.meta.isValid
+                    return (
+                      <Field data-invalid={isInvalid}>
+                        <FieldLabel htmlFor={field.name}>E-mail</FieldLabel>
+                        <Input
+                          type="email"
+                          id={field.name}
+                          name={field.name}
+                          value={field.state.value}
+                          onBlur={field.handleBlur}
+                          onChange={(e) => field.handleChange(e.target.value)}
+                          aria-invalid={isInvalid}
+                          placeholder="Ex: example@domain.com"
+                        />
+                        {isInvalid && (
+                          <FieldError errors={field.state.meta.errors} />
+                        )}
+                      </Field>
+                    )
+                  }}
+                </form.Field>
+                <form.Field
+                  name="password"
+                >
+                  {(field) => {
+                    const isInvalid =
+                      field.state.meta.isTouched && !field.state.meta.isValid
+                    return (
+                      <Field data-invalid={isInvalid}>
+                        <FieldLabel htmlFor={field.name}>Senha</FieldLabel>
+                        <Input
+                          id={field.name}
+                          name={field.name}
+                          type="password"
+                          value={field.state.value}
+                          onBlur={field.handleBlur}
+                          onChange={(e) => field.handleChange(e.target.value)}
+                          aria-invalid={isInvalid}
+                          placeholder="Ex: ********"
+                        />
+                        {isInvalid && (
+                          <FieldError errors={field.state.meta.errors} />
+                        )}
+                      </Field>
+                    )
+                  }}
+                </form.Field>
               <Field>
-                <div className="flex items-center">
-                  <FieldLabel htmlFor="password">Password</FieldLabel>
-                  <a
-                    href="#"
-                    className="ml-auto text-sm underline-offset-2 hover:underline"
-                  >
-                    Esqueceu sua senha?
-                  </a>
-                </div>
-                <Input 
-                  name="password" 
-                  id="password" 
-                  type="password" 
-                  required 
-                />
-              </Field>
-                  {state?.error && (
-                    <p className="text-sm text-destructive">{state.error}</p>
+                <FieldDescription>
+                  {mutation.isError && (
+                    <span className="text-rose-600">
+                      {mutation.error instanceof Error
+                        ? mutation.error.message
+                        : "Ocorreu um erro ao logar."}
+                    </span>
                   )}
-              <Field>
-                <SubmitButton tipo="login" /> 
+                </FieldDescription>
+                <Button
+                  type="submit"
+                  disabled={mutation.isPending}
+                  className="mt-6 w-full"
+                >
+                  {mutation?.isPending ? "Entrando..." : "Entrar"}
+                </Button>
               </Field>
               <FieldSeparator className="*:data-[slot=field-separator-content]:bg-card">
                 Ou entre com

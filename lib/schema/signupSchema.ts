@@ -6,7 +6,9 @@ import { z } from "zod"
 
 export const signupSchema = z.object({
     email: z.string().email("Email inválido"),
-    password: z.string().min(6, "Senha deve ter pelo menos 6 caracteres"),
+    password: z.string()
+        .min(6, "Senha deve ter pelo menos 6 caracteres")
+        .regex(/^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[^A-Za-z\d]).+$/, "Senha deve conter pelo menos uma letra maiúscula, uma letra minúscula, um número e um caractere especial"),
     name: z.string().min(1, "Nome é obrigatório"),
     confirm_password: z.string().min(6, "As senhas devem ser iguais e ter pelo menos 6 caracteres"),
 }).refine((data) => data.password === data.confirm_password, {

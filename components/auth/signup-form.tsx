@@ -3,6 +3,7 @@
 import { cn } from "@/lib/utils"
 import Image from "next/image"
 import Link from "next/link"
+import { redirect } from "next/navigation"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card" 
@@ -16,13 +17,15 @@ import {
 } from "@/components/ui/field"
 
 import { Input } from "@/components/ui/input"
+
+
+// Aqui estamos importando a Server Action signup, que é responsável por criar a conta do usuário no banco de dados.
 import { signup } from "@/lib/actions/auth"
-
-
-
-// TanStack Form é um gerenciador de estado de formulário moderno, com validação integrada e suporte a schemas Zod. Ele é usado aqui para validar os campos de transação antes de enviar para a Server Action.
-import { useMutation } from "@tanstack/react-query"
+// useForm é um hook do TanStack Form que permite gerenciar o estado de um formulário de forma declarativa. Ele fornece métodos para lidar com validação, envio e estado dos campos do formulário.
 import { useForm } from "@tanstack/react-form"
+// useMutation é um hook do React Query que permite gerenciar o estado de uma operação assíncrona, como uma requisição HTTP. Ele fornece informações sobre o estado da operação (pendente, sucesso, erro) e permite executar funções quando a operação é concluída com sucesso ou falha.
+import { useMutation } from "@tanstack/react-query"
+// signupSchema é um schema Zod que define a validação dos campos do formulário de cadastro. Ele garante que os dados enviados para a Server Action estejam no formato correto e atendam aos requisitos de validação.
 import { signupSchema } from "@/lib/schema/signupSchema"
 
 
@@ -36,25 +39,26 @@ export function SignupForm({
 
   
   const mutation = useMutation({
-    // mutationFn é a função que faz o trabalho de verdade. Repare que ela
-    // recebe um FormData — vamos montar esse FormData a partir dos valores
-    // do formulário, porque é isso que sua Server Action createTransaction
-    // já espera receber (mesmo padrão que login/signup usam).
+    // mutationFn é a função que vai ser chamada quando o formulário for enviado. 
+    // Aqui estamos chamando a Server Action signup, que é responsável por criar a conta do usuário no 
+    // banco de dados.
     mutationFn: async (formData: FormData) => {
       const result = await signup(formData)
-
+        // Se a Server Action retornar um erro, lançamos uma exceção para que o React Query saiba que a mutation falhou. Isso vai disparar o onError e permitir que você trate o erro de forma adequada.
           if (result?.error) {
         throw new Error(result.error)
       }
 
       return result
     },
-    // onSuccess roda automaticamente    formData.set("confirm_password", value.confirm_password)    formData.set("confirm_password", value.confirm_password) quando mutationFn termina sem erro.
+    // onSuccess é o que acontece quando a mutation é bem-sucedida. Aqui você pode redirecionar o usuário para outra página, mostrar uma mensagem de sucesso, etc.
     onSuccess: () => {  
-      
+      // Aqui você pode redirecionar o usuário para a página de login, por exemplo.
+      // Repare que o redirect() do Next.js é uma função que lança uma exceção especial que o Next.js intercepta para navegar o usuário. Por isso qualquer código escrito DEPOIS dessa linha nunca executaria — ele precisa vir depois do `if (error)`, fora dele, pra só rodar quando o login realmente deu certo.
+      redirect("/auth/login") 
     },
   })
-
+  // useForm é o hook do TanStack Form que cria o estado do formulário. Ele recebe um objeto de configuração com os valores iniciais, a validação e o que fazer quando o formulário é enviado.
   const form = useForm({
     defaultValues: {
           email: "",
@@ -64,30 +68,23 @@ export function SignupForm({
       },
     
   
-    // TanStack Form valida usando o schema Zod diretamente — mesmo schema que
-    // você já escreveu, sem precisar de nenhum "resolver" intermediário
-    // (diferente do react-hook-form, que precisava do zodResolver).
+    // validators é onde você define a validação do formulário. Aqui estamos usando o signupSchema que criamos com Zod.
     validators: {
       onSubmit: signupSchema,
     },
     onSubmit: async ({ value }) => {
-      // Aqui é onde "traduzimos" os valores do formulário (um objeto comum)
-      // pro formato FormData que a Server Action espera. Isso existe porque
-      // createTransaction foi escrita pra ser chamada também via
-      // <form action={...}>, que sempre entrega FormData.
+      // pega os valores do formulário e monta o FormData que a Server Action espera. 
+      //Repare que o nome dos campos no FormData precisa bater com os nomes que a Server Action espera.
       const formData = new FormData()
       formData.set("email", value.email)
       formData.set("password", value.password)
       formData.set("name", value.name)
       formData.set("confirm_password", value.confirm_password)
 
-      // Dispara a mutation com o FormData montado. mutateAsync (em vez de
-      // mutate) retorna uma Promise, o que permite usar await aqui dentro.
       await mutation.mutateAsync(formData)
     },
   })
 
-  //const [state, formAction] = useActionState<authState, FormData>(signup, { error: null })
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card className="overflow-hidden p-0">
