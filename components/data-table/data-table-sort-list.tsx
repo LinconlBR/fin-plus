@@ -204,7 +204,9 @@ export function DataTableSortList<TData>({
             </p>
           </div>
           {sorting.length > 0 && (
-            <SortableContent render={<div role="list" className="flex max-h-[300px] flex-col gap-2 overflow-y-auto p-1" />}>{sorting.map((sort) => (
+            <SortableContent>
+              <div role="list" className="flex max-h-[300px] flex-col gap-2 overflow-y-auto p-1">
+                {sorting.map((sort) => (
                                         <DataTableSortItem
                                           key={sort.id}
                                           sort={sort}
@@ -214,7 +216,9 @@ export function DataTableSortList<TData>({
                                           onSortUpdate={onSortUpdate}
                                           onSortRemove={onSortRemove}
                                         />
-                                      ))}</SortableContent>
+                                      ))}
+              </div>
+            </SortableContent>
           )}
           <div className="flex w-full items-center gap-2">
             <Button
@@ -296,7 +300,7 @@ function DataTableSortItem({
   );
 
   return (
-    <SortableItem value={sort.id} render={<div role="listitem" id={sortItemId} tabIndex={-1} className="flex items-center gap-2" onKeyDown={onItemKeyDown} />}><Popover open={showFieldSelector} onOpenChange={setShowFieldSelector}>
+    <SortableItem value={sort.id} asChild><div role="listitem" id={sortItemId} tabIndex={-1} className="flex items-center gap-2" onKeyDown={onItemKeyDown}><Popover open={showFieldSelector} onOpenChange={setShowFieldSelector}>
                 <PopoverTrigger render={<Button id={fieldTriggerId} aria-controls={fieldListboxId} variant="outline" className="w-44 justify-between rounded font-normal" />}><span className="truncate">{columnLabels.get(sort.id)}</span><ChevronsUpDown className="opacity-50" /></PopoverTrigger>
                 <PopoverContent
                   id={fieldListboxId}
@@ -324,9 +328,11 @@ function DataTableSortItem({
                 open={showDirectionSelector}
                 onOpenChange={setShowDirectionSelector}
                 value={sort.desc ? "desc" : "asc"}
-                onValueChange={(value: SortDirection) =>
-                  onSortUpdate(sort.id, { desc: value === "desc" })
-                }
+                onValueChange={(value) => {
+                  if (value === "asc" || value === "desc") {
+                    onSortUpdate(sort.id, { desc: value === "desc" });
+                  }
+                }}
               >
                 <SelectTrigger
                   aria-controls={directionListboxId}
@@ -354,6 +360,6 @@ function DataTableSortItem({
                 onClick={() => onSortRemove(sort.id)}
               >
                 <Trash2 />
-              </Button><SortableItemHandle render={<Button variant="outline" size="icon" className="size-8 shrink-0 rounded" />}><GripVertical /></SortableItemHandle></SortableItem>
+              </Button><SortableItemHandle asChild><Button variant="outline" size="icon" className="size-8 shrink-0 rounded"><GripVertical /></Button></SortableItemHandle></div></SortableItem>
   );
 }

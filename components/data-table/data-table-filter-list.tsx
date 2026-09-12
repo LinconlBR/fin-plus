@@ -255,7 +255,9 @@ export function DataTableFilterList<TData>({
             </p>
           </div>
           {filters.length > 0 ? (
-            <SortableContent render={<div role="list" className="flex max-h-[300px] flex-col gap-2 overflow-y-auto p-1" />}>{filters.map((filter, index) => (
+            <SortableContent>
+              <div role="list" className="flex max-h-[300px] flex-col gap-2 overflow-y-auto p-1">
+                {filters.map((filter, index) => (
                                         <DataTableFilterItem<TData>
                                           key={filter.filterId}
                                           filter={filter}
@@ -267,7 +269,9 @@ export function DataTableFilterList<TData>({
                                           onFilterUpdate={onFilterUpdate}
                                           onFilterRemove={onFilterRemove}
                                         />
-                                      ))}</SortableContent>
+                                      ))}
+              </div>
+            </SortableContent>
           ) : null}
           <div className="flex w-full items-center gap-2">
             <Button
@@ -371,13 +375,15 @@ function DataTableFilterItem<TData>({
   if (!column) return null;
 
   return (
-    <SortableItem value={filter.filterId} render={<div role="listitem" id={filterItemId} tabIndex={-1} className="flex items-center gap-2" onKeyDown={onItemKeyDown} />}><div className="min-w-[72px] text-center">
+    <SortableItem value={filter.filterId} asChild><div role="listitem" id={filterItemId} tabIndex={-1} className="flex items-center gap-2" onKeyDown={onItemKeyDown}><div className="min-w-[72px] text-center">
                 {index === 0 ? (
                     <span className="text-muted-foreground text-sm">Onde</span>
                 ) : index === 1 ? (
                   <Select
                     value={joinOperator}
-                    onValueChange={(value: JoinOperator) => setJoinOperator(value)}
+                    onValueChange={(value) => {
+                      if (value) setJoinOperator(value);
+                    }}
                   >
                     <SelectTrigger
                       aria-label="Selecionar operador de combinação"
@@ -388,7 +394,6 @@ function DataTableFilterItem<TData>({
                     </SelectTrigger>
                     <SelectContent
                       id={joinOperatorListboxId}
-                      position="popper"
                       className="min-w-(--radix-select-trigger-width) lowercase"
                     >
                       <SelectGroup>
@@ -456,15 +461,16 @@ function DataTableFilterItem<TData>({
                 open={showOperatorSelector}
                 onOpenChange={setShowOperatorSelector}
                 value={filter.operator}
-                onValueChange={(value: FilterOperator) =>
+                onValueChange={(value) => {
+                  if (!value) return;
                   onFilterUpdate(filter.filterId, {
                     operator: value,
                     value:
                       value === "isEmpty" || value === "isNotEmpty"
                         ? ""
                         : filter.value,
-                  })
-                }
+                  });
+                }}
               >
                 <SelectTrigger
                   aria-controls={operatorListboxId}
@@ -505,7 +511,7 @@ function DataTableFilterItem<TData>({
                 onClick={() => onFilterRemove(filter.filterId)}
               >
                 <Trash2 />
-              </Button><SortableItemHandle render={<Button variant="outline" size="icon" className="size-8 rounded" />}><GripVertical /></SortableItemHandle></SortableItem>
+              </Button><SortableItemHandle asChild><Button variant="outline" size="icon" className="size-8 rounded"><GripVertical /></Button></SortableItemHandle></div></SortableItem>
   );
 }
 
@@ -594,12 +600,10 @@ function onFilterInputRender<TData>({
         <Select
           open={showValueSelector}
           onOpenChange={setShowValueSelector}
-          value={filter.value}
-          onValueChange={(value) =>
-            onFilterUpdate(filter.filterId, {
-              value,
-            })
-          }
+          value={typeof filter.value === "string" ? filter.value : undefined}
+          onValueChange={(value) => {
+            if (value) onFilterUpdate(filter.filterId, { value });
+          }}
         >
           <SelectTrigger
             id={inputId}
