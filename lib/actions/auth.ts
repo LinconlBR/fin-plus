@@ -41,12 +41,6 @@ export async function login( formData: FormData) {
   if (error) {
     return { error: error.message }
   }
-
-  // redirect() não é um return normal: por baixo dos panos ele lança uma exceção
-  // especial que o Next.js intercepta para navegar o usuário. Por isso qualquer
-  // código escrito DEPOIS dessa linha nunca executaria — ele precisa vir depois do
-  // `if (error)`, fora dele, pra só rodar quando o login realmente deu certo.
-
 }
 
 export async function signup(formData: FormData) {
@@ -92,10 +86,6 @@ export async function signup(formData: FormData) {
   if (!data.user?.identities?.length) {
     return { error: "Este e-mail já está cadastrado." }
   }
-
-  // Redireciona pro login (não pro dashboard) porque o Supabase exige confirmação de
-  // e-mail antes da sessão ser considerada válida — o usuário ainda não está
-  // "logado de verdade" só por ter se cadastrado.
 
 }
 

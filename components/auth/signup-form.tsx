@@ -3,7 +3,7 @@
 import { cn } from "@/lib/utils"
 import Image from "next/image"
 import Link from "next/link"
-import { redirect } from "next/navigation"
+import { useRouter } from "next/navigation"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card" 
@@ -37,7 +37,8 @@ export function SignupForm({
   ...props
 }: React.ComponentProps<"div">) {
 
-  
+  const router = useRouter()
+
   const mutation = useMutation({
     // mutationFn é a função que vai ser chamada quando o formulário for enviado. 
     // Aqui estamos chamando a Server Action signup, que é responsável por criar a conta do usuário no 
@@ -55,7 +56,8 @@ export function SignupForm({
     onSuccess: () => {  
       // Aqui você pode redirecionar o usuário para a página de login, por exemplo.
       // Repare que o redirect() do Next.js é uma função que lança uma exceção especial que o Next.js intercepta para navegar o usuário. Por isso qualquer código escrito DEPOIS dessa linha nunca executaria — ele precisa vir depois do `if (error)`, fora dele, pra só rodar quando o login realmente deu certo.
-      redirect("/auth/login") 
+      
+      router.push("/auth/login") 
     },
   })
   // useForm é o hook do TanStack Form que cria o estado do formulário. Ele recebe um objeto de configuração com os valores iniciais, a validação e o que fazer quando o formulário é enviado.

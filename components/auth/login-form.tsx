@@ -3,7 +3,7 @@
 import { cn } from "@/lib/utils"
 import Image from "next/image"
 import Link from "next/link"
-import { redirect } from "next/navigation"
+import { useRouter } from "next/navigation"
 
 import { Button } from "@/components/ui/button" 
 import { Card, CardContent } from "@/components/ui/card"
@@ -80,7 +80,7 @@ export function LoginForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
-  
+  const router = useRouter()  
   const mutation = useMutation({
       mutationFn: async (formData: FormData) => {
         const result = await login(formData)
@@ -92,7 +92,7 @@ export function LoginForm({
       },
       // onSuccess é o que acontece quando a mutation é bem-sucedida. Aqui você pode redirecionar o usuário para outra página, mostrar uma mensagem de sucesso, etc.
       onSuccess: () => {  
-        redirect("/dashboard") 
+        router.push("/dashboard")
       },
     })
 
