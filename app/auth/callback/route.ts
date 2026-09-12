@@ -2,26 +2,22 @@
 
 import { NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
-async function GET(request: Request) {
+
+export async function GET(request: Request) {
   const url = new URL(request.url)
   const code = url.searchParams.get("code")
-  const state = url.searchParams.get("state")
-
-    if (state !== process.env.NEXT_PUBLIC_SUPABASE_STATE) {
-        return NextResponse.redirect("/auth/login?error=Estado inválido")
-    }
 
     if (code ) {
     const supabase = await createClient()
-    const { data, error } = await supabase.auth.exchangeCodeForSession(code)
-
+    const {  error } = await supabase.auth.exchangeCodeForSession(code)
+    
     if (error) {
-    return NextResponse.redirect("/auth/login?error=Erro ao trocar código por sessão")
+    return NextResponse.redirect("/auth/login?error=Erro ao trocar código por sessão") + `&error_description=${encodeURIComponent(error.message)}`
     }
 
     // Redireciona para o dashboard após a autenticação bem-sucedida
     return NextResponse.redirect("/dashboard")
     }
 
-    return NextResponse.redirect("/auth/login?error=Callback de autenticação falhou")
+    return NextResponse.redirect("/auth/login?error=Callback de autenticação falhou") + `&error_description=${encodeURIComponent("Código de autenticação ausente na resposta")}`
 }
