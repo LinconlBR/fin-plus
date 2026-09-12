@@ -63,9 +63,10 @@ import { formatDate } from "@/lib/format";
 import { generateId } from "@/lib/id";
 import { getFiltersStateParser } from "@/lib/parsers";
 import { cn } from "@/lib/utils";
+
 import type {
   ExtendedColumnFilter,
-  FilterOperator,
+  // FilterOperator,
   JoinOperator,
 } from "@/types/data-table";
 
@@ -227,7 +228,7 @@ export function DataTableFilterList<TData>({
                           {filters.length > 0 && (
                             <Badge
                               variant="secondary"
-                              className="h-[18.24px] rounded-[3.2px] px-[5.12px] font-mono font-normal text-[10.4px]"
+                              className="h-[18.24px] rounded-md px-[5.12px] font-mono font-normal text-[10.4px]"
                             >
                               {filters.length}
                             </Badge>
@@ -235,7 +236,7 @@ export function DataTableFilterList<TData>({
         <PopoverContent
           aria-describedby={descriptionId}
           aria-labelledby={labelId}
-          className="flex w-full max-w-(--radix-popover-content-available-width) flex-col gap-3.5 p-4 sm:min-w-[380px]"
+          className="flex w-full max-w-(--radix-popover-content-available-width) flex-col gap-3.5 p-4 sm:min-w-95"
           {...props}
         >
           <div className="flex flex-col gap-1">
@@ -256,7 +257,7 @@ export function DataTableFilterList<TData>({
           </div>
           {filters.length > 0 ? (
             <SortableContent>
-              <div role="list" className="flex max-h-[300px] flex-col gap-2 overflow-y-auto p-1">
+              <div role="list" className="flex max-h-75 flex-col gap-2 overflow-y-auto p-1">
                 {filters.map((filter, index) => (
                                         <DataTableFilterItem<TData>
                                           key={filter.filterId}
@@ -295,7 +296,7 @@ export function DataTableFilterList<TData>({
       </Popover>
       <SortableOverlay>
         <div className="flex items-center gap-2">
-          <div className="h-8 min-w-[72px] rounded-sm bg-primary/10" />
+          <div className="h-8 min-w-18 rounded-sm bg-primary/10" />
           <div className="h-8 w-32 rounded-sm bg-primary/10" />
           <div className="h-8 w-32 rounded-sm bg-primary/10" />
           <div className="h-8 min-w-36 flex-1 rounded-sm bg-primary/10" />
@@ -375,7 +376,7 @@ function DataTableFilterItem<TData>({
   if (!column) return null;
 
   return (
-    <SortableItem value={filter.filterId} asChild><div role="listitem" id={filterItemId} tabIndex={-1} className="flex items-center gap-2" onKeyDown={onItemKeyDown}><div className="min-w-[72px] text-center">
+    <SortableItem value={filter.filterId} asChild><div role="listitem" id={filterItemId} tabIndex={-1} className="flex items-center gap-2" onKeyDown={onItemKeyDown}><div className="min-w-18 text-center">
                 {index === 0 ? (
                     <span className="text-muted-foreground text-sm">Onde</span>
                 ) : index === 1 ? (
@@ -655,7 +656,7 @@ function onFilterInputRender<TData>({
                                 `Select option${multiple ? "s" : ""}...`
                               }
                             /></FacetedTrigger>
-          <FacetedContent id={inputListboxId} className="w-[200px]">
+          <FacetedContent id={inputListboxId} className="w-50">
             <FacetedInput
               aria-label={`Search ${columnMeta?.label} options`}
               placeholder={columnMeta?.placeholder ?? "Search options..."}

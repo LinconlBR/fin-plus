@@ -1,6 +1,6 @@
 "use client";
 
-import type { ColumnSort, SortDirection, Table } from "@tanstack/react-table";
+import type { ColumnSort, Table } from "@tanstack/react-table";
 import {
   ArrowDownUp,
   ChevronsUpDown,
@@ -173,7 +173,7 @@ export function DataTableSortList<TData>({
                           {sorting.length > 0 && (
                             <Badge
                               variant="secondary"
-                              className="h-[18.24px] rounded-[3.2px] px-[5.12px] font-mono font-normal text-[10.4px]"
+                              className="h-[18.24px] rounded-md px-[5.12px] font-mono font-normal text-[10.4px]"
                             >
                               {sorting.length}
                             </Badge>
@@ -182,7 +182,7 @@ export function DataTableSortList<TData>({
           aria-labelledby={labelId}
           aria-describedby={descriptionId}
           className={cn(
-            "flex w-full max-w-(--radix-popover-content-available-width) flex-col gap-3.5 p-4 sm:min-w-[380px]",
+            "flex w-full max-w-(--radix-popover-content-available-width) flex-col gap-3.5 p-4 sm:min-w-95",
             className,
           )}
           {...props}
@@ -205,7 +205,7 @@ export function DataTableSortList<TData>({
           </div>
           {sorting.length > 0 && (
             <SortableContent>
-              <div role="list" className="flex max-h-[300px] flex-col gap-2 overflow-y-auto p-1">
+              <div role="list" className="flex max-h-75 flex-col gap-2 overflow-y-auto p-1">
                 {sorting.map((sort) => (
                                         <DataTableSortItem
                                           key={sort.id}
@@ -243,7 +243,7 @@ export function DataTableSortList<TData>({
       </Popover>
       <SortableOverlay>
         <div className="flex items-center gap-2">
-          <div className="h-8 w-[180px] rounded-sm bg-primary/10" />
+          <div className="h-8 w-45 rounded-sm bg-primary/10" />
           <div className="h-8 w-24 rounded-sm bg-primary/10" />
           <div className="size-8 shrink-0 rounded-sm bg-primary/10" />
           <div className="size-8 shrink-0 rounded-sm bg-primary/10" />
