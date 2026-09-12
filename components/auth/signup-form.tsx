@@ -3,6 +3,7 @@
 import { cn } from "@/lib/utils"
 import Image from "next/image"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card" 
@@ -12,24 +13,91 @@ import {
   FieldGroup,
   FieldLabel,
   FieldSeparator,
+  FieldError,
 } from "@/components/ui/field"
+
 import { Input } from "@/components/ui/input"
-import { signup, authState } from "@/lib/actions/auth"
-import { useActionState } from "react"
-import SubmitButton from "./submit-button"
+
+
+// Aqui estamos importando a Server Action signup, que é responsável por criar a conta do usuário no banco de dados.
+import { signup } from "@/lib/actions/auth"
+// useForm é um hook do TanStack Form que permite gerenciar o estado de um formulário de forma declarativa. Ele fornece métodos para lidar com validação, envio e estado dos campos do formulário.
+import { useForm } from "@tanstack/react-form"
+// useMutation é um hook do React Query que permite gerenciar o estado de uma operação assíncrona, como uma requisição HTTP. Ele fornece informações sobre o estado da operação (pendente, sucesso, erro) e permite executar funções quando a operação é concluída com sucesso ou falha.
+import { useMutation } from "@tanstack/react-query"
+// signupSchema é um schema Zod que define a validação dos campos do formulário de cadastro. Ele garante que os dados enviados para a Server Action estejam no formato correto e atendam aos requisitos de validação.
+import { signupSchema } from "@/lib/schema/signupSchema"
+
+
+
 
 
 export function SignupForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
-  const [state, formAction] = useActionState<authState, FormData>(signup, { error: null })
+
+  const router = useRouter()
+
+  const mutation = useMutation({
+    // mutationFn é a função que vai ser chamada quando o formulário for enviado. 
+    // Aqui estamos chamando a Server Action signup, que é responsável por criar a conta do usuário no 
+    // banco de dados.
+    mutationFn: async (formData: FormData) => {
+      const result = await signup(formData)
+        // Se a Server Action retornar um erro, lançamos uma exceção para que o React Query saiba que a mutation falhou. Isso vai disparar o onError e permitir que você trate o erro de forma adequada.
+          if (result?.error) {
+        throw new Error(result.error)
+      }
+
+      return result
+    },
+    // onSuccess é o que acontece quando a mutation é bem-sucedida. Aqui você pode redirecionar o usuário para outra página, mostrar uma mensagem de sucesso, etc.
+    onSuccess: () => {  
+      // Aqui você pode redirecionar o usuário para a página de login, por exemplo.
+      // Repare que o redirect() do Next.js é uma função que lança uma exceção especial que o Next.js intercepta para navegar o usuário. Por isso qualquer código escrito DEPOIS dessa linha nunca executaria — ele precisa vir depois do `if (error)`, fora dele, pra só rodar quando o login realmente deu certo.
+      
+      router.push("/auth/login") 
+    },
+  })
+  // useForm é o hook do TanStack Form que cria o estado do formulário. Ele recebe um objeto de configuração com os valores iniciais, a validação e o que fazer quando o formulário é enviado.
+  const form = useForm({
+    defaultValues: {
+          email: "",
+          password: "",
+          name: "",
+          confirm_password: "",
+      },
+    
+  
+    // validators é onde você define a validação do formulário. Aqui estamos usando o signupSchema que criamos com Zod.
+    validators: {
+      onSubmit: signupSchema,
+    },
+    onSubmit: async ({ value }) => {
+      // pega os valores do formulário e monta o FormData que a Server Action espera. 
+      //Repare que o nome dos campos no FormData precisa bater com os nomes que a Server Action espera.
+      const formData = new FormData()
+      formData.set("email", value.email)
+      formData.set("password", value.password)
+      formData.set("name", value.name)
+      formData.set("confirm_password", value.confirm_password)
+
+      await mutation.mutateAsync(formData)
+    },
+  })
+
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card className="overflow-hidden p-0">
         <CardContent className="grid p-0 md:grid-cols-2">
-          <form action={formAction}  className="p-6 md:p-8">
-            
+
+          <form className="flex flex-1 flex-col gap-4 p-6 md:p-10"
+            onSubmit={(e) => {
+              e.preventDefault()
+              form.handleSubmit()
+            }}
+          >
             <FieldGroup>
               <div className="flex flex-col items-center gap-2 text-center">
                 <h1 className="text-2xl font-bold">Crie sua conta Fin+</h1>
@@ -37,47 +105,128 @@ export function SignupForm({
                   Comece a organizar seu dinheiro de um jeito simples e consciente
                 </p>
               </div>
-              <Field>
-                <FieldLabel htmlFor="name">Full Name</FieldLabel>
-                <Input name="name" id="name" type="text" placeholder="Francisgleison Filho" required />
-              </Field>
-              <Field>
-                <FieldLabel htmlFor="email">E-mail</FieldLabel>
-                <Input
+               <form.Field
+                  name="name"
+                >
+                  {(field) => {
+                    const isInvalid =
+                      field.state.meta.isTouched && !field.state.meta.isValid
+                    return (
+                      <Field data-invalid={isInvalid}>
+                        <FieldLabel htmlFor={field.name}>Nome Completo</FieldLabel>
+                        <Input
+                          id={field.name}
+                          name={field.name}
+                          value={field.state.value}
+                          onBlur={field.handleBlur}
+                          onChange={(e) => field.handleChange(e.target.value)}
+                          aria-invalid={isInvalid}
+                          placeholder="Ex: Francisgleison Filho"
+                        />
+                        {isInvalid && (
+                          <FieldError errors={field.state.meta.errors} />
+                        )}
+                      </Field>
+                    )
+                  }}
+                </form.Field>
+              <form.Field
                   name="email"
-                  id="email"
-                  type="email"
-                  placeholder="example@domain.com"
-                  required
-                />
-                <FieldDescription>
-                  Usaremos seu e-mail para acessar sua conta e enviar avisos importantes.
-                </FieldDescription>
-              </Field>
+                >
+                  {(field) => {
+                    const isInvalid =
+                      field.state.meta.isTouched && !field.state.meta.isValid
+                    return (
+                      <Field data-invalid={isInvalid}>
+                        <FieldLabel htmlFor={field.name}>E-mail</FieldLabel>
+                        <Input
+                          type="email"
+                          id={field.name}
+                          name={field.name}
+                          value={field.state.value}
+                          onBlur={field.handleBlur}
+                          onChange={(e) => field.handleChange(e.target.value)}
+                          aria-invalid={isInvalid}
+                          placeholder="Ex: example@domain.com"
+                        />
+                        {isInvalid && (
+                          <FieldError errors={field.state.meta.errors} />
+                        )}
+                      </Field>
+                    )
+                  }}
+                </form.Field>
+                <form.Field
+                  name="password"
+                >
+                  {(field) => {
+                    const isInvalid =
+                      field.state.meta.isTouched && !field.state.meta.isValid
+                    return (
+                      <Field data-invalid={isInvalid}>
+                        <FieldLabel htmlFor={field.name}>Senha</FieldLabel>
+                        <Input
+                          id={field.name}
+                          name={field.name}
+                          type="password"
+                          value={field.state.value}
+                          onBlur={field.handleBlur}
+                          onChange={(e) => field.handleChange(e.target.value)}
+                          aria-invalid={isInvalid}
+                          placeholder="Ex: ********"
+                        />
+                        {isInvalid && (
+                          <FieldError errors={field.state.meta.errors} />
+                        )}
+                      </Field>
+                    )
+                  }}
+                </form.Field>
+                <form.Field
+                  name="confirm_password" 
+                >
+                  {(field) => {
+                    const isInvalid =
+                      field.state.meta.isTouched && !field.state.meta.isValid
+                    return (
+                      <Field data-invalid={isInvalid}>
+                        <FieldLabel htmlFor={field.name}>Confirme sua senha</FieldLabel>  
+
+                        <Input
+                          id={field.name}
+                          name={field.name}
+                          type="password"
+                          value={field.state.value}
+                          onBlur={field.handleBlur} 
+
+                          onChange={(e) => field.handleChange(e.target.value)}
+                          aria-invalid={isInvalid}
+                          placeholder="Ex: ********"
+                        />
+                        {isInvalid && (
+                          <FieldError errors={field.state.meta.errors} />
+                        )}
+                      </Field>
+                    )
+                  }}
+              </form.Field>
               <Field>
-                <Field className="grid grid-cols-2 gap-4">
-                  <Field>
-                    <FieldLabel htmlFor="password">Senha</FieldLabel>
-                    <Input name="password" id="password" type="password" required />
-                  </Field>
-                  <Field>
-                    <FieldLabel htmlFor="confirm-password">
-                      Confirme sua senha
-                    </FieldLabel>
-                    <Input name="confirm-password" id="confirm-password" type="password" required />
-                  </Field>
-                </Field>
                 <FieldDescription>
-                  Use pelo menos 8 caracteres.
-                </FieldDescription>
-              </Field>
-              <Field>
-                <FieldDescription>
-                  {state.error && (
-                    <p className="text-sm text-destructive">{state.error}</p>
+                  {mutation.isError && (
+                    <span className="text-rose-600">
+                      {mutation.error instanceof Error
+                        ? mutation.error.message
+                        : "Ocorreu um erro ao criar a conta."}
+                    </span>
                   )}
                 </FieldDescription>
-                <SubmitButton tipo="signup" />
+                <Button
+                  type="submit"
+                  disabled={mutation.isPending}
+                  className="mt-6 w-full"
+                >
+                  {mutation.isPending ? "Criando conta..." : "Criar conta"}
+                </Button>
               </Field>
               <FieldSeparator className="*:data-[slot=field-separator-content]:bg-card">
                 Ou cadastre-se com

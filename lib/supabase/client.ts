@@ -1,3 +1,4 @@
+// Factory do cliente Supabase executado no navegador, usando as variáveis públicas da aplicação.
 import { createBrowserClient } from '@supabase/ssr'
 
  

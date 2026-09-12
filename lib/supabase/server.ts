@@ -1,3 +1,4 @@
+// Factory assíncrona do cliente Supabase no servidor, sincronizado com os cookies da requisição.
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 

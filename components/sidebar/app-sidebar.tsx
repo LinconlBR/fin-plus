@@ -3,7 +3,7 @@
 import * as React from "react"
 
 import { NavMain } from "@/components/sidebar/nav-main"
-import { NavProjects } from "@/components/sidebar/nav-projects"
+//import { NavProjects } from "@/components/sidebar/nav-projects"
 import { NavUser } from "@/components/sidebar/nav-user"
 
 import {
@@ -13,7 +13,7 @@ import {
   SidebarHeader,
   SidebarRail,
 } from "@/components/ui/sidebar"
-import {  LayoutDashboard, ArrowRightLeft, HandCoins, Goal, FrameIcon, PieChartIcon ,ChartColumn, MapIcon, BadgeSwissFranc } from "lucide-react"
+import {  LayoutDashboard, ArrowRightLeft, HandCoins, Goal  ,ChartColumn , BadgeSwissFranc, Settings, Lightbulb } from "lucide-react"
 
 // This is sample data.
 const data = {
@@ -84,7 +84,30 @@ const data = {
         },
       ],
     },
+    {
+      title: "Dicas financeiras",
+      url: "/tips",
+      icon: (
+        <Lightbulb
+        />
+      ),
+      items: [
+        
+      ],
+    },
+    {
+      title: "Configurações",
+      url: "/settings",
+      icon: (
+        <Settings
+        />
+      ),
+      items: [
+        
+      ],
+    },
   ],
+  /*
   projects: [
     {
       name: "Design Engineering",
@@ -111,6 +134,7 @@ const data = {
       ),
     },
   ],
+  */
 }
 
 export function AppSidebar({
@@ -127,12 +151,14 @@ export function AppSidebar({
             <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground">
               <BadgeSwissFranc className="h-5 w-5" />
             </span>
-            Fin<span className="relative -ml-2 -top-1 text-primary">+</span>
+            <div className="flex flex-col group-data-[collapsible=icon]:hidden">
+              <span className="truncate font-bold ">Fin <span className="text-primary">+</span></span>
+            </div>
          </div>
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
-        <NavProjects projects={data.projects} />
+        {/* <NavProjects projects={data.projects} /> */}
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={user} />

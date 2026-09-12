@@ -1,23 +1,24 @@
+// Server Actions responsáveis por autenticar, cadastrar e desconectar usuários no Supabase.
 "use server"
 
 import { createClient } from '@/lib/supabase/server'
+import { signupSchema } from '@/lib/schema/signupSchema'
 import { redirect } from 'next/navigation'
+import { loginSchema } from '../schema/loginSchema'
 
-// SERVER ACTIONS: essa diretiva "use server" no topo do arquivo diz ao Next.js que
-// TODA função exportada aqui roda exclusivamente no servidor — nunca no navegador.
-// É por isso que <form action={login}> funciona sem fetch() manual: o Next.js cria,
-// no build, um endpoint interno pra cada função e cuida do transporte de rede sozinho.
 
-export type authState = {
-  error: string | null
-}
-
-export async function login(prevState: authState, formData: FormData) {
-  // formData.get() pode retornar null se o campo não existir no form (por isso o
-  // atributo name="email" no <Input> é obrigatório — sem ele, isso aqui vira sempre
-  // null). O ?? "" garante um fallback seguro em vez de deixar passar null adiante.
-  const email = formData.get("email")?.toString() ?? ""
-  const password = formData.get("password")?.toString() ?? ""
+export async function login( formData: FormData) {
+  // Valida os dados do formulário usando o schema Zod. Se os dados forem inválidos, retorna um objeto com a mensagem de erro.
+  const parsed = loginSchema.safeParse({
+    email: formData.get("email")?.toString() ?? "",
+    password: formData.get("password")?.toString() ?? "",
+  })
+  // Se os dados forem inválidos, retorna um objeto com a mensagem de erro.
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Dados inválidos" }
+  }
+  // Se os dados forem válidos, extrai o email e a senha do objeto validado.
+  const { email, password } = parsed.data
 
   // ATENÇÃO AO AWAIT: createClient() é uma função async, ou seja, ela SEMPRE retorna
   // uma Promise, nunca o valor direto. Esquecer o `await` aqui faz `supabase` virar
@@ -34,21 +35,24 @@ export async function login(prevState: authState, formData: FormData) {
   if (error) {
     return { error: error.message }
   }
-
-  // redirect() não é um return normal: por baixo dos panos ele lança uma exceção
-  // especial que o Next.js intercepta para navegar o usuário. Por isso qualquer
-  // código escrito DEPOIS dessa linha nunca executaria — ele precisa vir depois do
-  // `if (error)`, fora dele, pra só rodar quando o login realmente deu certo.
-  redirect("/dashboard")
 }
 
-export async function signup(prevState: authState,formData: FormData) {
-  const name = formData.get("name")?.toString() ?? ""
-  const email = formData.get("email")?.toString() ?? ""
-  const password = formData.get("password")?.toString() ?? ""
+export async function signup(formData: FormData) {
+  const parsed = signupSchema.safeParse({
+    name: formData.get("name")?.toString() ?? "",
+    email: formData.get("email")?.toString() ?? "",
+    password: formData.get("password")?.toString() ?? "",
+    confirm_password: formData.get("confirm_password")?.toString() ?? "",
+  })
+
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Dados inválidos" }
+  }
+
+  const { name, email, password } = parsed.data
   const supabase = await createClient()
 
-  const { error } = await supabase.auth.signUp({
+  const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
@@ -64,11 +68,54 @@ export async function signup(prevState: authState,formData: FormData) {
   })
 
   if (error) {
+    if (error.status === 429 || error.message.toLowerCase().includes("rate limit")) {
+      return {
+        error: "Limite de envio de e-mails atingido. Aguarde alguns minutos e tente novamente.",
+      }
+    }
+
     return { error: error.message }
   }
 
-  // Redireciona pro login (não pro dashboard) porque o Supabase exige confirmação de
-  // e-mail antes da sessão ser considerada válida — o usuário ainda não está
-  // "logado de verdade" só por ter se cadastrado.
+  if (!data.user?.identities?.length) {
+    return { error: "Este e-mail já está cadastrado." }
+  }
+
+}
+
+export async function signOut() {
+  const supabase = await createClient()
+  await supabase.auth.signOut()
   redirect("/auth/login")
+}
+
+
+
+export async function signInWithGoogle() {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo:  getURL(),
+    },
+  })
+
+  if (error) {
+    redirect("/auth/login?error=" + encodeURIComponent(error.message))
+  }
+
+  redirect(data.url)
+}
+
+const getURL = () => {
+  let url =
+    process?.env?.NEXT_PUBLIC_SITE_URL ?? // Set this to your site URL in production env.
+    //process?.env?.NEXT_PUBLIC_VERCEL_URL ?? // Automatically set by Vercel.
+    'http://localhost:3000/'
+  // Make sure to include `https://` when not localhost.
+  url = url.startsWith('http') ? url : `https://${url}`
+  // Make sure to include a trailing `/`.
+  url = url.endsWith('/') ? url : `${url}/`
+  return url
 }

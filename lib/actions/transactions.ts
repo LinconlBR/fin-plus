@@ -1,3 +1,4 @@
+// Server Action que valida a sessão e cria novas transações financeiras no Supabase.
 "use server"
 
 import { createClient } from "@/lib/supabase/server"
