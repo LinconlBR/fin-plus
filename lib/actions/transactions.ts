@@ -10,7 +10,7 @@ import { transactionSchema } from "@/lib/schema/transactions"
 export async function createTransaction(formData: FormData) {     
     // 1. validar os dados do formData com o Zod
     const parsed = transactionSchema.safeParse({
-        amount: formData.get("amount"),
+        amount: Number(formData.get("amount")),
         type: formData.get("type"),
         description: formData.get("description"),
         date: formData.get("date"),
@@ -18,8 +18,8 @@ export async function createTransaction(formData: FormData) {
     })
 
     if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Dados inválidos" }
-  }
+        throw new Error(parsed.error.issues[0]?.message ?? "Dados inválidos")
+    }
 
     // 2. criar o client do Supabase
     const supabase = await createClient();
