@@ -12,7 +12,7 @@ import { ArrowDownLeft, ArrowUpRight, CalendarDays, Tags, Text } from "lucide-re
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
 
 import { useTransactions, type Transaction } from "@/hooks/use-transactions";
-import { NewTransactionDialog } from "@/components/transactions/new-transaction-dialog";
+import { TransactionDialog } from "@/components/transactions/transaction-dialog";
 
 // Opções de categoria e tipo para os filtros
 const categoryOptions = [
@@ -150,7 +150,7 @@ export default function Transactions() {
         <h1 className="text-2xl font-bold  ">
           Transações
         </h1>
-        <NewTransactionDialog />
+        <TransactionDialog />
       </div>
       <TransactionsContent />
       

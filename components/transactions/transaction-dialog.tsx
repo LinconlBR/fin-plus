@@ -33,7 +33,7 @@ import { transactionSchema } from "@/lib/schema/transactions"
 import { createTransaction } from "@/lib/actions/transactions"
 import { useCategories } from "@/hooks/use-categories"
 
-export function NewTransactionDialog() {
+export function TransactionDialog(transaction?: Transaction) {
   const [open, setOpen] = useState(false)
 
   // Precisamos das categorias reais pra popular o <Select> — mesmo hook que
