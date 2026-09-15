@@ -278,7 +278,9 @@ export function NewTransactionDialog() {
               }}
             </form.Field>
           </FieldGroup>
-
+            {mutation.isError && (
+              <FieldError>{mutation.error.message}</FieldError>
+            )}
           <Button
             type="submit"
             disabled={mutation.isPending}
