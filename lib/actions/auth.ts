@@ -108,6 +108,23 @@ export async function signInWithGoogle() {
   redirect(data.url)
 }
 
+export async function signInWithFacebook() {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: "facebook",
+    options: {
+      redirectTo: `${getURL()}auth/callback`,
+    },
+  })
+
+  if (error) {
+    redirect("/auth/login?error=" + encodeURIComponent(error.message))
+  }
+
+  redirect(data.url)
+}
+
 const getURL = () => {
   let url =
     process?.env?.NEXT_PUBLIC_SITE_URL ?? // Set this to your site URL in production env.
@@ -119,3 +136,4 @@ const getURL = () => {
   url = url.endsWith('/') ? url : `${url}/`
   return url
 }
+
