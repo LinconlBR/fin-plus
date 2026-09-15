@@ -104,7 +104,9 @@ export async function updateTransaction(id: string, formData: FormData) {
         date,
         category_id,
         user_id: user?.id,
-    }).eq("id", id) 
+    })
+    .eq("id", id)
+    .eq("user_id", user.id)
 
     // 4. se der erro, decida o que fazer
     if (error) {
