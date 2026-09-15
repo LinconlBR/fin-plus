@@ -225,7 +225,12 @@ export function NewTransactionDialog() {
                         id={field.name}
                         aria-invalid={isInvalid}
                       >
-                        <SelectValue />
+                        {// Aqui a gente usa SelectValue com children, pra poder traduzir os valores "income"/"expense" pra português na UI.
+                        // Se não fizer isso, o SelectValue só mostraria "income" ou "expense" mesmo.
+                        }
+                        <SelectValue>
+                            {(value: string) => (value === "income" ? "Receita" : "Despesa")}
+                        </SelectValue>
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="expense">Despesa</SelectItem>
@@ -260,7 +265,12 @@ export function NewTransactionDialog() {
                         id={field.name}
                         aria-invalid={isInvalid}
                       >
-                        <SelectValue placeholder="Selecione uma categoria" />
+                        {// Aqui a gente usa SelectValue com placeholder, pra mostrar "Selecione uma categoria" quando não tiver valor selecionado.
+                        // Se não fizer isso, o SelectValue só mostraria o id da categoria mesmo.
+                        }
+                        <SelectValue placeholder="Selecione uma categoria">
+                          {(value: string) => categories?.find((c) => c.id === value)?.name}
+                        </SelectValue>
                       </SelectTrigger>
                       <SelectContent>
                         {categories?.map((category) => (
