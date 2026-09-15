@@ -1,3 +1,9 @@
+// Este arquivo é o "proxy" do Next.js 16, que substitui o antigo "middleware.ts" do Next.js 13.
+// Ele é responsável por atualizar a sessão do usuário em cada request, garantindo que o estado de autenticação esteja correto. 
+// A função `updateSession` é chamada para verificar e atualizar a sessão do usuário com base no request recebido.
+// O matcher no final do arquivo garante que o proxy não seja executado em requests de arquivos estáticos, como imagens ou favicon, 
+// evitando processamento desnecessário e melhorando a performance.
+
 import { updateSession } from "@/lib/supabase/middleware";
 import type { NextRequest } from "next/server";
 
