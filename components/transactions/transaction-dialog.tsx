@@ -30,11 +30,16 @@ import {
 
 
 import { transactionSchema } from "@/lib/schema/transactions"
-import { createTransaction } from "@/lib/actions/transactions"
+import { createTransaction, updateTransaction} from "@/lib/actions/transactions"
 import { useCategories } from "@/hooks/use-categories"
 
-export function TransactionDialog(transaction?: Transaction) {
+import type { Transaction } from "@/hooks/use-transactions"
+
+export function TransactionDialog({ transaction }: { transaction?: Transaction }) {
   const [open, setOpen] = useState(false)
+  
+  
+  
 
   // Precisamos das categorias reais pra popular o <Select> — mesmo hook que
   // você já escreveu antes.
@@ -54,9 +59,13 @@ export function TransactionDialog(transaction?: Transaction) {
     // recebe um FormData — vamos montar esse FormData a partir dos valores
     // do formulário, porque é isso que sua Server Action createTransaction
     // já espera receber (mesmo padrão que login/signup usam).
-    mutationFn: async (formData: FormData) => {
-      await createTransaction(formData)
-    },
+        mutationFn: async (formData: FormData) => {
+          if (transaction) {
+            await updateTransaction(transaction.id, formData)
+          } else {
+            await createTransaction(formData)
+          }
+        },
     // onSuccess roda automaticamente quando mutationFn termina sem erro.
     onSuccess: () => {
       // invalidateQueries diz ao TanStack Query: "os dados dessa queryKey
@@ -71,11 +80,11 @@ export function TransactionDialog(transaction?: Transaction) {
 
   const form = useForm({
     defaultValues: {
-      description: "",
-      amount: 0,
-      type: "expense" as "income" | "expense",
-      category_id: "",
-      date: new Date().toISOString().split("T")[0],
+      description: transaction?.title ?? "",
+      amount: transaction?.amount ?? 0,
+      type: transaction?.type ?? ("expense" as "income" | "expense"),
+      category_id: transaction?.category_id ?? "",
+      date: transaction?.createdAt ?? new Date().toISOString().split("T")[0],
     },
     // TanStack Form valida usando o schema Zod diretamente — mesmo schema que
     // você já escreveu, sem precisar de nenhum "resolver" intermediário
@@ -106,7 +115,7 @@ export function TransactionDialog(transaction?: Transaction) {
       <DialogTrigger render={<Button>+ Nova transação</Button>} />
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Nova transação</DialogTitle>
+            <DialogTitle>{transaction ? "Editar transação" : "Nova transação"}</DialogTitle>
         </DialogHeader>
 
         <form
@@ -296,7 +305,12 @@ export function TransactionDialog(transaction?: Transaction) {
             disabled={mutation.isPending}
             className="mt-6 w-full"
           >
-            {mutation.isPending ? "Salvando..." : "Salvar transação"}
+            {mutation.isPending
+              ? "Salvando..."
+              : transaction
+              ? "Salvar alterações"
+              : "Salvar transação"
+            }
           </Button>
         </form>
       </DialogContent>
