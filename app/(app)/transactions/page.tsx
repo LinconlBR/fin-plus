@@ -93,7 +93,7 @@ const columns: ColumnDef<Transaction>[] = [
       const type = row.getValue("type") as Transaction["type"];
       const amount = row.getValue("amount") as number;
       return (
-        <div className="flex items-center justify-end gap-2 font-medium">
+        <div className="flex items-center gap-2 font-medium">
           {type === "income" ? <ArrowUpRight className="size-4 text-emerald-600" /> : <ArrowDownLeft className="size-4 text-rose-600" />}
           <span className={type === "income" ? "text-emerald-600" : "text-rose-600"}>
             {type === "income" ? "+" : "-"}{currencyFormatter.format(amount)}
@@ -107,6 +107,7 @@ const columns: ColumnDef<Transaction>[] = [
     {
     id: "actions",
     cell: ({ row }) => (
+      <div className="flex items-center justify-end gap-2 font-medium">
       <TransactionDialog
         transaction={row.original}
         trigger={
@@ -115,6 +116,7 @@ const columns: ColumnDef<Transaction>[] = [
           </Button>
         }
       />
+      </div>
     ),
   },
 ];
@@ -167,7 +169,7 @@ export default function Transactions() {
         <TransactionDialog />
       </div>
       <div className="space-y-6 p-6 md:p-8">
-          <TransactionsContent />
+          <TransactionsContent  />
       </div>
     </NuqsAdapter>
   );

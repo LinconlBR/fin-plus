@@ -117,3 +117,23 @@ export async function updateTransaction(id: string, formData: FormData) {
     revalidatePath("/transactions")
 
 }
+
+// Server Action que valida a sessão e deleta transações financeiras no Supabase.
+export async function deleteTransaction(id: string) {
+  const supabase = await createClient()
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    throw new Error("Usuário não autenticado")
+  }
+
+  const { error } = await supabase
+    .from("transactions")
+    .delete()
+    .eq("id", id)
+    .eq("user_id", user.id)
+
+  if (error) {
+    throw new Error(error.message)
+  }
+}
