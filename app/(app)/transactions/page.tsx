@@ -14,6 +14,7 @@ import { DataTableColumnHeader } from "@/components/data-table/data-table-column
 
 import { useTransactions, type Transaction } from "@/hooks/use-transactions";
 import { TransactionDialog } from "@/components/transactions/transaction-dialog";
+import { DeleteTransactionButton } from "@/components/transactions/delete-transaction-button";
 
 // Opções de categoria e tipo para os filtros
 const categoryOptions = [
@@ -104,18 +105,19 @@ const columns: ColumnDef<Transaction>[] = [
     meta: { label: "Valor", variant: "number", unit: "R$" },
     enableColumnFilter: true,
   },
-    {
+  {
     id: "actions",
     cell: ({ row }) => (
-      <div className="flex items-center justify-end gap-2 font-medium">
-      <TransactionDialog
-        transaction={row.original}
-        trigger={
-          <Button variant="ghost" size="icon">
-            <Pencil className="size-4" />
-          </Button>
-        }
-      />
+      <div className="flex items-center  justify-end gap-1">
+        <TransactionDialog
+          transaction={row.original}
+          trigger={
+            <Button variant="ghost" size="icon">
+              <Pencil className="size-4" />
+            </Button>
+          }
+        />
+        <DeleteTransactionButton id={row.original.id} />
       </div>
     ),
   },
