@@ -1,6 +1,7 @@
 "use client";
 
 import { NuqsAdapter } from "nuqs/adapters/next/app";
+import { Button } from "@/components/ui/button";
 
 import { DataTable } from "@/components/data-table/data-table";
 import { DataTableAdvancedToolbar } from "@/components/data-table/data-table-advanced-toolbar";
@@ -8,11 +9,12 @@ import { DataTableFilterList } from "@/components/data-table/data-table-filter-l
 import { DataTableSortList } from "@/components/data-table/data-table-sort-list";
 import { useDataTable } from "@/hooks/use-data-table";
 import type { ColumnDef } from "@tanstack/react-table";
-import { ArrowDownLeft, ArrowUpRight, CalendarDays, Tags, Text } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, CalendarDays, Tags, Text, Pencil } from "lucide-react";
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
 
 import { useTransactions, type Transaction } from "@/hooks/use-transactions";
-import { NewTransactionDialog } from "@/components/transactions/new-transaction-dialog";
+import { TransactionDialog } from "@/components/transactions/transaction-dialog";
+import { DeleteTransactionButton } from "@/components/transactions/delete-transaction-button";
 
 // Opções de categoria e tipo para os filtros
 const categoryOptions = [
@@ -92,7 +94,7 @@ const columns: ColumnDef<Transaction>[] = [
       const type = row.getValue("type") as Transaction["type"];
       const amount = row.getValue("amount") as number;
       return (
-        <div className="flex items-center justify-end gap-2 font-medium">
+        <div className="flex items-center gap-2 font-medium">
           {type === "income" ? <ArrowUpRight className="size-4 text-emerald-600" /> : <ArrowDownLeft className="size-4 text-rose-600" />}
           <span className={type === "income" ? "text-emerald-600" : "text-rose-600"}>
             {type === "income" ? "+" : "-"}{currencyFormatter.format(amount)}
@@ -102,6 +104,22 @@ const columns: ColumnDef<Transaction>[] = [
     },
     meta: { label: "Valor", variant: "number", unit: "R$" },
     enableColumnFilter: true,
+  },
+  {
+    id: "actions",
+    cell: ({ row }) => (
+      <div className="flex items-center  justify-end gap-1">
+        <TransactionDialog
+          transaction={row.original}
+          trigger={
+            <Button variant="ghost" size="icon">
+              <Pencil className="size-4" />
+            </Button>
+          }
+        />
+        <DeleteTransactionButton id={row.original.id} />
+      </div>
+    ),
   },
 ];
 
@@ -150,10 +168,11 @@ export default function Transactions() {
         <h1 className="text-2xl font-bold  ">
           Transações
         </h1>
-        <NewTransactionDialog />
+        <TransactionDialog />
       </div>
-      <TransactionsContent />
-      
+      <div className="space-y-6 p-6 md:p-8">
+          <TransactionsContent  />
+      </div>
     </NuqsAdapter>
   );
 }

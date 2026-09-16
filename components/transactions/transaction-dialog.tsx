@@ -30,11 +30,22 @@ import {
 
 
 import { transactionSchema } from "@/lib/schema/transactions"
-import { createTransaction } from "@/lib/actions/transactions"
+import { createTransaction, updateTransaction} from "@/lib/actions/transactions"
 import { useCategories } from "@/hooks/use-categories"
 
-export function NewTransactionDialog() {
+import type { Transaction } from "@/hooks/use-transactions"
+
+export function TransactionDialog({
+  transaction,
+  trigger,
+}: {
+  transaction?: Transaction
+  trigger?: React.ReactElement
+}) {
   const [open, setOpen] = useState(false)
+  
+  
+  
 
   // Precisamos das categorias reais pra popular o <Select> — mesmo hook que
   // você já escreveu antes.
@@ -54,9 +65,13 @@ export function NewTransactionDialog() {
     // recebe um FormData — vamos montar esse FormData a partir dos valores
     // do formulário, porque é isso que sua Server Action createTransaction
     // já espera receber (mesmo padrão que login/signup usam).
-    mutationFn: async (formData: FormData) => {
-      await createTransaction(formData)
-    },
+        mutationFn: async (formData: FormData) => {
+          if (transaction) {
+            await updateTransaction(transaction.id, formData)
+          } else {
+            await createTransaction(formData)
+          }
+        },
     // onSuccess roda automaticamente quando mutationFn termina sem erro.
     onSuccess: () => {
       // invalidateQueries diz ao TanStack Query: "os dados dessa queryKey
@@ -71,11 +86,11 @@ export function NewTransactionDialog() {
 
   const form = useForm({
     defaultValues: {
-      description: "",
-      amount: 0,
-      type: "expense" as "income" | "expense",
-      category_id: "",
-      date: new Date().toISOString().split("T")[0],
+      description: transaction?.title ?? "",
+      amount: transaction?.amount ?? 0,
+      type: transaction?.type ?? ("expense" as "income" | "expense"),
+      category_id: transaction?.category_id ?? "",
+      date: transaction?.createdAt ?? new Date().toISOString().split("T")[0],
     },
     // TanStack Form valida usando o schema Zod diretamente — mesmo schema que
     // você já escreveu, sem precisar de nenhum "resolver" intermediário
@@ -103,10 +118,10 @@ export function NewTransactionDialog() {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger render={<Button>+ Nova transação</Button>} />
+      <DialogTrigger render={trigger ?? <Button>+ Nova transação</Button>} />
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Nova transação</DialogTitle>
+            <DialogTitle>{transaction ? "Editar transação" : "Nova transação"}</DialogTitle>
         </DialogHeader>
 
         <form
@@ -225,7 +240,12 @@ export function NewTransactionDialog() {
                         id={field.name}
                         aria-invalid={isInvalid}
                       >
-                        <SelectValue />
+                        {// Aqui a gente usa SelectValue com children, pra poder traduzir os valores "income"/"expense" pra português na UI.
+                        // Se não fizer isso, o SelectValue só mostraria "income" ou "expense" mesmo.
+                        }
+                        <SelectValue>
+                            {(value: string) => (value === "income" ? "Receita" : "Despesa")}
+                        </SelectValue>
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="expense">Despesa</SelectItem>
@@ -260,7 +280,12 @@ export function NewTransactionDialog() {
                         id={field.name}
                         aria-invalid={isInvalid}
                       >
-                        <SelectValue placeholder="Selecione uma categoria" />
+                        {// Aqui a gente usa SelectValue com placeholder, pra mostrar "Selecione uma categoria" quando não tiver valor selecionado.
+                        // Se não fizer isso, o SelectValue só mostraria o id da categoria mesmo.
+                        }
+                        <SelectValue placeholder="Selecione uma categoria">
+                          {(value: string) => categories?.find((c) => c.id === value)?.name}
+                        </SelectValue>
                       </SelectTrigger>
                       <SelectContent>
                         {categories?.map((category) => (
@@ -278,13 +303,20 @@ export function NewTransactionDialog() {
               }}
             </form.Field>
           </FieldGroup>
-
+            {mutation.isError && (
+              <FieldError>{mutation.error.message}</FieldError>
+            )}
           <Button
             type="submit"
             disabled={mutation.isPending}
             className="mt-6 w-full"
           >
-            {mutation.isPending ? "Salvando..." : "Salvar transação"}
+            {mutation.isPending
+              ? "Salvando..."
+              : transaction
+              ? "Salvar alterações"
+              : "Salvar transação"
+            }
           </Button>
         </form>
       </DialogContent>

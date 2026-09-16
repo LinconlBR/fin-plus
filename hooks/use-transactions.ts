@@ -17,6 +17,7 @@ type TransactionRow = {
   date: string
   type: "income" | "expense"
   amount: number
+  category_id: string | null
   categories: { name: string } | null
 }
 
@@ -27,6 +28,7 @@ export type Transaction = {
   id: string
   title: string
   category: string
+  category_id: string
   createdAt: string
   type: "income" | "expense"
   amount: number
@@ -67,6 +69,7 @@ async function fetchTransactions(): Promise<Transaction[]> {
     // row.categories pode ser null (categoria apagada, lembra da FK com "set null"
     // que configuramos lá no schema) — por isso o fallback "Sem categoria".
     category: row.categories?.name ?? "Sem categoria",
+    category_id: row.category_id ?? "",
     createdAt: row.date,
     type: row.type,
     amount: Number(row.amount), // mesmo cuidado de sempre: numeric pode vir como string
