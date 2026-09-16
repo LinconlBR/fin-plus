@@ -1,6 +1,7 @@
 "use client";
 
 import { NuqsAdapter } from "nuqs/adapters/next/app";
+import { Button } from "@/components/ui/button";
 
 import { DataTable } from "@/components/data-table/data-table";
 import { DataTableAdvancedToolbar } from "@/components/data-table/data-table-advanced-toolbar";
@@ -8,7 +9,7 @@ import { DataTableFilterList } from "@/components/data-table/data-table-filter-l
 import { DataTableSortList } from "@/components/data-table/data-table-sort-list";
 import { useDataTable } from "@/hooks/use-data-table";
 import type { ColumnDef } from "@tanstack/react-table";
-import { ArrowDownLeft, ArrowUpRight, CalendarDays, Tags, Text } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, CalendarDays, Tags, Text, Pencil } from "lucide-react";
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
 
 import { useTransactions, type Transaction } from "@/hooks/use-transactions";
@@ -103,6 +104,19 @@ const columns: ColumnDef<Transaction>[] = [
     meta: { label: "Valor", variant: "number", unit: "R$" },
     enableColumnFilter: true,
   },
+    {
+    id: "actions",
+    cell: ({ row }) => (
+      <TransactionDialog
+        transaction={row.original}
+        trigger={
+          <Button variant="ghost" size="icon">
+            <Pencil className="size-4" />
+          </Button>
+        }
+      />
+    ),
+  },
 ];
 
 
@@ -152,8 +166,9 @@ export default function Transactions() {
         </h1>
         <TransactionDialog />
       </div>
-      <TransactionsContent />
-      
+      <div className="space-y-6 p-6 md:p-8">
+          <TransactionsContent />
+      </div>
     </NuqsAdapter>
   );
 }

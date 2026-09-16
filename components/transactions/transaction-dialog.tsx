@@ -35,7 +35,13 @@ import { useCategories } from "@/hooks/use-categories"
 
 import type { Transaction } from "@/hooks/use-transactions"
 
-export function TransactionDialog({ transaction }: { transaction?: Transaction }) {
+export function TransactionDialog({
+  transaction,
+  trigger,
+}: {
+  transaction?: Transaction
+  trigger?: React.ReactElement
+}) {
   const [open, setOpen] = useState(false)
   
   
@@ -112,7 +118,7 @@ export function TransactionDialog({ transaction }: { transaction?: Transaction }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger render={<Button>+ Nova transação</Button>} />
+      <DialogTrigger render={trigger ?? <Button>+ Nova transação</Button>} />
       <DialogContent>
         <DialogHeader>
             <DialogTitle>{transaction ? "Editar transação" : "Nova transação"}</DialogTitle>
