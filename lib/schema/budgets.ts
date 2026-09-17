@@ -8,7 +8,7 @@
         period: z.enum(["weekly", "monthly"]),
         is_recurring: z.boolean(),
         start_date: z.string().min(1, "Data de início é obrigatória"),
-        end_date: z.string().nullish(),
+        end_date: z.string().optional(),
     })
     .refine((data) => data.is_recurring || !!data.end_date, {
         message: "Data final é obrigatória para orçamentos únicos",

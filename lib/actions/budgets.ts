@@ -13,7 +13,7 @@ export async function createBudget(formData: FormData) {
         period: formData.get("period"),
         is_recurring: formData.get("is_recurring") === "true",
         start_date: formData.get("start_date"),
-        end_date: formData.get("end_date"),
+        end_date: formData.get("end_date")?.toString(),
     })
 
     if (!parsed.success) {
@@ -66,7 +66,7 @@ export async function updateBudget(id: string, formData: FormData) {
         period: formData.get("period"),
         is_recurring: formData.get("is_recurring") === "true",
         start_date: formData.get("start_date"),
-        end_date: formData.get("end_date"),
+        end_date: formData.get("end_date")?.toString(),
     })
 
     if (!parsed.success) {
