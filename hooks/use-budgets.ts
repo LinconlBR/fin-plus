@@ -53,13 +53,6 @@ async function fetchBudgets(): Promise<Budget[]> {
 
 export type BudgetWithSpent = Budget & { spent: number }
 
-const range = getBudgetPeriodRange({
-  is_recurring: budget.isRecurring,
-  period: budget.period,
-  start_date: budget.startDate,
-  end_date: budget.endDate,
-})
-
 export async function fetchBudgetsWithSpent(): Promise<BudgetWithSpent[]> {
   const supabase = createClient()
   const budgets = await fetchBudgets()
@@ -71,6 +64,15 @@ export async function fetchBudgetsWithSpent(): Promise<BudgetWithSpent[]> {
     .throwOnError()
 
   return budgets.map((budget) => {
+    if (!budget.period) return { ...budget, spent: 0 }
+
+        const range = getBudgetPeriodRange({
+            is_recurring: budget.isRecurring,
+            period: budget.period,
+            start_date: budget.startDate,
+            end_date: budget.endDate,
+        })
+
     if (!range) return { ...budget, spent: 0 }
 
     const spent = (transactions ?? [])
