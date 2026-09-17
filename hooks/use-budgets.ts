@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query"
 import { createClient } from "@/lib/supabase/client"
 import { getBudgetPeriodRange } from "@/lib/budgets"
 
-type budgetRow = {
+type BudgetRow = {
   id: string
   category_id: string | null
   category: { name: string } | null
@@ -38,7 +38,7 @@ async function fetchBudgets(): Promise<Budget[]> {
         throw new Error("Failed to fetch budgets")
     }
 
-    return (data as budgetRow[]).map((row) => ({
+    return (data as BudgetRow[]).map((row) => ({
         id: row.id,
         category_id: row.category_id,
         category: row.category?.name || "",
@@ -50,20 +50,27 @@ async function fetchBudgets(): Promise<Budget[]> {
     }))
 }
 
+
 export type BudgetWithSpent = Budget & { spent: number }
 
-async function fetchBudgetsWithSpent(): Promise<BudgetWithSpent[]> {
+const range = getBudgetPeriodRange({
+  is_recurring: budget.isRecurring,
+  period: budget.period,
+  start_date: budget.startDate,
+  end_date: budget.endDate,
+})
+
+export async function fetchBudgetsWithSpent(): Promise<BudgetWithSpent[]> {
   const supabase = createClient()
   const budgets = await fetchBudgets()
 
-  const { data: transactions, error } = await supabase
+  const { data: transactions} = await supabase
     .from("transactions")
     .select("category_id, amount, date")
     .eq("type", "expense")
     .throwOnError()
 
   return budgets.map((budget) => {
-    const range = getBudgetPeriodRange(budget)
     if (!range) return { ...budget, spent: 0 }
 
     const spent = (transactions ?? [])
@@ -85,7 +92,7 @@ export function useBudgets() {
     // é como uma "chave de dicionário". Se outro componente pedir a mesma
     // queryKey, o TanStack Query reaproveita o cache em vez de buscar de novo.
     queryKey: ["budgets"],
-    queryFn: fetchBudgets,
+    queryFn: fetchBudgetsWithSpent,
   })
 }
 
