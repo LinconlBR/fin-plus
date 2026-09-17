@@ -186,11 +186,11 @@ export function BudgetsContent() {
     </div>
  
     {/* Insight */}
-    {aiInsight && (
-      <div className="flex items-start gap-3 rounded-lg bg-amber-50 p-4 dark:bg-amber-950/30">
-        <Lightbulb className="mt-0.5 size-4 shrink-0 text-amber-600" />
-        <p className="text-sm text-amber-800 dark:text-amber-400">{aiInsight}</p>
-      </div>
+    {(aiInsight || budgetInsight) && (
+        <div className="flex items-start gap-3 rounded-lg bg-amber-50 p-4 dark:bg-amber-950/30">
+            <Lightbulb className="mt-0.5 size-4 shrink-0 text-amber-600" />
+            <p className="text-sm text-amber-800 dark:text-amber-400">{aiInsight || budgetInsight}</p>
+        </div>
     )}
  
     {/* Grid de orçamentos, já ordenado por urgência */}
