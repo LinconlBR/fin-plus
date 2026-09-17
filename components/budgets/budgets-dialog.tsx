@@ -71,7 +71,7 @@ export function BudgetsDialog({
       // FormData pro Server Action, porque FormData só entende strings.
       is_recurring: budget?.isRecurring ?? true,
       start_date: budget?.startDate ?? new Date().toISOString().split("T")[0],
-      end_date: budget?.endDate ?? "",
+      end_date: budget?.endDate ?? undefined,
     },
     validators: {
       onSubmit: budgetSchema,
