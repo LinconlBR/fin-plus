@@ -71,7 +71,6 @@ function getBudgetInsight(budgetsWithStatus: (BudgetWithSpent & { status: string
         .filter((b) => b.status === "normal")
         .map((b) => b.category)
 
-        console.log({ exceededBudgets}, {attentionBudgets}, {normalBudgets })
     // Gerando insights com base nos orçamentos excedidos, em alerta e normais
     if (exceededBudgets.length > 0 && attentionBudgets.length > 0) {
         return `Você excedeu o orçamento de ${exceededBudgets.join(", ")} e está próximo do limite em ${attentionBudgets.join(", ")}. Considere ajustar seus gastos nessas categorias.`
