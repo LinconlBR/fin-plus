@@ -26,6 +26,7 @@ mostrar números passados.
 | Formulários | TanStack Form + Zod |
 | Dados assíncronos | TanStack Query (telas interativas) / Server Components (leitura simples) |
 | Tabelas | TanStack Table (via componentes do diceui/tablecn) |
+| IA | Google Gemini API (`gemini-2.5-flash`) — insights personalizados |
 | Deploy | Vercel |
 
 ## Decisões de arquitetura — o que e por quê
@@ -33,18 +34,17 @@ mostrar números passados.
 Esta seção existe porque, num projeto de aprendizado, entender o raciocínio por trás de
 uma escolha vale tanto quanto o código em si.
 
-**Base UI em vez de Radix como base do shadcn/ui.** Escolhido na inicialização do
-projeto. Principal diferença prática: composição de componentes usa a prop `render`
-(`<Trigger render={<Button />} />`), não `asChild` como no Radix — e o `Select.Value` não
-resolve o rótulo do item selecionado automaticamente (precisa de uma função de
-resolução explícita) — duas diferenças que pegaram mais de uma vez seguindo
-tutoriais/documentação escritos para Radix, que é a opção mais comum no mercado.
+**Base UI em vez de Radix como base do shadcn/ui.** Composição de componentes usa a prop
+`render` (`<Trigger render={<Button />} />`), não `asChild` como no Radix; `Select.Value`
+não resolve o rótulo do item selecionado automaticamente (precisa de uma função de
+resolução explícita) — diferenças que pegaram mais de uma vez seguindo
+tutoriais/documentação escritos para Radix, a opção mais comum no mercado.
 
 **Server Components como padrão; TanStack Query só onde a tela é interativa.**
-Dashboard busca dados direto com `await` no servidor — sem loading manual, sem
-useEffect. TanStack Query entra especificamente em telas que precisam ser Client
-Component por outro motivo (a tabela de transações, com filtro/ordenação sincronizados
-na URL) — ali, cache, invalidação e reuso valem o custo extra de complexidade.
+Dashboard busca dados direto com `await` no servidor. TanStack Query entra
+especificamente em telas Client Component por outro motivo (filtro/ordenação
+sincronizados na URL em Transações, formulários com validação rica) — ali, cache,
+invalidação e reuso valem o custo extra de complexidade.
 
 **RLS (Row Level Security) é a camada real de segurança — não o `proxy.ts`.** Toda
 tabela do Supabase tem policies restringindo acesso via `auth.uid()`. O `proxy.ts`
@@ -52,65 +52,84 @@ tabela do Supabase tem policies restringindo acesso via `auth.uid()`. O `proxy.t
 visual; mesmo que fosse contornado, o banco recusaria qualquer query sem o usuário certo.
 
 **Nem todo bloco pronto do shadcn vale a pena reaproveitar.** A tabela de transações
-passou por 3 tentativas: o bloco `dashboard-01` (tabela de revisão de documentos, com
-drag-and-drop irrelevante ao domínio — descartado), um bloco pago do shadcn.io
-(inacessível), até chegar no sistema de tabela do **diceui/tablecn**, que de fato se
-encaixa (filtros facetados, multi-sort, estado na URL) e valeu o esforço de adaptação —
-inclusive corrigindo, ao longo do caminho, uma configuração de `manualFiltering` que
-vinha pensada para paginação/filtro no servidor, incompatível com nosso caso (dados
-carregados de uma vez via TanStack Query).
+passou por 3 tentativas até chegar no sistema de tabela do **diceui/tablecn** (filtros
+facetados, multi-sort, estado na URL) — inclusive corrigindo uma configuração de
+`manualFiltering` pensada para paginação no servidor, incompatível com dados carregados
+de uma vez via TanStack Query.
 
-**TanStack Form em vez de React Hook Form**, em todos os formulários (login, signup,
-transação). Trocado no meio do caminho, ao perceber que padronizar em torno do
-ecossistema TanStack (Query + Table + Form) compensa mais que a base de usuários maior
-do React Hook Form, dado que o objetivo aqui é consistência arquitetural.
+**TanStack Form em vez de React Hook Form**, em todos os formulários. Padroniza em
+torno do ecossistema TanStack (Query + Table + Form) já usado no resto do projeto.
+
+**Zod `.optional()` vs `z.union([z.string(), z.undefined()])` num campo usado como
+validador de formulário do TanStack Form.** `.optional()` gera um tipo de "chave
+opcional" (`campo?: string`); o TanStack Form infere os `defaultValues` como "chave
+sempre presente, valor pode ser undefined" (`campo: string | undefined`) — tipos
+estruturalmente diferentes pro TypeScript, mesmo aceitando os mesmos valores em tempo de
+execução. Isso gera um erro de tipo real ao passar o schema como `validators.onSubmit`.
+Corrigido usando `z.union([...])` no lugar de `.optional()` sempre que o campo for usado
+dessa forma.
 
 **Validação em duas camadas em toda Server Action que recebe dado de formulário**: Zod
 no cliente (feedback rápido de UX) e Zod de novo dentro da própria Server Action
 (segurança de verdade — alguém pode chamar a função diretamente, pulando o formulário).
 
 **Server Actions chamadas via `mutationFn`/`onClick` não devem usar `redirect()`
-internamente.** Aprendido na prática: `redirect()` do Next.js só é interceptado
-corretamente quando a Server Action é chamada via `<form action={...}>`. Chamada
-diretamente (como em `useMutation` ou `onClick`), o redirecionamento "vaza" como um erro
-visível (`NEXT_REDIRECT`) na tela. Solução: a Server Action só retorna/lança erro; a
-navegação de sucesso acontece no cliente, via `useRouter().push(...)`.
+internamente**, nem ser chamadas direto no corpo de um componente durante a
+renderização. `redirect()` só é interceptado corretamente via `<form action={...}>`;
+chamado de outra forma, "vaza" como erro visível (`NEXT_REDIRECT`). E qualquer chamada
+assíncrona com efeito colateral (incluindo uma Server Action de IA) precisa passar por
+`useQuery`/`useMutation` — chamá-la direto durante o render gera o erro do React "Cannot
+update a component while rendering a different component".
 
-**CRUD de transações num único componente (`TransactionDialog`)**, não dois
-separados — criação e edição compartilham quase todos os campos; a prop opcional
-`transaction` decide o modo, evitando duplicar o formulário inteiro.
+**Domains do Postgres para valores monetários.** `positive_money_amount`
+(`numeric(12,2)`, `CHECK (VALUE > 0)`) para valores-alvo; `non_negative_money_amount`
+(`CHECK (VALUE >= 0)`) para valores acumulados que podem começar em zero (ex:
+`current_amount` de uma meta nova) — um domain "positivo estrito" aplicado por engano
+nessa coluna rejeitaria o próprio valor padrão.
 
-**Server Actions em vez de rotas de API manuais** para mutações. `lib/actions/auth.ts`,
-`lib/actions/transactions.ts`. Formulários chamam a função diretamente via `<form
-action={minhaFuncao}>` ou `onClick` (caso de itens fora de um `<form>`, como o logout e
-o apagar transação), sem `fetch` manual.
+**Insight de orçamento com IA (Gemini) e fallback baseado em regras.** A versão baseada
+em regras (comparação de percentuais, sem custo de API) sempre existe como *fallback*
+confiável — a chamada à IA usa `aiInsight || budgetInsight` na exibição, então qualquer
+falha de rede/API cai de volta pra uma mensagem funcional, nunca pra tela vazia.
+
+**CRUD de transações e orçamentos num único componente cada** (`TransactionDialog`,
+`BudgetsDialog`), não dois separados — criação e edição compartilham quase todos os
+campos; uma prop opcional decide o modo.
+
+**Server Actions em vez de rotas de API manuais** para mutações.
 
 **Trigger de banco (`handle_new_user`)** popula `profiles` e categorias padrão
-automaticamente quando um usuário se cadastra, lendo `full_name` do `raw_user_meta_data`
-enviado no `signUp()`.
-
-**Valores monetários como `numeric(12,2)`**, nunca `float` — evita erro de arredondamento.
+automaticamente no cadastro.
 
 ## Schema do banco (Supabase)
 
-4 tabelas em `public`, todas com RLS habilitado:
+5 tabelas em `public`, todas com RLS habilitado:
 
-- **`profiles`** — espelha `auth.users` (id é FK 1:1, sem gerar UUID novo). Policies de
-  SELECT/UPDATE do próprio perfil.
-- **`categories`** — categorias de receita/despesa por usuário. `type` restrito a
-  `income`/`expense` via CHECK constraint. Populadas com categorias padrão no cadastro.
-- **`transactions`** — lançamentos financeiros. FK para `profiles` (cascade) e
-  `categories` (set null — apagar categoria não apaga histórico).
-- **`goals`** — metas de economia. `period` restrito a `weekly`/`monthly`.
+- **`profiles`** — espelha `auth.users`. Policies de SELECT/UPDATE do próprio perfil.
+- **`categories`** — categorias de receita/despesa por usuário, populadas com padrões no
+  cadastro.
+- **`transactions`** — lançamentos financeiros. FK cascade/set null pra `profiles`/
+  `categories`.
+- **`budgets`** (renomeada de uma `goals` original) — limite de gasto por categoria e
+  período. `is_recurring` decide se o período é recalculado automaticamente
+  (semanal/mensal, a partir de hoje) ou se é um intervalo fixo único
+  (`start_date`/`end_date` obrigatórios).
+- **`goals`** — metas de economia de longo prazo (`target_amount`, `current_amount`,
+  `deadline`), conceito diferente de orçamento recorrente.
+
+⚠️ **Furo de dado conhecido, ainda não corrigido**: `category_id` em `transactions` e
+`budgets` usa `ON DELETE SET NULL`. Apagar uma categoria deixaria transações e orçamentos
+órfãos com `category_id = null`, e o cálculo de gasto por orçamento (que compara
+`category_id` de ambos) trataria todos os órfãos como pertencentes uns aos outros
+(`null === null`). Não é um problema visível hoje porque **não existe tela de apagar
+categoria ainda** — precisa ser resolvido antes de construir essa tela.
 
 ## Autenticação
 
-- E-mail/senha com confirmação por e-mail (SMTP próprio ainda pendente — usando o
-  serviço embutido do Supabase, com limite de 3 e-mails/hora, adequado só para
-  desenvolvimento)
+- E-mail/senha com confirmação por e-mail (SMTP próprio pendente — usando o serviço
+  embutido do Supabase, limite de 3 e-mails/hora, só para desenvolvimento)
 - OAuth com **Google** e **Facebook** (Facebook em modo de desenvolvimento até passar
   por App Review da Meta)
-- Todos os formulários de auth usam TanStack Form + Zod + `useMutation`
 
 ## Funcionalidades implementadas
 
@@ -118,11 +137,28 @@ enviado no `signUp()`.
 - [x] Layout com sidebar persistente, navegação real, breadcrumb dinâmico
 - [x] Dashboard com dados reais: saldo/receitas/despesas do mês, gráfico de evolução
 - [x] Transações: listagem com filtro/ordenação/paginação real, criação, edição e
-      exclusão (com confirmação), validação em duas camadas
-- [ ] Orçamentos por categoria
-- [ ] Metas de economia com acompanhamento de progresso
+      exclusão, validação em duas camadas
+- [x] Orçamentos: recorrentes ou únicos, cards com progresso e cores por status
+      (normal/atenção/excedido), ordenados por urgência, insight gerado por IA com
+      fallback baseado em regras, CRUD completo
+- [ ] Metas de economia de longo prazo com acompanhamento de progresso
+- [ ] Tela de gerenciar categorias (criar/editar/apagar) — bloqueada até resolver o furo
+      de dado descrito acima
 - [ ] Relatórios e gráficos analíticos
 - [ ] SMTP próprio (Resend/SendGrid/Postmark) — antes do lançamento
+
+## Pendências de limpeza (auditoria de arquitetura)
+
+Levantadas numa revisão completa do projeto, priorizadas numa branch dedicada:
+
+1. Resolver o furo de `category_id = null` antes de mexer em categorias
+2. `revalidatePath` residual em `lib/actions/transactions.ts` (sem efeito, já removido
+   em `budgets.ts`)
+3. Nomenclatura inconsistente em `lib/schema/` (`loginSchema.ts` vs `budgets.ts`)
+4. Constraints redundantes em `goals` (duplicam a validação que já vive nos domains)
+5. Menu do usuário (`nav-user.tsx`) com itens decorativos em inglês ("Account",
+   "Billing", "Upgrade to Pro") sem função real
+6. Remover `components/sidebar/nav-projects.tsx` (código morto do template original)
 
 ## Rodando localmente
 
@@ -130,18 +166,18 @@ enviado no `signUp()`.
 npm install
 ```
 
-Crie um arquivo `.env.local` na raiz com as credenciais do seu projeto Supabase
-(Project Settings → API no dashboard):
+Crie um arquivo `.env.local` na raiz:
 
 ```
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
+GEMINI_API_KEY=
 ```
 
-Rode o schema SQL do projeto (tabelas, RLS, trigger) no SQL Editor do seu projeto
-Supabase antes de usar o app, e configure os providers OAuth (Google/Facebook) tanto no
-Supabase quanto nos respectivos consoles de desenvolvedor.
+Rode o schema SQL do projeto (tabelas, RLS, trigger, domains) no SQL Editor do seu
+projeto Supabase antes de usar o app, e configure os providers OAuth (Google/Facebook)
+tanto no Supabase quanto nos respectivos consoles de desenvolvedor.
 
 ```bash
 npm run dev
