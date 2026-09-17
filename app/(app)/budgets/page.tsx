@@ -1,6 +1,7 @@
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { BudgetsDialog } from "@/components/budgets/budgets-dialog";
 import { BudgetsContent } from "@/components/budgets/budgets-content";
+
 export default function Budgets() {
   return (  
     <NuqsAdapter>

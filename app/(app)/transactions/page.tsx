@@ -1,5 +1,3 @@
-"use client";
-
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { TransactionsContent } from "@/components/transactions/transaction-content";
 import { TransactionDialog } from "@/components/transactions/transaction-dialog";

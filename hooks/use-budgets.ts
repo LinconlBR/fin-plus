@@ -18,6 +18,7 @@ type BudgetRow = {
 export type Budget = {
     id: string
     category_id: string | null
+    category: string
     targetAmount: number
     period: "weekly" | "monthly" | null
     startDate: string
