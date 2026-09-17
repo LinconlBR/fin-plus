@@ -139,7 +139,6 @@ export function BudgetsContent() {
     if (isLoading) return <div>Carregando orçamentos...</div>
     if (isError) return <div>Erro ao carregar orçamentos.</div>
 
-    console.log("AI Insight:", aiInsight)
     if (budgets.length === 0) {
   return (
     <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed p-12 text-center">
@@ -187,10 +186,10 @@ export function BudgetsContent() {
     </div>
  
     {/* Insight */}
-    {budgetInsight && (
+    {aiInsight && (
       <div className="flex items-start gap-3 rounded-lg bg-amber-50 p-4 dark:bg-amber-950/30">
         <Lightbulb className="mt-0.5 size-4 shrink-0 text-amber-600" />
-        <p className="text-sm text-amber-800 dark:text-amber-400">{budgetInsight}</p>
+        <p className="text-sm text-amber-800 dark:text-amber-400">{aiInsight}</p>
       </div>
     )}
  
