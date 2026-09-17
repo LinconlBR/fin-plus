@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query"
 import { createClient } from "@/lib/supabase/client"
+import { getBudgetPeriodRange } from "@/lib/budgets"
 
 type budgetRow = {
   id: string
@@ -16,8 +17,7 @@ type budgetRow = {
 
 export type Budget = {
     id: string
-    category_id: string
-    category: string
+    category_id: string | null
     targetAmount: number
     period: "weekly" | "monthly" | null
     startDate: string
@@ -25,22 +25,67 @@ export type Budget = {
     isRecurring: boolean
 }
 
-export async function fetchBudgets(): Promise<Budget[]> {
+async function fetchBudgets(): Promise<Budget[]> {
     const supabase = createClient()
 
-    const { data, error } = await supabase
+    const { data } = await supabase
         .from("budgets")
         .select("*, category:categories(name)")
         .order("start_date", { ascending: false })
         .throwOnError()
-    return data.map((budget) => ({
-        id: budget.id,
-        category_id: budget.category_id,
-        category: budget.category?.name || "",
-        targetAmount: budget.target_amount ? parseFloat(budget.target_amount) : 0,
-        period: budget.period,
-        startDate: budget.start_date,
-        endDate: budget.end_date,
-        isRecurring: budget.is_recurring
+
+    if (!data) {
+        throw new Error("Failed to fetch budgets")
+    }
+
+    return (data as budgetRow[]).map((row) => ({
+        id: row.id,
+        category_id: row.category_id,
+        category: row.category?.name || "",
+        targetAmount: row.target_amount ? parseFloat(row.target_amount) : 0,
+        period: row.period,
+        startDate: row.start_date,
+        endDate: row.end_date,
+        isRecurring: row.is_recurring
     }))
 }
+
+export type BudgetWithSpent = Budget & { spent: number }
+
+async function fetchBudgetsWithSpent(): Promise<BudgetWithSpent[]> {
+  const supabase = createClient()
+  const budgets = await fetchBudgets()
+
+  const { data: transactions, error } = await supabase
+    .from("transactions")
+    .select("category_id, amount, date")
+    .eq("type", "expense")
+    .throwOnError()
+
+  return budgets.map((budget) => {
+    const range = getBudgetPeriodRange(budget)
+    if (!range) return { ...budget, spent: 0 }
+
+    const spent = (transactions ?? [])
+      .filter(
+        (t) =>
+          t.category_id === budget.category_id &&
+          t.date >= range.start &&
+          t.date <= range.end
+      )
+      .reduce((acc, t) => acc + Number(t.amount), 0)
+
+    return { ...budget, spent }
+  })
+}
+
+export function useBudgets() {
+  return useQuery({
+    // queryKey identifica essa busca de forma única no cache do TanStack Query —
+    // é como uma "chave de dicionário". Se outro componente pedir a mesma
+    // queryKey, o TanStack Query reaproveita o cache em vez de buscar de novo.
+    queryKey: ["budgets"],
+    queryFn: fetchBudgets,
+  })
+}
+
