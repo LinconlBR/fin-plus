@@ -11,9 +11,7 @@ export default function Transactions() {
         <h1 className="text-2xl font-bold tracking-tight text-foreground md:text-3xl">
           Transações
         </h1>
-      </div>
-        
-      
+      </div>  
       <div className="space-y-6 p-6 md:p-8">
           <TransactionsContent  />
       </div>
