@@ -7,6 +7,10 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { Lightbulb, Pencil } from "lucide-react"
+
+
+import { useQuery } from "@tanstack/react-query"
+import { generateBudgetInsight } from "@/lib/actions/ai"
 //
 const currencyFormatter = new Intl.NumberFormat("pt-BR", {
   style: "currency",
@@ -95,8 +99,6 @@ export function BudgetsContent() {
     const { data, isLoading, isError } = useBudgets()
     const budgets = data ?? []
 
-    if (isLoading) return <div>Carregando orçamentos...</div>
-    if (isError) return <div>Erro ao carregar orçamentos.</div>
     
     // Calculando o status de cada orçamento com base no gasto e no valor alvo
     const budgetsWithStatus = budgets.map((budget) => ({
@@ -124,7 +126,20 @@ export function BudgetsContent() {
     // Calculando o número de categorias que excederam o orçamento
     const exceededCount = budgetsWithStatus.filter((b) => b.status === "excedido").length
     
-   
+    const summary = budgetsWithStatus
+  .map((b) => `${b.category}: gastou ${b.spent} de ${b.targetAmount} (${b.status})`)
+  .join("; ")
+
+    const { data: aiInsight } = useQuery({
+    queryKey: ["budget-insight", summary],
+    queryFn: () => generateBudgetInsight(summary),
+    enabled: budgetsWithStatus.length > 0, // só chama a IA se tiver orçamento
+    })
+
+    if (isLoading) return <div>Carregando orçamentos...</div>
+    if (isError) return <div>Erro ao carregar orçamentos.</div>
+
+    console.log("AI Insight:", aiInsight)
     if (budgets.length === 0) {
   return (
     <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed p-12 text-center">
