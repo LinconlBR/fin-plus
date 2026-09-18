@@ -5,7 +5,8 @@ import { useQuery } from "@tanstack/react-query"
 import { createClient } from "@/lib/supabase/client"
 
 
-type Categories = {
+
+export type Categories = {
     id: string;
     name: string;
     type: "income" | "expense";

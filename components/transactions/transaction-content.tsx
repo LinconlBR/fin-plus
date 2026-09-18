@@ -1,155 +1,41 @@
 "use client"
 
 
-import { Button } from "@/components/ui/button";
+//import { Button } from "@/components/ui/button";
 
 
 
-import { ArrowDownLeft, ArrowUpRight, CalendarDays, Tags, Text, Pencil } from "lucide-react";
+//import { ArrowDownLeft, ArrowUpRight, CalendarDays, Tags, Text, Pencil } from "lucide-react";
 
 
-import { TransactionDialog } from "@/components/transactions/transaction-dialog";
-import { useTransactions, type Transaction } from "@/hooks/use-transactions";
-import { DeleteTransactionButton } from "@/components/transactions/delete-transaction-button";
+//import { TransactionDialog } from "@/components/transactions/transaction-dialog";
 
+//import { DeleteTransactionButton } from "@/components/transactions/delete-transaction-button";
+import { useTransactions} from "@/hooks/use-transactions";
+//import { useCategories, type Categories } from "@/hooks/use-categories"; 
+import { DataTable } from "./data-table/data-table";
+import { columns } from "./data-table/columns";
 
-// Opções de categoria e tipo para os filtros
-const categoryOptions = [
-  { label: "Moradia", value: "Moradia" },
-  { label: "Alimentação", value: "Alimentação" },
-  { label: "Transporte", value: "Transporte" },
-  { label: "Lazer", value: "Lazer" },
-  { label: "Salário", value: "Salário" },
-];
-
-// Opções de tipo para os filtros
-const typeOptions = [
-  { label: "Receita", value: "income" },
-  { label: "Despesa", value: "expense" },
-];
-
-// Formatadores para moeda e data
-const currencyFormatter = new Intl.NumberFormat("pt-BR", {
-  style: "currency",
-  currency: "BRL",
-});
-// Formatador de data para exibir no formato "dd/MM/yyyy"
-const dateFormatter = new Intl.DateTimeFormat("pt-BR", {
-  day: "2-digit",
-  month: "short",
-  year: "numeric",
-});
-
-
-// Define as colunas da tabela de transações
-const columns: ColumnDef<Transaction>[] = [
-  {
-    id: "title", 
-    accessorKey: "title",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} label="Descrição" />
-    ),
-    cell: ({ row }) => <div>{row.getValue("title")}</div>,
-    meta: { label: "Descrição", placeholder: "Buscar transações...", variant: "text", icon: Text },
-    enableColumnFilter: true,
-  },
-  {
-    id: "category",
-    accessorKey: "category",
-    header: ({ column }) => <DataTableColumnHeader column={column} label="Categoria" />,
-    cell: ({ row }) => <span className="text-muted-foreground">{row.getValue("category")}</span>,
-    meta: { label: "Categoria", variant: "multiSelect", options: categoryOptions, icon: Tags },
-    enableColumnFilter: true,
-  },
-  {
-    id: "createdAt",
-    accessorKey: "createdAt",
-    header: ({ column }) => <DataTableColumnHeader column={column} label="Data" />,
-    cell: ({ row }) => dateFormatter.format(new Date(`${row.getValue("createdAt")}T12:00:00`)),
-    meta: { label: "Data", variant: "date", icon: CalendarDays },
-    enableColumnFilter: true,
-  },
-  {
-    id: "type",
-    accessorKey: "type",
-    header: ({ column }) => <DataTableColumnHeader column={column} label="Tipo" />,
-    cell: ({ row }) => {
-      const type = row.getValue("type") as Transaction["type"];
-      return (
-        <span className={type === "income" ? "text-emerald-600" : "text-rose-600"}>
-          {type === "income" ? "Receita" : "Despesa"}
-        </span>
-      );
-    },
-    meta: { label: "Tipo", variant: "select", options: typeOptions },
-    enableColumnFilter: true,
-  },
-  {
-    id: "amount",
-    accessorKey: "amount",
-    header: ({ column }) => <DataTableColumnHeader column={column} label="Valor" />,
-    cell: ({ row }) => {
-      const type = row.getValue("type") as Transaction["type"];
-      const amount = row.getValue("amount") as number;
-      return (
-        <div className="flex items-center gap-2 font-medium">
-          {type === "income" ? <ArrowUpRight className="size-4 text-emerald-600" /> : <ArrowDownLeft className="size-4 text-rose-600" />}
-          <span className={type === "income" ? "text-emerald-600" : "text-rose-600"}>
-            {type === "income" ? "+" : "-"}{currencyFormatter.format(amount)}
-          </span>
-        </div>
-      );
-    },
-    meta: { label: "Valor", variant: "number", unit: "R$" },
-    enableColumnFilter: true,
-  },
-  {
-    id: "actions",
-    cell: ({ row }) => (
-      <div className="flex items-center  justify-end gap-1">
-        <TransactionDialog
-          transaction={row.original}
-          trigger={
-            <Button variant="ghost" size="icon">
-              <Pencil className="size-4" />
-            </Button>
-          }
-        />
-        <DeleteTransactionButton id={row.original.id} />
-      </div>
-    ),
-  },
-];
+// Opções de categoria e tipo para os filtros 
+// pegar categorias e tipos do banco de dados para popular essas opções dinamicamente
 
 
 // Componente principal que renderiza o conteúdo das transações
 export function TransactionsContent() {
-     const { data, isLoading, isError } = useTransactions() ;
-     const PAGE_SIZE = 10 ;
-     const transactions = data ?? [];
+     const { data, isLoading, isError } = useTransactions();
 
-     const { table } = useDataTable({
-    data: transactions,
-    columns,
-    pageCount: Math.ceil(transactions.length / PAGE_SIZE),
-    initialState: {
-    sorting: [{ id: "createdAt", desc: true }],
-    pagination: { pageIndex: 0, pageSize: PAGE_SIZE },
-    },
-    // Unique identifier for rows, can be used for unique row selection
-    getRowId: (row: Transaction) => row.id,
-    });
+     const transactions = data ?? []
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
 
-     //checando se os dados estão sendo carregados ou se houve algum erro na requisição
-        if (isLoading) return <div>Carregando transações...</div>
-        if (isError) return <div>Erro ao carregar transações.</div>
-
+  if (isError) {
+    return <div>Error occurred while fetching transactions.</div>;
+  }
+  
   return (
-    <DataTable table={table}>
-			<DataTableAdvancedToolbar table={table}>
-				{/* <DataTableFilterList table={table} /> */}
-				{/* <DataTableSortList table={table} /> */}
-			</DataTableAdvancedToolbar>
-		</DataTable>
+    <div className="container mx-auto py-10">
+      <DataTable columns={columns} data={transactions} />
+    </div>
   )
 }
