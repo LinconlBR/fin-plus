@@ -1,160 +1,113 @@
 "use client"
 
-import { DataTable } from "@/components/data-table/data-table";
-import { DataTableAdvancedToolbar } from "@/components/data-table/data-table-advanced-toolbar";
-//import { DataTableFilterList } from "@/components/data-table/data-table-filter-list";
-//import { DataTableSortList } from "@/components/data-table/data-table-sort-list";
-import { useDataTable } from "@/hooks/use-data-table";
+import { useState } from "react"
 
-import { Button } from "@/components/ui/button";
+import { useTransactions } from "@/hooks/use-transactions"
+import { useCategories } from "@/hooks/use-categories"
 
+import { DataTable } from "./data-table/data-table"
+import { columns } from "./data-table/columns"
 
-import type { ColumnDef } from "@tanstack/react-table";
-import { ArrowDownLeft, ArrowUpRight, CalendarDays, Tags, Text, Pencil } from "lucide-react";
-import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
-
-import { TransactionDialog } from "@/components/transactions/transaction-dialog";
-import { useTransactions, type Transaction } from "@/hooks/use-transactions";
-import { DeleteTransactionButton } from "@/components/transactions/delete-transaction-button";
-
-
-// Opções de categoria e tipo para os filtros
-const categoryOptions = [
-  { label: "Moradia", value: "Moradia" },
-  { label: "Alimentação", value: "Alimentação" },
-  { label: "Transporte", value: "Transporte" },
-  { label: "Lazer", value: "Lazer" },
-  { label: "Salário", value: "Salário" },
-];
-
-// Opções de tipo para os filtros
-const typeOptions = [
-  { label: "Receita", value: "income" },
-  { label: "Despesa", value: "expense" },
-];
-
-// Formatadores para moeda e data
-const currencyFormatter = new Intl.NumberFormat("pt-BR", {
-  style: "currency",
-  currency: "BRL",
-});
-// Formatador de data para exibir no formato "dd/MM/yyyy"
-const dateFormatter = new Intl.DateTimeFormat("pt-BR", {
-  day: "2-digit",
-  month: "short",
-  year: "numeric",
-});
-
-
-// Define as colunas da tabela de transações
-const columns: ColumnDef<Transaction>[] = [
-  {
-    id: "title", 
-    accessorKey: "title",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} label="Descrição" />
-    ),
-    cell: ({ row }) => <div>{row.getValue("title")}</div>,
-    meta: { label: "Descrição", placeholder: "Buscar transações...", variant: "text", icon: Text },
-    enableColumnFilter: true,
-  },
-  {
-    id: "category",
-    accessorKey: "category",
-    header: ({ column }) => <DataTableColumnHeader column={column} label="Categoria" />,
-    cell: ({ row }) => <span className="text-muted-foreground">{row.getValue("category")}</span>,
-    meta: { label: "Categoria", variant: "multiSelect", options: categoryOptions, icon: Tags },
-    enableColumnFilter: true,
-  },
-  {
-    id: "createdAt",
-    accessorKey: "createdAt",
-    header: ({ column }) => <DataTableColumnHeader column={column} label="Data" />,
-    cell: ({ row }) => dateFormatter.format(new Date(`${row.getValue("createdAt")}T12:00:00`)),
-    meta: { label: "Data", variant: "date", icon: CalendarDays },
-    enableColumnFilter: true,
-  },
-  {
-    id: "type",
-    accessorKey: "type",
-    header: ({ column }) => <DataTableColumnHeader column={column} label="Tipo" />,
-    cell: ({ row }) => {
-      const type = row.getValue("type") as Transaction["type"];
-      return (
-        <span className={type === "income" ? "text-emerald-600" : "text-rose-600"}>
-          {type === "income" ? "Receita" : "Despesa"}
-        </span>
-      );
-    },
-    meta: { label: "Tipo", variant: "select", options: typeOptions },
-    enableColumnFilter: true,
-  },
-  {
-    id: "amount",
-    accessorKey: "amount",
-    header: ({ column }) => <DataTableColumnHeader column={column} label="Valor" />,
-    cell: ({ row }) => {
-      const type = row.getValue("type") as Transaction["type"];
-      const amount = row.getValue("amount") as number;
-      return (
-        <div className="flex items-center gap-2 font-medium">
-          {type === "income" ? <ArrowUpRight className="size-4 text-emerald-600" /> : <ArrowDownLeft className="size-4 text-rose-600" />}
-          <span className={type === "income" ? "text-emerald-600" : "text-rose-600"}>
-            {type === "income" ? "+" : "-"}{currencyFormatter.format(amount)}
-          </span>
-        </div>
-      );
-    },
-    meta: { label: "Valor", variant: "number", unit: "R$" },
-    enableColumnFilter: true,
-  },
-  {
-    id: "actions",
-    cell: ({ row }) => (
-      <div className="flex items-center  justify-end gap-1">
-        <TransactionDialog
-          transaction={row.original}
-          trigger={
-            <Button variant="ghost" size="icon">
-              <Pencil className="size-4" />
-            </Button>
-          }
-        />
-        <DeleteTransactionButton id={row.original.id} />
-      </div>
-    ),
-  },
-];
-
+import { Input } from "@/components/ui/input"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 // Componente principal que renderiza o conteúdo das transações
 export function TransactionsContent() {
-     const { data, isLoading, isError } = useTransactions() ;
-     const PAGE_SIZE = 10 ;
-     const transactions = data ?? [];
+  const { data, isLoading, isError } = useTransactions()
+  const { data: categories } = useCategories()
 
-     const { table } = useDataTable({
-    data: transactions,
-    columns,
-    pageCount: Math.ceil(transactions.length / PAGE_SIZE),
-    initialState: {
-    sorting: [{ id: "createdAt", desc: true }],
-    pagination: { pageIndex: 0, pageSize: PAGE_SIZE },
-    },
-    // Unique identifier for rows, can be used for unique row selection
-    getRowId: (row: Transaction) => row.id,
-    });
+  // Os 3 filtros vivem aqui, um useState por campo — o mesmo padrão que você
+  // já usou em outros formulários, só que aplicado a filtro em vez de envio.
+  const [search, setSearch] = useState("")
+  const [categoryFilter, setCategoryFilter] = useState<string>("all")
+  const [typeFilter, setTypeFilter] = useState<"all" | "income" | "expense">("all")
 
-     //checando se os dados estão sendo carregados ou se houve algum erro na requisição
-        if (isLoading) return <div>Carregando transações...</div>
-        if (isError) return <div>Erro ao carregar transações.</div>
+  const transactions = data ?? []
+
+  // Aplica os 3 filtros em sequência, um .filter() encadeado no outro —
+  // cada um só deixa passar o que já passou no anterior. "all" (valor padrão
+  // dos selects) significa "sem filtro nesse campo", por isso o `|| X === "all"`
+  // em cada condição.
+  const filteredTransactions = transactions
+    .filter((t) =>
+      search.trim() === ""
+        ? true
+        : t.title.toLowerCase().includes(search.trim().toLowerCase())
+    )
+    .filter((t) => categoryFilter === "all" || t.category_id === categoryFilter)
+    .filter((t) => typeFilter === "all" || t.type === typeFilter)
+
+  if (isLoading) {
+    return <div>Carregando...</div>
+  }
+
+  if (isError) {
+    return <div>Erro ao buscar transações.</div>
+  }
 
   return (
-    <DataTable table={table}>
-			<DataTableAdvancedToolbar table={table}>
-				{/* <DataTableFilterList table={table} /> */}
-				{/* <DataTableSortList table={table} /> */}
-			</DataTableAdvancedToolbar>
-		</DataTable>
+    <div className="container mx-auto py-10">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <Input
+          placeholder="Buscar por descrição..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="max-w-sm"
+        />
+
+        <Select
+          value={categoryFilter}
+          onValueChange={(value) => setCategoryFilter(value ?? "all")}
+        >
+          <SelectTrigger className="w-45">
+            <SelectValue placeholder="Categoria">
+              {(value: string) =>
+                value === "all"
+                  ? "Todas as categorias"
+                  : categories?.find((c) => c.id === value)?.name
+              }
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todas as categorias</SelectItem>
+            {categories?.map((category) => (
+              <SelectItem key={category.id} value={category.id}>
+                {category.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Select
+          value={typeFilter}
+          onValueChange={(v) => setTypeFilter(v as "all" | "income" | "expense")}
+        >
+          <SelectTrigger className="w-40">
+            <SelectValue>
+              {(value: string) =>
+                value === "all"
+                  ? "Todos os tipos"
+                  : value === "income"
+                  ? "Receita"
+                  : "Despesa"
+              }
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos os tipos</SelectItem>
+            <SelectItem value="income">Receita</SelectItem>
+            <SelectItem value="expense">Despesa</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <DataTable columns={columns} data={filteredTransactions} />
+    </div>
   )
 }
