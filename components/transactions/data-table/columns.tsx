@@ -1,7 +1,7 @@
 "use client"
 
 import { createColumnHelper } from "@tanstack/react-table"
-import { MoreHorizontal } from "lucide-react"
+import { MoreHorizontal,ArrowUpDown  } from "lucide-react"
  
 import { Button } from "@/components/ui/button"
 import {
@@ -28,28 +28,85 @@ const columnHelper = createColumnHelper<DataTableFeatures, Transaction>()
 
 export const columns = columnHelper.columns([
   columnHelper.accessor("title", {
-    header: "Descrição",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Descrição
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      )
+    },
   }),
-  columnHelper.accessor("createdAt", {
-    header: "Data",
-  }),
-  columnHelper.accessor("type", {
-    header: "Tipo",
+  columnHelper.accessor("category", {
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Categoria
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      )
+    },
+    cell: ({ row }) => {
+      const transaction = row.original
+      const [icon, category, color] = transaction.category
+      return (
+        <div className="flex items-center gap-2">
+          {icon && (
+            <div
+              className="h-3 w-3 rounded-full"
+              style={{ backgroundColor: color  }}
+            />
+          )}
+          {category}
+        </div>
+      )
+    },
   }),
   columnHelper.accessor("amount", {
-    header: () => <div className="text-left">Valor</div>,
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Valor
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      )
+    },
     cell: ({ row }) => {
+      const tipo = row.original.category[3] ?? "income"  // Extrai o tipo da categoria (income ou expense)
       const amount = parseFloat(row.getValue("amount"))
       const formatted = new Intl.NumberFormat("pt-BR", {
         style: "currency",
         currency: "BRL",
       }).format(amount)
  
-      return <div className="text-left font-medium">{formatted}</div>
+        if (tipo === "expense") {
+          return <div className="text-left font-medium text-red-500">{formatted}</div>
+        } else {      
+       return <div className="text-left font-medium text-green-500" >{formatted}</div>
+      }
     },
   }),
-  columnHelper.accessor("category", {
-    header: "Categoria",
+  columnHelper.accessor("createdAt", {
+    header:  ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Data
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      )
+    },
   }),
   columnHelper.display({
     id: "actions",

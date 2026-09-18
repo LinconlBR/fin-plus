@@ -18,7 +18,7 @@ type TransactionRow = {
   type: "income" | "expense"
   amount: number
   category_id: string | null
-  categories: { name: string } | null
+  categories: { name: string; icon: string; color: string } | null
 }
 
 // Esse é o formato "achatado" que as colunas da tabela esperam — sem aninhamento,
@@ -27,10 +27,9 @@ type TransactionRow = {
 export type Transaction = {
   id: string
   title: string
-  category: string
+  category: [string, string, string, "income" | "expense"] // icon, name, color, type
   category_id: string
   createdAt: string
-  type: "income" | "expense"
   amount: number
 }
 
@@ -68,10 +67,9 @@ async function fetchTransactions(): Promise<Transaction[]> {
     title: row.description ?? "Sem descrição",
     // row.categories pode ser null (categoria apagada, lembra da FK com "set null"
     // que configuramos lá no schema) — por isso o fallback "Sem categoria".
-    category: row.categories?.name ?? "Sem categoria",
+    category: [row.categories?.icon ?? "  ", row.categories?.name ?? "Sem categoria", row.categories?.color ?? "#FFFFFF", row.type ?? "income"],
     category_id: row.category_id ?? "",
-    createdAt: row.date,
-    type: row.type,
+    createdAt: row.date ?? new Date().toISOString(),
     amount: Number(row.amount), // mesmo cuidado de sempre: numeric pode vir como string
   }))
 }
