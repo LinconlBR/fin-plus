@@ -66,7 +66,7 @@ export function DataTable<TData extends RowData>({
   return (
     <>
      {/* Search input for filtering by description */}
-      <div className="inline-flex items-center   py-4">
+      <div className="flex items-center justify-between py-4">
         <Input
           placeholder="Buscar por descrição..."
           value={(table.getColumn("title")?.getFilterValue() as string) ?? ""}
@@ -75,13 +75,12 @@ export function DataTable<TData extends RowData>({
           }
         className="max-w-sm"
         />
-      </div>
 
     {/* Dropdown menu for toggling column visibility */}
-    <div className="inline-flex ml-41  justify-end py-4">
+    
       <DropdownMenu>
         <DropdownMenuTrigger render={<Button variant="outline" className="ml-auto" />}>
-          Columns
+          Esconder Coluna(s)
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           {table
@@ -142,7 +141,7 @@ export function DataTable<TData extends RowData>({
           ) : (
             <TableRow>
               <TableCell colSpan={columns.length} className="h-24 text-center">
-                No results.
+                Sem resultados.
               </TableCell>
             </TableRow>
           )}
@@ -156,7 +155,7 @@ export function DataTable<TData extends RowData>({
           onClick={() => table.previousPage()}
           disabled={!table.getCanPreviousPage()}
         >
-          Previous
+          Anterior
         </Button>
         <Button
           variant="outline"
@@ -164,7 +163,7 @@ export function DataTable<TData extends RowData>({
           onClick={() => table.nextPage()}
           disabled={!table.getCanNextPage()}
         >
-          Next
+          Próxima
         </Button>
       </div>
     </>
