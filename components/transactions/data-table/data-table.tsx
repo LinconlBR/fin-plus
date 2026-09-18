@@ -66,7 +66,7 @@ export function DataTable<TData extends RowData>({
   return (
     <>
      {/* Search input for filtering by description */}
-      <div className="flex items-center py-4">
+      <div className="inline-flex items-center   py-4">
         <Input
           placeholder="Buscar por descrição..."
           value={(table.getColumn("title")?.getFilterValue() as string) ?? ""}
@@ -78,32 +78,34 @@ export function DataTable<TData extends RowData>({
       </div>
 
     {/* Dropdown menu for toggling column visibility */}
-    <DropdownMenu>
-      <DropdownMenuTrigger render={<Button variant="outline" className="ml-auto" />}>
-        Columns
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        {table
-          .getAllColumns()
-          .filter(
-            (column) => column.getCanHide()
-          )
-          .map((column) => {
-            return (
-              <DropdownMenuCheckboxItem
-                key={column.id}
-                className="capitalize"
-                checked={column.getIsVisible()}
-                onCheckedChange={(value) =>
-                  column.toggleVisibility(!!value)
-                }
-              >
-                {column.id}
-              </DropdownMenuCheckboxItem>
+    <div className="inline-flex ml-41  justify-end py-4">
+      <DropdownMenu>
+        <DropdownMenuTrigger render={<Button variant="outline" className="ml-auto" />}>
+          Columns
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          {table
+            .getAllColumns()
+            .filter(
+              (column) => column.getCanHide()
             )
-          })}
-      </DropdownMenuContent>
-    </DropdownMenu>
+            .map((column) => {
+              return (
+                <DropdownMenuCheckboxItem
+                  key={column.id}
+                  className="capitalize"
+                  checked={column.getIsVisible()}
+                  onCheckedChange={(value) =>
+                    column.toggleVisibility(!!value)
+                  }
+                >
+                  {column.id}
+                </DropdownMenuCheckboxItem>
+              )
+            })}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
   
     {/* Table rendering */}
     <div className="overflow-hidden rounded-md border">

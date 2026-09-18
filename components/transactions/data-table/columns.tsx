@@ -1,19 +1,11 @@
 "use client"
 
 import { createColumnHelper } from "@tanstack/react-table"
-import { MoreHorizontal,ArrowUpDown  } from "lucide-react"
+import { ArrowUpDown , Pencil} from "lucide-react"
  
 import { Button } from "@/components/ui/button"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-
+import { TransactionDialog } from "@/components/transactions/transaction-dialog"
+import { DeleteTransactionButton } from "@/components/transactions/delete-transaction-button"
 
 
 import { type DataTableFeatures } from "./data-table-features"
@@ -112,29 +104,18 @@ export const columns = columnHelper.columns([
     id: "actions",
     cell: ({ row }) => {
       const transaction = row.original
- 
       return (
-        <DropdownMenu>
-          <DropdownMenuTrigger
-            render={<Button variant="ghost" className="h-8 w-8 p-0" />}
-          >
-            <span className="sr-only">Open menu</span>
-            <MoreHorizontal className="h-4 w-4" />
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuGroup>
-              <DropdownMenuLabel>Actions</DropdownMenuLabel>
-              <DropdownMenuItem
-                onClick={() => navigator.clipboard.writeText(transaction.id)}
-              >
-                Copy transaction ID
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem>View customer</DropdownMenuItem>
-              <DropdownMenuItem>View payment details</DropdownMenuItem>
-            </DropdownMenuGroup>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <div className="flex items-center justify-end gap-1">
+          <TransactionDialog
+            transaction={transaction}
+            trigger={
+              <Button variant="ghost" size="icon">
+                <Pencil className="size-4" />
+              </Button>
+            }
+          />
+          <DeleteTransactionButton id={transaction.id} />
+        </div>
       )
     },
   }),
