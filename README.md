@@ -2,7 +2,7 @@
 
 ### Web app de acompanhamento financeiro pessoal
 
-  ![dashboard-dark](public/login.png)
+![dashboard-dark](public/login.png)
 
 Fin+ conecta gastos reais do usuário às metas que ele define — fechando o ciclo
 **registro → análise → ajuste de comportamento**, em vez de só categorizar despesas
@@ -164,10 +164,10 @@ categorias.
 ### 1) Criar o projeto e rodar o schema
 
 1. Acesse [app.supabase.com](https://app.supabase.com) e crie um projeto novo.
-2. Abra `SQL Editor` e rode o schema do projeto (tabelas, RLS, trigger, domains —
-   veja o histórico de commits/PRs pra reconstituir os `CREATE TABLE` na ordem certa).
+2. Abra `SQL Editor`, copia o conteúdo de [`schema.sql`](./schema.sql) (na raiz do
+   repositório) e cola lá. Clica em **RUN**.
 3. Confira em `Table Editor` se `profiles`, `categories`, `transactions`, `budgets` e
-   `goals` foram criadas.
+   `goals` foram criadas, todas com o cadeado de RLS habilitado.
 
 ### 2) Configurar autenticação
 
