@@ -1,18 +1,9 @@
 "use client"
 
 
-//import { Button } from "@/components/ui/button";
 
-
-
-//import { ArrowDownLeft, ArrowUpRight, CalendarDays, Tags, Text, Pencil } from "lucide-react";
-
-
-//import { TransactionDialog } from "@/components/transactions/transaction-dialog";
-
-//import { DeleteTransactionButton } from "@/components/transactions/delete-transaction-button";
 import { useTransactions} from "@/hooks/use-transactions";
-//import { useCategories, type Categories } from "@/hooks/use-categories"; 
+
 import { DataTable } from "./data-table/data-table";
 import { columns } from "./data-table/columns";
 
