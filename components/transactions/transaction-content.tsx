@@ -1,17 +1,12 @@
 "use client"
 
-import { DataTable } from "@/components/data-table/data-table";
-import { DataTableAdvancedToolbar } from "@/components/data-table/data-table-advanced-toolbar";
-//import { DataTableFilterList } from "@/components/data-table/data-table-filter-list";
-//import { DataTableSortList } from "@/components/data-table/data-table-sort-list";
-import { useDataTable } from "@/hooks/use-data-table";
 
 import { Button } from "@/components/ui/button";
 
 
-import type { ColumnDef } from "@tanstack/react-table";
+
 import { ArrowDownLeft, ArrowUpRight, CalendarDays, Tags, Text, Pencil } from "lucide-react";
-import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
+
 
 import { TransactionDialog } from "@/components/transactions/transaction-dialog";
 import { useTransactions, type Transaction } from "@/hooks/use-transactions";

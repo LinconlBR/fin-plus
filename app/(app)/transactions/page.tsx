@@ -1,10 +1,10 @@
-import { NuqsAdapter } from "nuqs/adapters/next/app";
+
 import { TransactionsContent } from "@/components/transactions/transaction-content";
 import { TransactionDialog } from "@/components/transactions/transaction-dialog";
 
 export default function Transactions() {
-  return (  
-    <NuqsAdapter>      
+  return ( 
+    <>
       <div className="border-b bg-background px-6 py-5 text-center md:px-8">
         <h1 className="text-2xl font-bold tracking-tight text-foreground md:text-3xl">
           Transações
@@ -16,6 +16,6 @@ export default function Transactions() {
       <div className="fixed bottom-4 right-4 z-50">
         <TransactionDialog />
       </div>
-    </NuqsAdapter>
+    </>
   );
 }
