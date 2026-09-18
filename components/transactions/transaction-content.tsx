@@ -26,11 +26,11 @@ export function TransactionsContent() {
 
      const transactions = data ?? []
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <div>Carregando...</div>;
   }
 
   if (isError) {
-    return <div>Error occurred while fetching transactions.</div>;
+    return <div>Erro ao buscar transações.</div>;
   }
   
   return (
