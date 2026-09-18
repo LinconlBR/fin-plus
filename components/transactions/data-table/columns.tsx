@@ -54,16 +54,16 @@ export const columns = columnHelper.columns([
     },
     cell: ({ row }) => {
       const transaction = row.original
-      const [icon, category, color] = transaction.category
+      const { icon, name, color } = transaction.category
       return (
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2" style={{ color }}>
           {icon && (
             <div
               className="h-3 w-3 rounded-full"
               style={{ backgroundColor: color  }}
             />
           )}
-          {category}
+          {name}
         </div>
       )
     },
@@ -81,7 +81,7 @@ export const columns = columnHelper.columns([
       )
     },
     cell: ({ row }) => {
-      const tipo = row.original.category[3] ?? "income"  // Extrai o tipo da categoria (income ou expense)
+      const tipo = row.original.type ?? "income"  // Extrai o tipo da categoria (income ou expense)
       const amount = parseFloat(row.getValue("amount"))
       const formatted = new Intl.NumberFormat("pt-BR", {
         style: "currency",

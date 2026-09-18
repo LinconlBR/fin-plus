@@ -27,8 +27,9 @@ type TransactionRow = {
 export type Transaction = {
   id: string
   title: string
-  category: [string, string, string, "income" | "expense"] // icon, name, color, type
+  category: { name: string; icon: string; color: string }
   category_id: string
+  type: "income" | "expense"
   createdAt: string
   amount: number
 }
@@ -44,7 +45,7 @@ async function fetchTransactions(): Promise<Transaction[]> {
   // numa única query — sem precisar de duas buscas separadas.
   const { data, error } = await supabase
     .from("transactions")
-    .select("*, categories(name)")
+    .select("*, categories(name, icon, color)")
     .order("date", { ascending: false })
 
   // Se der erro, o TanStack Query precisa que a gente "jogue" (throw) esse erro —
@@ -67,7 +68,12 @@ async function fetchTransactions(): Promise<Transaction[]> {
     title: row.description ?? "Sem descrição",
     // row.categories pode ser null (categoria apagada, lembra da FK com "set null"
     // que configuramos lá no schema) — por isso o fallback "Sem categoria".
-    category: [row.categories?.icon ?? "  ", row.categories?.name ?? "Sem categoria", row.categories?.color ?? "#FFFFFF", row.type ?? "income"],
+    category: {
+      name: row.categories?.name ?? "Sem categoria",
+      icon: row.categories?.icon ?? "Tag", // "Tag" como ícone genérico de fallback
+      color: row.categories?.color ?? "#94a3b8",
+    },
+    type: row.type,
     category_id: row.category_id ?? "",
     createdAt: row.date ?? new Date().toISOString(),
     amount: Number(row.amount), // mesmo cuidado de sempre: numeric pode vir como string
