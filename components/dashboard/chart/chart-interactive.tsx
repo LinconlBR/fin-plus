@@ -36,11 +36,11 @@ export const description = "Este gráfico interativo mostra a evolução das rec
 const chartConfig = {
   currentBalance: {
     label: "Saldo",
-    color: "var(--color-chart-3)",
+    color: "var(--primary)",
   },
   expense: {
     label: "Despesas",
-    color: "var(--color-chart-5)",
+    color: "var(--accent-cyan)",
   },
 } satisfies ChartConfig
 
@@ -68,13 +68,11 @@ export function ChartAreaInteractive({ data }: { data: ChartPoint[] }) {
     startDate.setDate(startDate.getDate() - daysToSubtract)
     return date >= startDate
   })
-
-  console.log(data );
   
   return (
     <Card className="@container/card">
       <CardHeader>
-        <CardTitle>Receitas vs Despesas</CardTitle>
+        <CardTitle>Saldo x Despesas</CardTitle>
         <CardDescription>
           <span className="hidden @[540px]/card:block">
             {timeRange === "90d" && "Total dos últimos 3 meses"}

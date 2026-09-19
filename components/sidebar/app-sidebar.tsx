@@ -163,7 +163,7 @@ export function AppSidebar({
       <SidebarFooter>
         <NavUser user={user} />
       </SidebarFooter>
-      <SidebarRail />
+      <SidebarRail /> 
     </Sidebar>
   )
 }
