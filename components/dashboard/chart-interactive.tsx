@@ -34,8 +34,8 @@ import {
 export const description = "Este gráfico interativo mostra a evolução das receitas e despesas ao longo do tempo. Você pode selecionar diferentes intervalos de tempo para visualizar os dados correspondentes. As áreas coloridas representam as receitas (em verde) e as despesas (em vermelho), permitindo uma comparação visual clara entre os dois fluxos financeiros."
 
 const chartConfig = {
-  income: {
-    label: "Receitas",
+  currentBalance: {
+    label: "Saldo",
     color: "var(--color-chart-3)",
   },
   expense: {
@@ -47,7 +47,7 @@ const chartConfig = {
 
 type ChartPoint = {
   date: string
-  income: number
+  currentBalance: number
   expense: number
 }
 
@@ -196,7 +196,7 @@ export function ChartAreaInteractive({ data }: { data: ChartPoint[] }) {
               stackId="a"
             />
             <Area
-              dataKey="income"
+              dataKey="currentBalance"
               type="natural"
               fill="url(#fillIncome)"
               stroke="var(--color-income)"

@@ -90,24 +90,25 @@ ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90)
   .gte("date", ninetyDaysAgo.toISOString().split("T")[0])
   
   // Agrupa as transações por dia para o gráfico
-  const grouped: Record<string, { income: number; expense: number }> = {}
+  const grouped: Record<string, { currentBalance: number; expense: number }> = {}
   for (const t of transactions90Days ?? []) {
     const day = t.date // já vem como "AAAA-MM-DD"
     // Se ainda não existe um registro para esse dia, inicializa com 0
     if (!grouped[day]) {
-      grouped[day] = { income: 0, expense: 0 }
+      grouped[day] = { currentBalance: 0, expense: 0 }
     }
     // Adiciona o valor da transação ao total do dia, dependendo do tipo
     if (t.type === "income") {
-      grouped[day].income += Number(t.amount)
-    } else {
+      grouped[day].currentBalance += Number(t.amount)
+    } else if (t.type === "expense") {
       grouped[day].expense += Number(t.amount)
+      grouped[day].currentBalance -= Number(t.amount)
     }
   }
   // Converte o objeto agrupado em um array de pontos para o gráfico
   const chartPoints = Object.entries(grouped).map(([date, values]) => ({
     date,
-    income: values.income,
+    currentBalance: values.currentBalance,
     expense: values.expense,
   }))
 
