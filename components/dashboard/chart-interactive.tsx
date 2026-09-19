@@ -134,15 +134,15 @@ export function ChartAreaInteractive({ data }: { data: ChartPoint[] }) {
         >
           <AreaChart data={filteredData}>
             <defs>
-              <linearGradient id="fillIncome" x1="0" y1="0" x2="0" y2="1">
+              <linearGradient id="fillBalance" x1="0" y1="0" x2="0" y2="1">
                 <stop
                   offset="5%"
-                  stopColor="var(--color-income)"
+                  stopColor="var(--color-currentBalance)"
                   stopOpacity={1.0}
                 />
                 <stop
                   offset="95%"
-                  stopColor="var(--color-income)"
+                  stopColor="var(--color-currentBalance)"
                   stopOpacity={0.1}
                 />
               </linearGradient>
@@ -198,8 +198,8 @@ export function ChartAreaInteractive({ data }: { data: ChartPoint[] }) {
             <Area
               dataKey="currentBalance"
               type="natural"
-              fill="url(#fillIncome)"
-              stroke="var(--color-income)"
+              fill="url(#fillBalance)"
+              stroke="var(--color-currentBalance)"
               stackId="a"
             />
           </AreaChart>
