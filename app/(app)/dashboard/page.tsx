@@ -84,33 +84,43 @@ ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90)
 
 
   // -------- Busca as transações dos últimos 90 dias no Supabase (para o gráfico)
+  
+  // Obtém as transações antes dos últimos 90 dias para calcular o saldo inicial
+  const { data: transactionsBefore } = await supabase
+  .from("transactions")
+  .select("*")
+  .lt("date", ninetyDaysAgo.toISOString().split("T")[0])
+  .order("date", { ascending: true })
+
+  // Calcula o saldo inicial antes dos últimos 90 dias
+  const saldoInicial = (transactionsBefore ?? []).reduce((acc, t) => {
+    return t.type === "income" ? acc + Number(t.amount) : acc - Number(t.amount)
+  }, 0)
+
   const { data: transactions90Days } = await supabase
   .from("transactions")
   .select("*")
   .gte("date", ninetyDaysAgo.toISOString().split("T")[0])
-  
+  .order("date", { ascending: true })
+
   // Agrupa as transações por dia para o gráfico
-  const grouped: Record<string, { currentBalance: number; expense: number }> = {}
-  for (const t of transactions90Days ?? []) {
-    const day = t.date // já vem como "AAAA-MM-DD"
-    // Se ainda não existe um registro para esse dia, inicializa com 0
-    if (!grouped[day]) {
-      grouped[day] = { currentBalance: 0, expense: 0 }
-    }
-    // Adiciona o valor da transação ao total do dia, dependendo do tipo
-    if (t.type === "income") {
-      grouped[day].currentBalance += Number(t.amount)
-    } else if (t.type === "expense") {
-      grouped[day].expense += Number(t.amount)
-      grouped[day].currentBalance -= Number(t.amount)
-    }
+  const grouped: Record<string, { net: number; expense: number }> = {}
+for (const t of transactions90Days ?? []) {
+  const day = t.date
+  if (!grouped[day]) grouped[day] = { net: 0, expense: 0 }
+  if (t.type === "income") {
+    grouped[day].net += Number(t.amount)
+  } else {
+    grouped[day].expense += Number(t.amount)
+    grouped[day].net -= Number(t.amount)
   }
+}
   // Converte o objeto agrupado em um array de pontos para o gráfico
-  const chartPoints = Object.entries(grouped).map(([date, values]) => ({
-    date,
-    currentBalance: values.currentBalance,
-    expense: values.expense,
-  }))
+ let saldoAcumulado = saldoInicial
+  const chartPoints = Object.entries(grouped).map(([date, values]) => {
+    saldoAcumulado += values.net
+    return { date, currentBalance: saldoAcumulado, expense: values.expense }
+  })
 
 
   return (
