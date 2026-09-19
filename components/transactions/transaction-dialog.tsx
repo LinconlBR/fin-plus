@@ -83,7 +83,10 @@ export function TransactionDialog({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger render={trigger ?? <Button>+ Nova transação</Button>} />
+      <DialogTrigger render={trigger ?? 
+        <Button className="ml-auto w-fit bg-primary text-primary-foreground hover:bg-primary/90">
+          + Nova transação
+        </Button>} />
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{transaction ? "Editar transação" : "Nova transação"}</DialogTitle>
