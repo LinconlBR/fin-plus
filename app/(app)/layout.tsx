@@ -1,5 +1,6 @@
 import { AppSidebar } from "@/components/sidebar/app-sidebar"
 import DynamicBreadcrumb from "@/components/sidebar/dynamic-breadcrumb"
+import { ThemeToggle } from "@/components/theme-button"
 import { Separator } from "@/components/ui/separator"
 import {
   SidebarInset,
@@ -17,6 +18,7 @@ export default async function Layout({ children }: { children: React.ReactNode }
   const { data: profile } = await supabase.from("profiles").select("*").eq("id", user?.id).single()
 
   return (
+
     <SidebarProvider>
       <AppSidebar user={{ name: profile?.full_name ?? "", email: user?.email ?? "", avatar: "/avatar.svg"}} />
         <SidebarInset>
@@ -32,6 +34,7 @@ export default async function Layout({ children }: { children: React.ReactNode }
             </header>
         {children}
         </SidebarInset>
+        <ThemeToggle />
     </SidebarProvider>
 
     
