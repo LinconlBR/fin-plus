@@ -26,7 +26,7 @@ import { useForm } from "@tanstack/react-form"
 // useMutation é um hook do React Query que permite gerenciar o estado de uma operação assíncrona, como uma requisição HTTP. Ele fornece informações sobre o estado da operação (pendente, sucesso, erro) e permite executar funções quando a operação é concluída com sucesso ou falha.
 import { useMutation } from "@tanstack/react-query"
 // signupSchema é um schema Zod que define a validação dos campos do formulário de cadastro. Ele garante que os dados enviados para a Server Action estejam no formato correto e atendam aos requisitos de validação.
-import { signupSchema } from "@/lib/schema/signupSchema"
+import { signupSchema } from "@/lib/schema/signup"
 
 
 

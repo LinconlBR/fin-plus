@@ -73,7 +73,7 @@ const financeIllustration = `data:image/svg+xml;charset=UTF-8,${encodeURICompone
 import { login,signInWithFacebook, signInWithGoogle } from "@/lib/actions/auth"
 import { useForm } from "@tanstack/react-form"
 import { useMutation } from "@tanstack/react-query"
-import { loginSchema } from "@/lib/schema/loginSchema"
+import { loginSchema } from "@/lib/schema/login"
 
 
 export function LoginForm({

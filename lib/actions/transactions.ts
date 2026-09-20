@@ -2,7 +2,6 @@
 "use server"
 
 import { createClient } from "@/lib/supabase/server"
-import { revalidatePath } from "next/cache"
 import { transactionSchema } from "@/lib/schema/transactions"
 
 export async function createTransaction(formData: FormData) {
@@ -59,8 +58,6 @@ export async function createTransaction(formData: FormData) {
     if (error) {
         throw new Error(error.message)
     }
-
-    revalidatePath("/transactions")
 }
 
 export async function updateTransaction(id: string, formData: FormData) {
@@ -113,8 +110,6 @@ export async function updateTransaction(id: string, formData: FormData) {
     if (error) {
         throw new Error(error.message)
     }
-
-    revalidatePath("/transactions")
 }
 
 // Server Action que valida a sessão e deleta transações financeiras no Supabase.

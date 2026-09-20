@@ -1,5 +1,3 @@
-
-
 // Schema Zod que valida os campos obrigatórios e os valores permitidos do cadastro de usuário.
 
 import { z } from "zod"

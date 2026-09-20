@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { Lightbulb, Pencil } from "lucide-react"
-
+import { Badge } from "@/components/ui/badge"
 
 import { useQuery } from "@tanstack/react-query"
 import { generateBudgetInsight } from "@/lib/actions/ai"
@@ -25,18 +25,21 @@ const statusStyles = {
     text: "text-destructive",
     indicator: "bg-destructive",
     border: "border-destructive/40 shadow-glow-danger",
+    badgeVariant: "destructive" as const,
   },
   atencao: {
     label: "Quase no limite",
     text: "text-warning",
     indicator: "bg-warning",
     border: "border-transparent",
+    badgeVariant: "warning" as const,
   },
   normal: {
     label: "Dentro do limite",
     text: "text-success",
     indicator: "bg-success",
     border: "border-transparent",
+    badgeVariant: "success" as const,
   },
 }
 // Função para determinar o status do orçamento com base no gasto e no valor alvo
@@ -230,9 +233,9 @@ export function BudgetsContent() {
               <Progress value={percentage} indicatorClassName={styles.indicator} />
  
               <div className="flex items-baseline justify-between">
-                <span className={`text-sm font-medium ${styles.text}`}>
+                <Badge variant={styles.badgeVariant}>
                   {styles.label}
-                </span>
+                </Badge>
                 <span className="text-sm text-muted-foreground">
                   {currencyFormatter.format(budget.spent)} /{" "}
                   {currencyFormatter.format(budget.targetAmount)}
