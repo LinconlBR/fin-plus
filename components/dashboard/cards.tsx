@@ -1,23 +1,17 @@
-import { TrendingDown, TrendingUp } from "lucide-react"
+import { ArrowDownLeft, ArrowUpRight, Wallet } from "lucide-react"
 
 import { createClient } from "@/lib/supabase/server"
-import { Badge } from "@/components/ui/badge"
-import {
-  Card,
-  CardAction,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
+import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { cn } from "@/lib/utils"
 
 interface CardData {
   label: string
   value: string
-  trend: "up" | "down"
-  trendLabel: string
-  description: string
-  comment?: string
+  icon: React.ReactNode
+  dotColor: string
+  iconBg: string
+  borderColor?: string
+  trendLabel?: string
 }
 
 function generateCardData(
@@ -27,29 +21,29 @@ function generateCardData(
 ): CardData[] {
   return [
     {
-      label: "Receitas",
-      value: totalIncome.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }),
-      trend: "up",
-      trendLabel: "",
-      description: "receitas totais para o mês atual",
-      comment: "Estas são as receitas totais para o mês atual.",
-    },
-    {
-      label: "Despesas",
-      value: totalExpenses.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }),
-      trend: "down",
-      trendLabel: "",
-      description: "despesas totais para o mês atual",
-      comment: "Estas são as despesas totais para o mês atual.",
-    },
-    {
-      label: "Saldo",
+      label: "Saldo Atual",
       value: balance.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }),
-      trend: balance >= 0 ? "up" : "down",
-      trendLabel: "",
-      description: "saldo líquido para o mês atual",
-      comment:
-        "Este é o saldo líquido após subtrair as despesas totais das receitas totais para o mês atual.",
+      icon: <Wallet className="size-4 text-accent-violet" />,
+      dotColor: "bg-accent-violet",
+      iconBg: "bg-accent-violet/15",
+    },
+    {
+      label: "Receitas do Mês",
+      value: totalIncome.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }),
+      icon: <ArrowUpRight className="size-4 text-income" />,
+      dotColor: "bg-income",
+      iconBg: "bg-income/15",
+      borderColor: "border-income/60 shadow-glow-secondary",
+      trendLabel: "+12% em relação ao mês anterior",
+    },
+    {
+      label: "Despesas do Mês",
+      value: totalExpenses.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }),
+      icon: <ArrowDownLeft className="size-4 text-expense" />,
+      dotColor: "bg-expense",
+      iconBg: "bg-expense/15",
+      borderColor: "border-expense/60 shadow-glow-primary",
+      trendLabel: "-8% em relação ao mês anterior",
     },
   ]
 }
@@ -103,37 +97,31 @@ export async function DashboardCards() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 px-4 *:data-[slot=card]:bg-linear-to-t *:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card *:data-[slot=card]:shadow-xs lg:px-6 sm:grid-cols-3 dark:*:data-[slot=card]:bg-card">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         {cards.map((card) => (
-          <Card key={card.label} className="@container/card">
-            <CardHeader>
-              <CardDescription>{card.label}</CardDescription>
-              <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-                {card.value}
-              </CardTitle>
-              <CardAction>
-                <Badge variant="outline">
-                  {card.trend === "up" ? (
-                    <span className="--color-success">
-                      <TrendingUp className="text-success" />
-                    </span>
-                  ) : (
-                    <span className="text-destructive">
-                      <TrendingDown />
-                    </span>
-                  )}
-                  {card.trendLabel}
-                </Badge>
-              </CardAction>
+          <Card
+            key={card.label}
+            className={cn("border", card.borderColor)}
+          >
+            <CardHeader className="flex flex-row items-start justify-between">
+              <div>
+                <CardDescription className="flex items-center gap-1.5">
+                  <span className={cn("size-1.5 rounded-full", card.dotColor)} />
+                  {card.label}
+                </CardDescription>
+                <CardTitle className="mt-1 text-2xl font-semibold tabular-nums">
+                  {card.value}
+                </CardTitle>
+              </div>
+              <div className={cn("flex size-8 items-center justify-center rounded-md", card.iconBg)}>
+                {card.icon}
+              </div>
             </CardHeader>
-            <CardFooter className="flex-col items-start gap-1.5 text-sm">
-              <div className="line-clamp-1 flex gap-2 font-medium">
-                {card.description}
+            {card.trendLabel && (
+              <div className="px-6 pb-4 text-xs text-muted-foreground">
+                {card.trendLabel}
               </div>
-              <div className="text-muted-foreground">
-                {card.comment ? card.comment : "Sem comentários"}
-              </div>
-            </CardFooter>
+            )}
           </Card>
         ))}
       </div>

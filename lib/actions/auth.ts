@@ -2,9 +2,9 @@
 "use server"
 
 import { createClient } from '@/lib/supabase/server'
-import { signupSchema } from '@/lib/schema/signupSchema'
+import { signupSchema } from '@/lib/schema/signup'
 import { redirect } from 'next/navigation'
-import { loginSchema } from '../schema/loginSchema'
+import { loginSchema } from '../schema/login'
 
 
 export async function login( formData: FormData) {

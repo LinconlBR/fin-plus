@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { Lightbulb, Pencil } from "lucide-react"
-
+import { Badge } from "@/components/ui/badge"
 
 import { useQuery } from "@tanstack/react-query"
 import { generateBudgetInsight } from "@/lib/actions/ai"
@@ -24,19 +24,22 @@ const statusStyles = {
     label: "Excedido",
     text: "text-destructive",
     indicator: "bg-destructive",
-    border: "border-destructive/40",
+    border: "border-destructive/40 shadow-glow-danger",
+    badgeVariant: "destructive" as const,
   },
   atencao: {
     label: "Quase no limite",
-    text: "text-amber-600",
-    indicator: "bg-amber-500",
+    text: "text-warning",
+    indicator: "bg-warning",
     border: "border-transparent",
+    badgeVariant: "warning" as const,
   },
   normal: {
     label: "Dentro do limite",
-    text: "text-emerald-600",
-    indicator: "bg-emerald-500",
+    text: "text-success",
+    indicator: "bg-success",
     border: "border-transparent",
+    badgeVariant: "success" as const,
   },
 }
 // Função para determinar o status do orçamento com base no gasto e no valor alvo
@@ -177,19 +180,19 @@ export function BudgetsContent() {
           <p className="text-2xl font-medium">{budgets.length}</p>
         </CardContent>
       </Card>
-      <Card>
+      <Card className={exceededCount > 0 ? "border-destructive/40 shadow-glow-danger" : undefined}>
         <CardContent>
           <p className="text-sm text-muted-foreground">Excedidos</p>
           <p className="text-2xl font-medium text-destructive">{exceededCount}</p>
         </CardContent>
       </Card>
     </div>
- 
+
     {/* Insight */}
     {(aiInsight || budgetInsight) && (
-        <div className="flex items-start gap-3 rounded-lg bg-amber-50 p-4 dark:bg-amber-950/30">
-            <Lightbulb className="mt-0.5 size-4 shrink-0 text-amber-600" />
-            <p className="text-sm text-amber-800 dark:text-amber-400">{aiInsight || budgetInsight}</p>
+        <div className="flex items-start gap-3 rounded-lg border border-border bg-accent-violet/10 p-4">
+            <Lightbulb className="mt-0.5 size-4 shrink-0 text-accent-violet" />
+            <p className="text-sm text-foreground/90">{aiInsight || budgetInsight}</p>
         </div>
     )}
  
@@ -230,9 +233,9 @@ export function BudgetsContent() {
               <Progress value={percentage} indicatorClassName={styles.indicator} />
  
               <div className="flex items-baseline justify-between">
-                <span className={`text-sm font-medium ${styles.text}`}>
+                <Badge variant={styles.badgeVariant}>
                   {styles.label}
-                </span>
+                </Badge>
                 <span className="text-sm text-muted-foreground">
                   {currencyFormatter.format(budget.spent)} /{" "}
                   {currencyFormatter.format(budget.targetAmount)}

@@ -6,6 +6,7 @@ import { ArrowUpDown , Pencil} from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { TransactionDialog } from "@/components/transactions/transaction-dialog"
 import { DeleteTransactionButton } from "@/components/transactions/delete-transaction-button"
+import { CategoryIcon } from "@/components/category-icons"
 
 
 import { type DataTableFeatures } from "./data-table-features"
@@ -47,14 +48,11 @@ export const columns = columnHelper.columns([
     cell: ({ row }) => {
       const transaction = row.original
       const { icon, name, color } = transaction.category
+      // Mesmo componente usado no Dashboard (últimas transações) — antes
+      // essa coluna mostrava só uma bolinha colorida, sem o ícone real.
       return (
-        <div className="flex items-center gap-2" style={{ color }}>
-          {icon && (
-            <div
-              className="h-3 w-3 rounded-full"
-              style={{ backgroundColor: color  }}
-            />
-          )}
+        <div className="flex items-center gap-2">
+          <CategoryIcon icon={icon} color={color} />
           {name}
         </div>
       )
@@ -81,9 +79,9 @@ export const columns = columnHelper.columns([
       }).format(amount)
  
         if (tipo === "expense") {
-          return <div className="text-left font-medium text-red-500">{formatted}</div>
-        } else {      
-       return <div className="text-left font-medium text-green-500" >{formatted}</div>
+          return <div className="text-left font-medium text-expense">{formatted}</div>
+        } else {
+       return <div className="text-left font-medium text-income" >{formatted}</div>
       }
     },
   }),

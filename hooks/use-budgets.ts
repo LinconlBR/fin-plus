@@ -76,9 +76,15 @@ export async function fetchBudgetsWithSpent(): Promise<BudgetWithSpent[]> {
 
     if (!range) return { ...budget, spent: 0 }
 
+    // budget.category_id !== null é a correção do furo de dado: sem essa
+    // checagem explícita, um orçamento órfão (categoria apagada,
+    // category_id = null) bateria com QUALQUER transação também órfã
+    // (category_id = null), já que null === null é `true` em JavaScript —
+    // somando gastos de categorias completamente diferentes por engano.
     const spent = (transactions ?? [])
       .filter(
         (t) =>
+          budget.category_id !== null &&
           t.category_id === budget.category_id &&
           t.date >= range.start &&
           t.date <= range.end
@@ -98,4 +104,3 @@ export function useBudgets() {
     queryFn: fetchBudgetsWithSpent,
   })
 }
-

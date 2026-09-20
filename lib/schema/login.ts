@@ -1,4 +1,3 @@
-
 // Schema Zod que valida os campos obrigatórios e os valores permitidos do login.
 import { z } from "zod"
 
