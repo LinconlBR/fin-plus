@@ -36,11 +36,11 @@ export const description = "Este gráfico interativo mostra a evolução das rec
 const chartConfig = {
   currentBalance: {
     label: "Saldo",
-    color: "var(--primary)",
+    color: "var(--accent-cyan)",
   },
   expense: {
     label: "Despesas",
-    color: "var(--accent-cyan)",
+    color: "var(--primary)",
   },
 } satisfies ChartConfig
 

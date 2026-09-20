@@ -46,8 +46,8 @@ export async function DashboardLastTransactions() {
               <span
                 className={
                   t.type === "income"
-                    ? "text-sm font-medium text-emerald-600"
-                    : "text-sm font-medium text-destructive"
+                    ? "text-sm font-medium text-income"
+                    : "text-sm font-medium text-expense"
                 }
               >
                 {t.type === "income" ? "+" : "-"}

@@ -51,7 +51,7 @@ export function DeleteTransactionButton({ id }: { id: string }) {
           {/* onClick aqui dispara a mutation ANTES do AlertDialogAction fechar
               o dialog — os dois acontecem, sem conflito, porque um é o clique
               em si e o outro é o fechamento visual do modal. */}
-          <AlertDialogAction onClick={() => mutation.mutate()}>
+          <AlertDialogAction variant="destructive-solid" onClick={() => mutation.mutate()}>
             Apagar
           </AlertDialogAction>
         </AlertDialogFooter>

@@ -7,7 +7,7 @@ export function DashboardInsights() {
   return (
     <Card>
       <CardHeader className="flex flex-row items-center gap-2">
-        <Lightbulb className="size-4 text-amber-500" />
+        <Lightbulb className="size-4 text-accent-violet" />
         <CardTitle>Dicas Financeiras</CardTitle>
       </CardHeader>
       <CardContent>

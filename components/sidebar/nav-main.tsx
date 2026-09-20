@@ -1,6 +1,7 @@
 "use client"
 
 import { usePathname } from "next/navigation"
+import { cn } from "@/lib/utils"
 import {
   Collapsible,
   CollapsibleContent,
@@ -76,7 +77,12 @@ export function NavMain({
                 <SidebarMenuButton
                   render={<a href={item.url} />}
                   isActive={isActive}
-                  className={isActive ? "border border-[#2e1065]" : "border border-transparent"}
+                  className={cn(
+                    "border",
+                    isActive
+                      ? "border-sidebar-accent-foreground/30 dark:border-transparent dark:shadow-glow-primary"
+                      : "border-transparent"
+                  )}
                 >
                   {item.icon}
                   <span>{item.title}</span>

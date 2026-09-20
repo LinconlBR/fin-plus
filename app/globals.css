@@ -6,6 +6,13 @@
 
 @theme inline {
   --color-accent-cyan: var(--accent-cyan);
+  --color-accent-violet: var(--accent-violet);
+  --color-warning: var(--warning);
+  --color-income: var(--income);
+  --color-expense: var(--expense);
+  --shadow-glow-primary: var(--glow-primary);
+  --shadow-glow-secondary: var(--glow-secondary);
+  --shadow-glow-danger: var(--glow-danger);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);
@@ -57,8 +64,12 @@
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --accent-cyan: #0891b2;
-  --primary: #db2777;
+  --accent-cyan: #06b6d4;
+  --accent-violet: #8b5cf6;
+  --warning: #6366f1;
+  --income: var(--accent-cyan);
+  --expense: var(--primary);
+  --primary: #ec4899;
   --primary-foreground: oklch(0.987 0.022 95.277);
   --secondary: oklch(0.967 0.001 286.375);
   --secondary-foreground: oklch(0.21 0.006 285.885);
@@ -75,7 +86,7 @@
   --chart-3: oklch(0.666 0.179 58.318);
   --chart-4: oklch(0.555 0.163 48.998);
   --chart-5: oklch(0.473 0.137 46.201);
-  --radius: 0.625rem;
+  --radius: 0.875rem;
   --sidebar: #c1befd;
   --sidebar-primary: oklch(0.666 0.179 58.318);
   --sidebar-foreground: oklch(0.145 0 0);
@@ -84,7 +95,10 @@
   --sidebar-accent-foreground: #2e1065;
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
-  --success: oklch(54.15% 0.17948 142.606);
+  --success: #0d9488;
+  --glow-primary: 0 0 0 1px rgba(236, 72, 153, 0.25), 0 6px 16px rgba(236, 72, 153, 0.20);
+  --glow-secondary: 0 0 0 1px rgba(6, 182, 212, 0.25), 0 6px 16px rgba(6, 182, 212, 0.16);
+  --glow-danger: 0 0 0 1px rgba(244, 63, 94, 0.25), 0 6px 16px rgba(244, 63, 94, 0.18);
 }
 
 .dark {
@@ -96,6 +110,11 @@
   --popover-foreground: oklch(0.985 0 0);
   --primary: #ec4899;
   --accent-cyan: #22d3ee;
+  --accent-violet: #8b5cf6;
+  --warning: #818cf8;
+  --income: var(--accent-cyan);
+  --expense: var(--primary);
+  --success: #2dd4bf;
   --primary-foreground: oklch(0.987 0.022 95.277);
   --secondary: oklch(0.274 0.006 286.033);
   --secondary-foreground: oklch(0.985 0 0);
@@ -116,10 +135,13 @@
   --sidebar-foreground: oklch(0.985 0 0);
   --sidebar-primary: oklch(0.769 0.188 70.08);
   --sidebar-primary-foreground: oklch(0.279 0.077 45.635);
-  --sidebar-accent: oklch(0.269 0 0); /* mantém o que já tinha, funciona bem no escuro */
-  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-accent: rgba(236, 72, 153, 0.14); /* item ativo/hover ganha o glow rosa da marca */
+  --sidebar-accent-foreground: #ec4899;
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+  --glow-primary: 0 0 0 1px rgba(236, 72, 153, 0.45), 0 8px 24px rgba(236, 72, 153, 0.35);
+  --glow-secondary: 0 0 0 1px rgba(34, 211, 238, 0.40), 0 8px 24px rgba(34, 211, 238, 0.25);
+  --glow-danger: 0 0 0 1px rgba(244, 63, 94, 0.45), 0 8px 24px rgba(244, 63, 94, 0.30);
 }
 
 @layer base {

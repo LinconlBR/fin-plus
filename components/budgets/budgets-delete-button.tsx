@@ -48,7 +48,7 @@ export function DeleteBudgetButton({ id }: { id: string }) {
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Cancelar</AlertDialogCancel>
-          <AlertDialogAction onClick={() => mutation.mutate()}>
+          <AlertDialogAction variant="destructive-solid" onClick={() => mutation.mutate()}>
             Apagar
           </AlertDialogAction>
         </AlertDialogFooter>

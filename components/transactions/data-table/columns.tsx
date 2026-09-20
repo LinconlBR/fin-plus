@@ -81,9 +81,9 @@ export const columns = columnHelper.columns([
       }).format(amount)
  
         if (tipo === "expense") {
-          return <div className="text-left font-medium text-red-500">{formatted}</div>
-        } else {      
-       return <div className="text-left font-medium text-green-500" >{formatted}</div>
+          return <div className="text-left font-medium text-expense">{formatted}</div>
+        } else {
+       return <div className="text-left font-medium text-income" >{formatted}</div>
       }
     },
   }),
