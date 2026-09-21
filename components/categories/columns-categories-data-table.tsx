@@ -40,6 +40,11 @@ export const categoriesColumns = columnHelper.columns([
         </Button>
       )
     },
+    cell: ({ row }) => (
+        <span className={row.original.type === "income" ? "text-income" : "text-expense"}>
+        {row.original.type === "income" ? "Receita" : "Despesa"}
+        </span>
+    ),
   }),
   columnHelper.accessor("icon", {
     header: ({ column }) => {
@@ -53,19 +58,9 @@ export const categoriesColumns = columnHelper.columns([
         </Button>
       )
     },
-  }),
-  columnHelper.accessor("color", {
-    header:  ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Cor
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      )
-    },
+    cell: ({ row }) => (
+        <CategoryIcon icon={row.original.icon} color={row.original.color} />
+    ),
   }),
   columnHelper.display({
     id: "actions",
