@@ -39,7 +39,7 @@ export function NavMain({
   const pathname = usePathname()
   return (
     <SidebarGroup>
-      <SidebarGroupLabel>Platform</SidebarGroupLabel>
+      {/* <SidebarGroupLabel>Plataforma</SidebarGroupLabel> */}
       <SidebarMenu>
         {items.map((item) => {
           if (item.items && item.items.length > 0) {

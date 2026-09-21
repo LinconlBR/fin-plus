@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server"
-import { CategoryIcon } from "@/components/category-icons"
+import { CategoryIcon } from "@/components/categories/category-icons"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 const dateFormatter = new Intl.DateTimeFormat("pt-BR", {

@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query"
 import { createClient } from "@/lib/supabase/client"
 import { getBudgetPeriodRange } from "@/lib/budgets"
 
+// define o schema que vem da daatabase, que é diferente do schema que a gente quer usar na UI
 type BudgetRow = {
   id: string
   category_id: string | null
@@ -15,6 +16,7 @@ type BudgetRow = {
   is_recurring: boolean
 }
 
+// define o schema que a gente quer usar na UI, que é diferente do schema que vem da database
 export type Budget = {
     id: string
     category_id: string | null
@@ -26,6 +28,7 @@ export type Budget = {
     isRecurring: boolean
 }
 
+// busca os orçamentos do Supabase e transforma o schema da database para o schema que a gente quer usar na UI
 async function fetchBudgets(): Promise<Budget[]> {
     const supabase = createClient()
 
@@ -54,6 +57,7 @@ async function fetchBudgets(): Promise<Budget[]> {
 
 export type BudgetWithSpent = Budget & { spent: number }
 
+// busca os orçamentos do Supabase, calcula o gasto de cada orçamento e transforma o schema da database para o schema que a gente quer usar na UI
 export async function fetchBudgetsWithSpent(): Promise<BudgetWithSpent[]> {
   const supabase = createClient()
   const budgets = await fetchBudgets()
@@ -95,12 +99,15 @@ export async function fetchBudgetsWithSpent(): Promise<BudgetWithSpent[]> {
   })
 }
 
+// hook tanstack query para buscar os orçamentos do Supabase, calcular o gasto de cada orçamento e transformar 
+// o schema da database para o schema que a gente quer usar na UI
 export function useBudgets() {
   return useQuery({
     // queryKey identifica essa busca de forma única no cache do TanStack Query —
     // é como uma "chave de dicionário". Se outro componente pedir a mesma
     // queryKey, o TanStack Query reaproveita o cache em vez de buscar de novo.
     queryKey: ["budgets"],
+    // queryFn é a função que vai buscar os dados de fato. Ela pode ser assíncrona e retornar uma Promise.
     queryFn: fetchBudgetsWithSpent,
   })
 }

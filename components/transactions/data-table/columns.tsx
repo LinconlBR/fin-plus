@@ -6,7 +6,7 @@ import { ArrowUpDown , Pencil} from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { TransactionDialog } from "@/components/transactions/transaction-dialog"
 import { DeleteTransactionButton } from "@/components/transactions/delete-transaction-button"
-import { CategoryIcon } from "@/components/category-icons"
+import { CategoryIcon } from "@/components/categories/category-icons"
 
 
 import { type DataTableFeatures } from "./data-table-features"
