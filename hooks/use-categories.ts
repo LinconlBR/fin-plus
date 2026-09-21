@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/client"
 
 
 
-export type Categories = {
+export type Category = {
     id: string;
     name: string;
     type: "income" | "expense";
@@ -14,7 +14,7 @@ export type Categories = {
     color: string;
 }
 
-async function fetchCategories(): Promise<Categories[]> { 
+async function fetchCategories(): Promise<Category[]> { 
     const supabase = createClient()
     const { data, error } = await supabase
     .from("categories")
@@ -28,7 +28,7 @@ async function fetchCategories(): Promise<Categories[]> {
         throw new Error("No data returned from categories query")
     }
 
-    return (data as Categories[]).map((row) => ({
+    return (data as Category[]).map((row) => ({
         id: row.id,
         name: row.name,
         type: row.type,

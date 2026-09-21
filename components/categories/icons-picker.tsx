@@ -17,6 +17,7 @@ export function IconsPicker({ value, onChange }: IconsPickerProps) {
 
 				return (
 					<Button
+                        size="icon"
                         variant="ghost"
 						key={name}
 						type="button"
