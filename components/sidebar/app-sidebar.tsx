@@ -12,16 +12,10 @@ import {
   SidebarHeader,
   SidebarRail,
 } from "@/components/ui/sidebar"
-import {  LayoutDashboard, ArrowRightLeft, HandCoins, Goal  ,ChartColumn , BadgeSwissFranc, Settings, Lightbulb } from "lucide-react"
+import {  LayoutDashboard, ArrowRightLeft, HandCoins, Goal  ,ChartColumn , BadgeSwissFranc, Lightbulb, Columns3Cog} from "lucide-react"
 
 // This is sample data.
-const data = {
-  user: {
-    name: "shadcn",
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
-  },
-  navMain: [
+const navMain = [
     {
       title: "Dashboard",
       url: "/dashboard",
@@ -81,6 +75,10 @@ const data = {
           title: "Receitas vs despesas",
           url: "/reports/income-vs-expenses",
         },
+        {
+          title: "Projeção de saldo",
+          url: "/reports/balance-projection",
+        }
       ],
     },
     {
@@ -95,18 +93,25 @@ const data = {
       ],
     },
     {
-      title: "Configurações",
-      url: "/settings",
+      title: "Personalizar",
+      url: "/customize",
       icon: (
-        <Settings
+        <Columns3Cog
         />
       ),
       items: [
-        
+        {
+          title: "Dashboard",
+          url: "/customize/dashboard",
+        },
+        {
+          title: "Categorias",
+          url: "/customize/categories",
+        },
       ],
     },
-  ],
-}
+  ]
+
 
 export function AppSidebar({
   user,
@@ -127,8 +132,8 @@ export function AppSidebar({
             </div>
          </div>
       </SidebarHeader>
-      <SidebarContent>
-        <NavMain items={data.navMain} />
+      <SidebarContent className="flex-1 my-4">
+        <NavMain items={navMain} />
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={user} />

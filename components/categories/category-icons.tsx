@@ -14,7 +14,7 @@ import {
 
 // Lista curada de ícones relevantes ao domínio do app — importados nomeados
 // (não `import *`), pra manter o tree-shaking funcionando e o bundle pequeno.
-const iconMap: Record<string, LucideIcon> = {
+export const iconMap: Record<string, LucideIcon> = {
   UtensilsCrossed, Coffee, Pizza, Beer, ShoppingCart,
   Car, Bus, Bike, Train, Fuel, Plane,
   Home, Building2, Key, Lightbulb, Wrench, Wifi,

@@ -5,8 +5,8 @@ import { useState } from "react"
 import { useTransactions } from "@/hooks/use-transactions"
 import { useCategories } from "@/hooks/use-categories"
 
-import { DataTable } from "./data-table/data-table"
-import { columns } from "./data-table/columns"
+import { DataTable } from "../ui/data-table/data-table"
+import { transactionsColumns } from "@/components/transactions/columns-transactions-data-table"
 
 import { Input } from "@/components/ui/input"
 import {
@@ -107,7 +107,7 @@ export function TransactionsContent() {
         </Select>
       </div>
 
-      <DataTable columns={columns} data={filteredTransactions} />
+      <DataTable columns={transactionsColumns} data={filteredTransactions} />
     </div>
   )
 }

@@ -45,6 +45,7 @@ export function TransactionDialog({
   const { data: categories } = useCategories()
   const queryClient = useQueryClient()
 
+  // Mutation para criar ou atualizar a transação
   const mutation = useMutation({
     mutationFn: async (formData: FormData) => {
       if (transaction) {

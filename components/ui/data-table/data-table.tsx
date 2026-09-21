@@ -26,7 +26,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 
-import { features, type DataTableFeatures } from "@/components/transactions/data-table/data-table-features"
+import { features, type DataTableFeatures } from "@/components/ui/data-table/data-table-features"
 import { useState } from "react"
 
 interface DataTableProps<TData extends RowData> {

@@ -6,10 +6,10 @@ import { ArrowUpDown , Pencil} from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { TransactionDialog } from "@/components/transactions/transaction-dialog"
 import { DeleteTransactionButton } from "@/components/transactions/delete-transaction-button"
-import { CategoryIcon } from "@/components/category-icons"
+import { CategoryIcon } from "@/components/categories/category-icons"
 
 
-import { type DataTableFeatures } from "./data-table-features"
+import { type DataTableFeatures } from "@/components/ui/data-table/data-table-features"
 
 
 import { type Transaction } from "@/hooks/use-transactions"
@@ -19,7 +19,7 @@ import { type Transaction } from "@/hooks/use-transactions"
 // Use `accessor` for data columns and `display` for columns without one.
 const columnHelper = createColumnHelper<DataTableFeatures, Transaction>()
 
-export const columns = columnHelper.columns([
+export const transactionsColumns = columnHelper.columns([
   columnHelper.accessor("title", {
     header: ({ column }) => {
       return (
