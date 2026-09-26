@@ -8,7 +8,7 @@ export async function createGoal(formData: FormData) {
     // 1. validar os dados do formData com o Zod
     const parsed = goalSchema.safeParse({
         name: formData.get("name"),
-        target_amount: Number(formData.get("targetAmount")),
+        target_amount: Number(formData.get("target_amount")),
         deadline: formData.get("deadline")?.toString() || undefined,
     })
 
@@ -44,7 +44,7 @@ export async function updateGoal(id: string, formData: FormData) {
     // 1. validar os dados do formData com o Zod
     const parsed = goalSchema.safeParse({
         name: formData.get("name"),
-        target_amount: Number(formData.get("targetAmount")),
+        target_amount: Number(formData.get("target_amount")),
         deadline: formData.get("deadline")?.toString() || undefined,
     })
 

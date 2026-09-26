@@ -6,7 +6,7 @@ import { goalContributionSchema } from "@/lib/schema/goal-contribution"
 export async function createGoalContribution(formData: FormData) {
     // 1. validar os dados do formData com o Zod
     const parsed = goalContributionSchema.safeParse({
-        goal_id: formData.get("goalId"),
+        goal_id: formData.get("goal_id")?.toString() || undefined,
         amount: Number(formData.get("amount")),
         date: formData.get("date")?.toString() || undefined,
     })
