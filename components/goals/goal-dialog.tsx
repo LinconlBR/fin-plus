@@ -132,7 +132,10 @@ export function GoalDialog({
                                     type="number"
                                     value={field.state.value}
                                     onBlur={field.handleBlur}
-                                    onChange={(e) => field.handleChange(parseFloat(e.target.value))}
+                                    onChange={(e) => {
+                                        const value = parseFloat(e.target.value)
+                                        field.handleChange(isNaN(value) ? 0 : value)
+                                    }}
                                     aria-invalid={isInvalid}
                                     placeholder="Ex: 5000"
                                     />
@@ -153,11 +156,16 @@ export function GoalDialog({
                                     id={field.name}
                                     name={field.name}
                                     type="date"
-                                    value={field.state.value}
+                                    value={field.state.value ?? ""}
                                     onBlur={field.handleBlur}
                                     onChange={(e) => field.handleChange(e.target.value)}
                                     aria-invalid={isInvalid}
                                     />
+                                    {goal?.deadline && new Date(goal.deadline) < new Date() && !isInvalid && (
+                                    <p className="text-sm text-warning">
+                                        Essa meta passou do prazo. Defina um novo prazo pra continuar.
+                                    </p>
+                                    )}
                                     {isInvalid && <FieldError errors={field.state.meta.errors} />}
                                 </Field>
                                 )

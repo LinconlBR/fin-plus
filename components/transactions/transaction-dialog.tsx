@@ -139,7 +139,10 @@ export function TransactionDialog({
                         step="0.01"
                         value={field.state.value}
                         onBlur={field.handleBlur}
-                        onChange={(e) => field.handleChange(Number(e.target.value))}
+                        onChange={(e) => {
+                          const value = parseFloat(e.target.value)
+                          field.handleChange(isNaN(value) ? 0 : value)
+                        }}
                         aria-invalid={isInvalid}
                       />
                       {isInvalid && <FieldError errors={field.state.meta.errors} />}

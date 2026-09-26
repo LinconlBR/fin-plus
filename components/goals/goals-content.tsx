@@ -155,15 +155,21 @@ export function GoalsContent() {
                   </p>
                 )}
 
-                <GoalContributionDialog
-                  goal_id={goal.id}
-                  trigger={
-                    <Button variant="outline" className="w-full">
-                      <Plus className="size-4" />
-                      Adicionar valor
-                    </Button>
-                  }
-                />
+                {status === "concluida" ? (
+                  <p className="text-center text-sm text-muted-foreground">
+                    Meta concluída! Apague-a ou aumente o valor-alvo pra continuar economizando.
+                  </p>
+                ) : (
+                  <GoalContributionDialog
+                    goal_id={goal.id}
+                    trigger={
+                      <Button variant="outline" className="w-full">
+                        <Plus className="size-4" />
+                        Adicionar valor
+                      </Button>
+                    }
+                  />
+                )}
               </CardContent>
             </Card>
           )
