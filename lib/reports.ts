@@ -6,6 +6,18 @@ export type ExpenseRow = {
   category_id: string | null
   categories: { name: string; color: string | null } | null
 }
+export const changeToneClass = {
+  good: "text-success",
+  bad: "text-destructive",
+  neutral: "text-muted-foreground",
+}
+
+export type ChangeTone = "good" | "bad" | "neutral"
+
+export function changeTone(change: number | null, higherIsBetter: boolean): ChangeTone {
+  if (change === null || Math.abs(change) < 0.5) return "neutral"
+  return (change > 0) === higherIsBetter ? "good" : "bad"
+}
 
 
 export function toDateString(date: Date): string {

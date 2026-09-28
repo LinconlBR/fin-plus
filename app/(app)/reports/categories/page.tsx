@@ -1,5 +1,10 @@
-import { parsePeriod , getPreviousPeriodRangeStrings, getPeriodRangeStrings ,groupExpensesByCategory, percentChange , ExpenseRow} from "@/lib/reports"
+import { parsePeriod , changeTone, changeToneClass, getPreviousPeriodRangeStrings, getPeriodRangeStrings ,groupExpensesByCategory, percentChange , ExpenseRow} from "@/lib/reports"
 import { createClient } from "@/lib/supabase/server"
+import { CategoryDonut } from "@/components/reports/categories/category-donut"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
+import { formatPercentChange,formatCurrency } from "@/lib/format";
+import { cn } from "@/lib/utils";
 
 export default async function CategoriesPage(props: PageProps<"/reports/categories">) {
   const { period } = await props.searchParams
@@ -34,22 +39,52 @@ export default async function CategoriesPage(props: PageProps<"/reports/categori
     const categories = currentGroups.items.map((item) => {
       const previousItem = previousGroups.items.find((p) => p.id === item.id)
       const change = percentChange(item.total, previousItem?.total ?? 0)
-      const percentage = (item.total / currentGroups.total) * 100
 
-      return { ...item, change, percentage }
+      return { ...item, change }
     })
 
+    if (currentGroups.total === 0) {
+        return (
+            <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed p-12 text-center">
+            <p className="font-medium">Sem despesas neste período</p>
+            <p className="text-sm text-muted-foreground">Registre transações para ver a distribuição por categoria.</p>
+            </div>
+        )
+    }
 
     return (
-        <ul>
-          {categories.map((item) => (
-            <li key={item.id}>
-              <span>{item.name}</span>{" "}
-              <span>{item.total.toFixed(2)}</span>{" "}
-              <span>{item.change === null ? "—" : item.change.toFixed(1)}</span>
-              <span>{item.percentage.toFixed(1)}</span>
-            </li>
-          ))}
-        </ul>
+        <div className="flex flex-col gap-4 lg:flex-row">
+            <Card className="lg:w-96">
+                <CardHeader>
+                    <CardTitle>Distribuição por Categoria</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <CategoryDonut items={currentGroups.items} total={currentGroups.total} />
+                </CardContent>
+            </Card>
+            <Card className="flex-1">
+                <CardHeader>
+                    <CardTitle>Ranking de Categorias</CardTitle>
+                </CardHeader>
+                <CardContent>   
+                    {categories.map((item) => (
+                    <div key={item.id} className="grid grid-cols-[130px_1fr_96px_64px] items-center gap-4 border-t py-3">
+                    <span className="flex items-center gap-2 text-sm">
+                        <span className="size-2.5 rounded-full" style={{ backgroundColor: item.color }} />
+                        {item.name}
+                    </span>
+                    <div className="h-2 rounded-full bg-muted">
+                        <div className="h-full rounded-full" style={{ width: `${item.percentage}%`, backgroundColor: item.color }} />
+                    </div>
+                        <span className="text-right text-sm font-medium tabular-nums">{formatCurrency(item.total)}</span>
+                        <span className={cn("text-right text-sm", changeToneClass[changeTone(item.change, false)])}>
+                            {formatPercentChange(item.change)}
+                        </span>
+                    </div>
+                    ))}
+                </CardContent>
+            </Card>
+
+        </div>
     )
 }
