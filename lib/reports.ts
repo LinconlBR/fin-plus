@@ -108,3 +108,53 @@ export function groupExpensesByCategory(rows: ExpenseRow[]) {
     return { items, total };
 }
 
+export type MonthlyFlow = {
+  month: string
+  label: string
+  income: number
+  expense: number
+}
+
+
+export function groupByMonth(rows: { amount: number | string; type: "income" | "expense"; date: string }[], monthsCount: number, referenceDate: Date = new Date()): MonthlyFlow[] {
+    const monthlyMap = new Map<string, MonthlyFlow>();
+    const monthLabels = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"]
+    
+    for (let i = 0; i < monthsCount; i++) {
+        const date = new Date(referenceDate.getFullYear(), referenceDate.getMonth() - i, 1);
+
+        const monthKey = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, "0")}`;
+
+        monthlyMap.set(monthKey, {
+            month: monthKey,
+            label: `${monthLabels[date.getMonth()]}/${date.getFullYear()}`,
+            income: 0,
+            expense: 0,
+        });
+    }
+
+    for (const row of rows) {
+         const monthKey = row.date.slice(0, 7)
+
+        const monthlyFlow = monthlyMap.get(monthKey);
+        if (monthlyFlow) {
+            if (row.type === "income") {
+                monthlyFlow.income += Number(row.amount);
+            } else {
+                monthlyFlow.expense += Number(row.amount);
+            }
+        }
+    }
+
+    return Array.from(monthlyMap.values()).sort((a, b) => a.month.localeCompare(b.month));
+}
+
+export function getFlowMonthsCount(period: ReportPeriod): number {
+  return period === "year" ? 12 : 6
+}
+
+export function getMonthsRangeStrings(monthsCount: number, referenceDate: Date = new Date()) {
+  const start = new Date(referenceDate.getFullYear(), referenceDate.getMonth() - (monthsCount - 1), 1)
+  const end = new Date(referenceDate.getFullYear(), referenceDate.getMonth() + 1, 0)
+  return { start: toDateString(start), end: toDateString(end) }
+}

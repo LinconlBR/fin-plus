@@ -77,7 +77,7 @@ const navMain = [
         },
         {
           title: "Receitas vs despesas",
-          url: "/reports/income-vs-expenses",
+          url: "/reports/income-vs-expense",
         },
         {
           title: "Comparativo de períodos",
