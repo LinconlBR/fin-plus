@@ -1,5 +1,5 @@
 import { parsePeriod } from "@/lib/reports"
-import { PeriodComparisonContent } from "@/components/reports/period-comparison/period-comparison-content"
+import { PeriodComparisonContent } from "@/components/reports/period-comparison/period-comparison-content" 
 
 export default async function PeriodComparisonPage(
   props: PageProps<"/reports/period-comparison">

@@ -7,7 +7,7 @@ import {
   type ReportPeriod,
 } from "@/lib/reports"
 import { createClient } from "@/lib/supabase/server"
-import { MonthlyFlowChart } from "@/components/reports/income-vs-expenses/monthly-flow-chart"
+import { MonthlyFlowChart } from "@/components/reports/income-vs-expense/monthly-flow-chart"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { formatCurrency } from "@/lib/format"
 import { cn } from "@/lib/utils"
