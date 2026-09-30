@@ -204,3 +204,57 @@ export function summarizePeriod(rows: { amount: number | string; type: "income" 
         transactionCount
     };
 }
+
+
+export type GoalTrendPoint = {
+  month: string
+  label: string
+  values: Record<string, number> // goalId -> total acumulado até esse mês
+}
+
+export function groupGoalContributionsByMonth(
+  contributionsBefore: { goal_id: string; amount: number | string }[],
+  contributionsInWindow: { goal_id: string; amount: number | string; date: string }[],
+  goalIds: string[],
+  monthsCount: number,
+  referenceDate: Date = new Date()
+): GoalTrendPoint[] {
+  const monthLabels = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"]
+  const monthlyMap = new Map<string, { month: string; label: string }>()
+
+  for (let i = 0; i < monthsCount; i++) {
+    const date = new Date(referenceDate.getFullYear(), referenceDate.getMonth() - i, 1)
+    const monthKey = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, "0")}`
+    monthlyMap.set(monthKey, { month: monthKey, label: monthLabels[date.getMonth()] })
+  }
+
+  // O total corrente começa com o que já existia ANTES da janela, uma vez só.
+  const runningTotal: Record<string, number> = {}
+  for (const goalId of goalIds) runningTotal[goalId] = 0
+  for (const contribution of contributionsBefore) {
+    runningTotal[contribution.goal_id] = (runningTotal[contribution.goal_id] ?? 0) + Number(contribution.amount)
+  }
+
+  // Agrupa as contribuições DA JANELA por mês, pra não varrer a lista inteira a cada mês.
+  const byMonth = new Map<string, typeof contributionsInWindow>()
+  for (const contribution of contributionsInWindow) {
+    const monthKey = contribution.date.slice(0, 7)
+    const list = byMonth.get(monthKey) ?? []
+    list.push(contribution)
+    byMonth.set(monthKey, list)
+  }
+
+  // Do mais antigo pro mais recente: as chaves "YYYY-MM" ordenam certo como string.
+  const orderedKeys = [...monthlyMap.keys()].sort()
+
+  return orderedKeys.map((monthKey) => {
+    for (const contribution of byMonth.get(monthKey) ?? []) {
+      runningTotal[contribution.goal_id] =
+        (runningTotal[contribution.goal_id] ?? 0) + Number(contribution.amount)
+    }
+
+    const { label } = monthlyMap.get(monthKey)!
+    return { month: monthKey, label, values: { ...runningTotal } }
+  })
+}
+
