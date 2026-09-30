@@ -158,3 +158,49 @@ export function getMonthsRangeStrings(monthsCount: number, referenceDate: Date =
   const end = new Date(referenceDate.getFullYear(), referenceDate.getMonth() + 1, 0)
   return { start: toDateString(start), end: toDateString(end) }
 }
+
+
+
+export type PeriodSummary = {
+  income: number
+  expense: number
+  net: number
+  savingsRate: number
+  weeklyAverageExpense: number
+  transactionCount: number
+}
+
+export function summarizePeriod(rows: { amount: number | string; type: "income" | "expense" }[], start: string, end: string): PeriodSummary {
+    
+    const startDate = new Date(start)
+    const endDate = new Date(end)
+    const days = (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24) + 1
+    const weeks = Math.max(days / 7, 1) // mínimo de 1 semana, evita dividir por um período quase zero
+
+    let income = 0;
+    let expense = 0;
+    let transactionCount = 0;
+
+    for (const row of rows) {
+        const amount = Number(row.amount);
+        if (row.type === "income") {
+            income += amount;
+        } else {
+            expense += amount;
+        }
+        transactionCount++;
+    }
+
+    const net = income - expense;
+    const savingsRate = income === 0 ? 0 : (net / income) * 100;
+    const weeklyAverageExpense = expense / weeks 
+
+    return {
+        income,
+        expense,
+        net,
+        savingsRate,
+        weeklyAverageExpense,
+        transactionCount
+    };
+}
