@@ -7,7 +7,7 @@ import {
 import { type GoalWithProgress } from "@/hooks/use-goals"
 import { createClient } from "@/lib/supabase/server"
 import { GoalsTrendChart } from "@/components/reports/goals-evolution/goals-trend-chart"
-import { GoalsProgressList } from "@/components/reports/goals-evolution/goals-progres-list"
+import { GoalsProgressList } from "@/components/reports/goals-evolution/goals-progress-list"
 
 
 type GoalRow = {
