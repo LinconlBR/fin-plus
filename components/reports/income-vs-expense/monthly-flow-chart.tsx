@@ -39,7 +39,7 @@ export function MonthlyFlowChart({ data }: { data: MonthlyFlow[] }) {
           tickLine={false}
           axisLine={false}
           tickMargin={8}
-          width={72}
+          width={96}
           tickFormatter={(value) => formatCurrency(value)}
         />
         <ChartTooltip

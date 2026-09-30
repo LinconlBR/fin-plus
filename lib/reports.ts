@@ -258,3 +258,83 @@ export function groupGoalContributionsByMonth(
   })
 }
 
+
+export type BalanceProjection = {
+  currentBalance: number
+  avgMonthlyIncome: number
+  avgMonthlyExpense: number
+  monthlyNet: number
+  monthsAhead: number
+  projectedBalance: number
+  hasEnoughData: boolean
+}
+
+export function calculateBalanceProjection(
+  currentBalance: number,
+  recentMonths: MonthlyFlow[], // os últimos 3 meses, já vindos de groupByMonth
+  monthsAhead: number
+): BalanceProjection {
+
+  const totalIncome = recentMonths.reduce((sum, month) => sum + month.income, 0)
+  const totalExpense = recentMonths.reduce((sum, month) => sum + month.expense, 0)
+  const divisor = recentMonths.length || 1
+  const avgMonthlyIncome = totalIncome / divisor
+  const avgMonthlyExpense = totalExpense / divisor
+  const monthlyNet = avgMonthlyIncome - avgMonthlyExpense
+  const projectedBalance = currentBalance + monthlyNet * monthsAhead
+  const monthsWithMovement = recentMonths.filter(
+    (month) => month.income > 0 || month.expense > 0
+  ).length
+
+  return {
+    currentBalance,
+    avgMonthlyIncome,
+    avgMonthlyExpense,
+    monthlyNet,
+    monthsAhead,
+    projectedBalance,
+    hasEnoughData: monthsWithMovement >= 2,
+  }
+
+
+}
+
+export type ProjectionPoint = {
+  label: string
+  actual: number | null
+  projected: number | null
+}
+
+export function buildProjectionSeries(
+  currentBalance: number,
+  recentMonths: MonthlyFlow[], // últimos 3 meses, em ordem cronológica
+  monthlyNet: number,
+  monthsAhead: number
+): ProjectionPoint[] {
+  const actualBalances = new Array<number>(recentMonths.length)
+  let runningBalance = currentBalance
+
+  for (let index = recentMonths.length - 1; index >= 0; index--) {
+    actualBalances[index] = runningBalance
+    const month = recentMonths[index]
+    runningBalance -= month.income - month.expense
+  }
+
+  const points: ProjectionPoint[] = recentMonths.map((month, index) => ({
+    label: month.label,
+    actual: actualBalances[index],
+    projected: index === recentMonths.length - 1 ? actualBalances[index] : null,
+  }))
+
+  let projectedBalance = actualBalances[actualBalances.length - 1] ?? currentBalance
+  for (let index = 1; index <= monthsAhead; index++) {
+    projectedBalance += monthlyNet
+    points.push({
+      label: `+${index}`,
+      actual: null,
+      projected: projectedBalance,
+    })
+  }
+
+  return points
+}

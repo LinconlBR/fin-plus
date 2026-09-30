@@ -93,7 +93,7 @@ const navMain = [
         },
         {
           title: "Projeção de saldo",
-          url: "/reports/forecast",
+          url: "/reports/balance-projection",
         }
       ],
     },
