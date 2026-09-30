@@ -1,6 +1,5 @@
 import {
   changeTone,
-  changeToneClass,
   getPreviousPeriodRangeStrings,
   getPeriodRangeStrings,
   summarizePeriod,
@@ -9,12 +8,20 @@ import {
 } from "@/lib/reports"
 import { createClient } from "@/lib/supabase/server"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 import { formatCurrency, formatPercent, formatPercentChange } from "@/lib/format"
 import { cn } from "@/lib/utils"
 
 type FlowRow = { amount: number | string; type: "income" | "expense" }
 
-const tableGrid = "grid grid-cols-[1fr_130px_130px_110px] items-center gap-4"
+// label + o par de barras | valor anterior | valor atual | selo de variação
+const tableGrid = "grid grid-cols-[180px_1fr_110px_110px_90px] items-center gap-4"
+
+const badgeVariant = {
+  good: "success",
+  bad: "destructive",
+  neutral: "secondary",
+} as const
 
 export async function PeriodComparisonContent({
   period,
@@ -127,6 +134,7 @@ export async function PeriodComparisonContent({
       <CardContent>
         <div className={cn(tableGrid, "pb-2 text-xs text-muted-foreground")}>
           <span>Métrica</span>
+          <span></span>
           <span className="text-right">Período anterior</span>
           <span className="text-right">Período atual</span>
           <span className="text-right">Variação</span>
@@ -137,18 +145,42 @@ export async function PeriodComparisonContent({
           const tone =
             row.higherIsBetter === null ? "neutral" : changeTone(change, row.higherIsBetter)
 
+          // As duas barras são desenhadas relativas ao MAIOR valor da própria
+          // linha (não entre linhas diferentes) — Math.max(..., 1) evita
+          // dividir por zero quando os dois valores da linha são zero.
+          const maxValue = Math.max(Math.abs(row.current), Math.abs(row.previous), 1)
+          const previousBarWidth = (Math.abs(row.previous) / maxValue) * 100
+          const currentBarWidth = (Math.abs(row.current) / maxValue) * 100
+
           return (
             <div key={row.label} className={cn(tableGrid, "border-t py-3 text-sm")}>
-              <span>{row.label}</span>
+              <span className="font-medium">{row.label}</span>
+
+              <div className="flex flex-col gap-1">
+                <div className="h-1.5 rounded-full bg-muted">
+                  <div
+                    className="h-full rounded-full bg-muted-foreground/50"
+                    style={{ width: `${previousBarWidth}%` }}
+                  />
+                </div>
+                <div className="h-1.5 rounded-full bg-muted">
+                  <div
+                    className="h-full rounded-full bg-primary"
+                    style={{ width: `${currentBarWidth}%` }}
+                  />
+                </div>
+              </div>
+
               <span className="text-right text-muted-foreground tabular-nums">
                 {row.format(row.previous)}
               </span>
               <span className="text-right font-medium tabular-nums">
                 {row.format(row.current)}
               </span>
-              <span className={cn("text-right tabular-nums", changeToneClass[tone])}>
-                {formatPercentChange(change)}
-              </span>
+
+              <div className="flex justify-end">
+                <Badge variant={badgeVariant[tone]}>{formatPercentChange(change)}</Badge>
+              </div>
             </div>
           )
         })}
