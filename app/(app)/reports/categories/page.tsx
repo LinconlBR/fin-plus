@@ -1,5 +1,5 @@
 import { parsePeriod } from "@/lib/reports"
-import { CategoriesContent } from "@/components/reports/categories/categories-content"
+import { ReportCategoriesContent } from "@/components/reports/categories/categories-content"
 
 export default async function CategoriesPage(
   props: PageProps<"/reports/categories">
@@ -7,5 +7,5 @@ export default async function CategoriesPage(
   const { period } = await props.searchParams
   const parsedPeriod = parsePeriod(period)
 
-  return <CategoriesContent period={parsedPeriod} />
+  return <ReportCategoriesContent period={parsedPeriod} />
 }

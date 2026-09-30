@@ -17,7 +17,7 @@ import { cn } from "@/lib/utils"
 // Cabeçalho e linhas usam o mesmo grid, senão as colunas desalinham.
 const rankingGrid = "grid grid-cols-[130px_1fr_110px_100px] items-center gap-4"
 
- async function CategoriesContent({ period }: { period: ReportPeriod }) {
+export async function ReportCategoriesContent({ period }: { period: ReportPeriod }) {
   const currentPeriod = getPeriodRangeStrings(period, new Date())
   const previousPeriod = getPreviousPeriodRangeStrings(period, new Date())
   const supabase = await createClient()
@@ -133,5 +133,3 @@ const rankingGrid = "grid grid-cols-[130px_1fr_110px_100px] items-center gap-4"
     </div>
   )
 }
-
-export default CategoriesContent;

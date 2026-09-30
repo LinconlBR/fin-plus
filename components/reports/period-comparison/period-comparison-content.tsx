@@ -16,7 +16,7 @@ type FlowRow = { amount: number | string; type: "income" | "expense" }
 
 const tableGrid = "grid grid-cols-[1fr_130px_130px_110px] items-center gap-4"
 
- async function PeriodComparisonContent({
+export async function PeriodComparisonContent({
   period,
 }: {
   period: ReportPeriod
@@ -156,5 +156,3 @@ const tableGrid = "grid grid-cols-[1fr_130px_130px_110px] items-center gap-4"
     </Card>
   )
 }
-
-export default PeriodComparisonContent;
