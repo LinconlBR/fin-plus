@@ -338,3 +338,20 @@ export function buildProjectionSeries(
 
   return points
 }
+
+export function getWeekRange(referenceDate: Date = new Date()): { start: Date; end: Date } {
+  const start = new Date(referenceDate)
+  start.setHours(0, 0, 0, 0)
+  const dayOfWeek = start.getDay() // 0 = domingo, 1 = segunda... 6 = sábado
+  start.setDate(start.getDate() - dayOfWeek)
+
+  const end = new Date(start)
+  end.setDate(start.getDate() + 6)
+
+  return { start, end }
+}
+
+export function getWeekRangeStrings(referenceDate: Date = new Date()) {
+  const { start, end } = getWeekRange(referenceDate)
+  return { start: toDateString(start), end: toDateString(end) }
+}

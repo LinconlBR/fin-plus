@@ -3,6 +3,12 @@ import { ArrowDownLeft, ArrowUpRight, Wallet } from "lucide-react"
 import { createClient } from "@/lib/supabase/server"
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
+import {
+  getPeriodRangeStrings,
+  getPreviousPeriodRangeStrings,
+  percentChange,
+  toDateString,
+} from "@/lib/reports"
 
 interface CardData {
   label: string
@@ -17,8 +23,16 @@ interface CardData {
 function generateCardData(
   totalIncome: number,
   totalExpenses: number,
-  balance: number
+  balance: number,
+  incomeTrend: number | null,
+  expenseTrend: number | null
 ): CardData[] {
+  const formatTrend = (trend: number | null, label: string) => {
+    if (trend === null) return `Sem dados do ${label} anterior`
+    const sign = trend >= 0 ? "+" : ""
+    return `${sign}${trend.toFixed(0)}% em relação ao ${label} anterior`
+  }
+
   return [
     {
       label: "Saldo Atual",
@@ -34,7 +48,7 @@ function generateCardData(
       dotColor: "bg-income",
       iconBg: "bg-income/15",
       borderColor: "border-income/60 shadow-glow-secondary",
-      trendLabel: "+12% em relação ao mês anterior",
+      trendLabel: formatTrend(incomeTrend, "mês"),
     },
     {
       label: "Despesas do Mês",
@@ -43,12 +57,15 @@ function generateCardData(
       dotColor: "bg-expense",
       iconBg: "bg-expense/15",
       borderColor: "border-expense/60 shadow-glow-primary",
-      trendLabel: "-8% em relação ao mês anterior",
+      trendLabel: formatTrend(expenseTrend, "mês"),
     },
   ]
 }
 
-export async function DashboardCards() {
+export async function DashboardCards({ month }: { month?: string }) {
+  
+  const resolvedMonth = month ?? toDateString(new Date()).slice(0, 7)
+  // ...troca todo uso de `month` por `resolvedMonth` daqui pra baixo
   const supabase = await createClient()
 
   const {
@@ -63,28 +80,57 @@ export async function DashboardCards() {
 
   const firstName = profile?.full_name?.split(" ")[0] ?? ""
 
-  const now = new Date()
-  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
-  const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+  const [year, m] = resolvedMonth.split("-").map(Number)
+  const referenceDate = new Date(year, m - 1, 1)
+  const currentRange = getPeriodRangeStrings("month", referenceDate)
+  const previousRange = getPreviousPeriodRangeStrings("month", referenceDate)
 
-  const { data: transactions } = await supabase
-    .from("transactions")
-    .select("*")
-    .gte("date", startOfMonth.toISOString().split("T")[0])
-    .lte("date", endOfMonth.toISOString().split("T")[0])
+  // Busca em paralelo: as transações DO mês navegado, as do mês anterior
+  // (só pra comparação de tendência), e TUDO antes do início do mês
+  // navegado (pra reconstruir o saldo acumulado até ali).
+  const [currentResult, previousResult, beforeResult] = await Promise.all([
+    supabase
+      .from("transactions")
+      .select("amount, type")
+      .gte("date", currentRange.start)
+      .lte("date", currentRange.end)
+      .throwOnError(),
+    supabase
+      .from("transactions")
+      .select("amount, type")
+      .gte("date", previousRange.start)
+      .lte("date", previousRange.end)
+      .throwOnError(),
+    supabase
+      .from("transactions")
+      .select("amount, type")
+      .lt("date", currentRange.start)
+      .throwOnError(),
+  ])
 
-  const totalIncome =
-    transactions
-      ?.filter((t) => t.type === "income")
-      .reduce((acc, t) => acc + Number(t.amount), 0) ?? 0
+  const sumByType = (rows: { amount: number | string; type: string }[] | null, type: string) =>
+    (rows ?? [])
+      .filter((t) => t.type === type)
+      .reduce((acc, t) => acc + Number(t.amount), 0)
 
-  const totalExpenses =
-    transactions
-      ?.filter((t) => t.type === "expense")
-      .reduce((acc, t) => acc + Number(t.amount), 0) ?? 0
+  const totalIncome = sumByType(currentResult.data, "income")
+  const totalExpenses = sumByType(currentResult.data, "expense")
 
-  const balance = totalIncome - totalExpenses
-  const cards = generateCardData(totalIncome, totalExpenses, balance)
+  const previousIncome = sumByType(previousResult.data, "income")
+  const previousExpenses = sumByType(previousResult.data, "expense")
+
+  // Saldo acumulado até o FIM do mês navegado: tudo antes do mês, mais o
+  // líquido do próprio mês — não é só "receita menos despesa do mês".
+  const balanceBeforeMonth = (beforeResult.data ?? []).reduce(
+    (acc, t) => (t.type === "income" ? acc + Number(t.amount) : acc - Number(t.amount)),
+    0
+  )
+  const balance = balanceBeforeMonth + totalIncome - totalExpenses
+
+  const incomeTrend = percentChange(totalIncome, previousIncome)
+  const expenseTrend = percentChange(totalExpenses, previousExpenses)
+
+  const cards = generateCardData(totalIncome, totalExpenses, balance, incomeTrend, expenseTrend)
 
   return (
     <div className="space-y-4">
@@ -99,10 +145,7 @@ export async function DashboardCards() {
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         {cards.map((card) => (
-          <Card
-            key={card.label}
-            className={cn("border", card.borderColor)}
-          >
+          <Card key={card.label} className={cn("border", card.borderColor)}>
             <CardHeader className="flex flex-row items-start justify-between">
               <div>
                 <CardDescription className="flex items-center gap-1.5">
