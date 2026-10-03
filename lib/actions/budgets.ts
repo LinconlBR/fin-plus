@@ -3,6 +3,7 @@
 
 import { createClient } from "@/lib/supabase/server"
 import { budgetSchema } from "@/lib/schema/budgets"
+import { toDateString } from "../reports"
 
 
 export async function createBudget(formData: FormData) {
@@ -41,19 +42,32 @@ export async function createBudget(formData: FormData) {
 
 
     // 3. inserir na tabela budgets
-    const { error } = await supabase.from("budgets").insert({
-        category_id,
-        target_amount: parseFloat(target_amount),
-        period,
-        is_recurring,
-        start_date,
-        end_date,
-        user_id: user?.id,
-    })
+    const { data: newBudget, error } = await supabase
+        .from("budgets")
+        .insert({
+            category_id,
+            target_amount: parseFloat(target_amount),
+            period,
+            is_recurring,
+            start_date,
+            end_date,
+            user_id: user?.id,
+        })
+        .select("id")
+        .single()
 
-    if (error) {
-        throw new Error("Erro ao criar orçamento")
-    }
+        if (error) {
+            throw new Error("Erro ao criar orçamento")
+        }
+
+        // grava o snapshot do mês atual em budget_history
+        const currentPeriod = toDateString(new Date()).slice(0, 7) // "2026-09"
+        await supabase
+        .from("budget_history")
+        .upsert(
+            { budget_id: newBudget.id, period: currentPeriod, amount: parseFloat(target_amount) },
+            { onConflict: "budget_id,period" }
+        )
 
 }
 
@@ -109,7 +123,13 @@ export async function updateBudget(id: string, formData: FormData) {
     if (error) {
         throw new Error("Erro ao atualizar orçamento")
     }
-
+    const currentPeriod = toDateString(new Date()).slice(0, 7)
+    await supabase
+    .from("budget_history")
+    .upsert(
+        { budget_id: id, period: currentPeriod, amount: parseFloat(target_amount) },
+        { onConflict: "budget_id,period" }
+    )
   
 }
 
@@ -137,3 +157,4 @@ export async function deleteBudget(id: string) {
     }
   
 }
+

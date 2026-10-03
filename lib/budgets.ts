@@ -1,5 +1,6 @@
 
 import { type BudgetWithSpent } from "@/hooks/use-budgets"
+import { toDateString } from "@/lib/reports"
 
 type Budget = {
   is_recurring: boolean
@@ -88,49 +89,92 @@ export function getBudgetInsight(budgetsWithStatus: (BudgetWithSpent & { status:
     return ""
 }
 
-export function getBudgetPeriodRange(budget: Budget): { start: string; end: string } | null {
-    
-    // Se o orçamento não tiver período definido, retorna null
-    if (!budget || !budget.period) {
-        return null;
-    }
-    // Caso 1: orçamento único, não recorrente — usa as datas guardadas, sem calcular nada
+export function getBudgetPeriodRange(
+  budget: Budget,
+  referenceDate: Date = new Date()
+): { start: string; end: string } | null {
+
+  if (!budget || !budget.period) {
+    return null;
+  }
+
   if (!budget.is_recurring) {
     return {
       start: budget.start_date,
       end: budget.end_date ?? budget.start_date,
     }
   }
-   const now = new Date()
 
-    // Caso 2: recorrente mensal 
   if (budget.period === "monthly") {
-    const start = new Date(now.getFullYear(), now.getMonth(), 1)
-    const end = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+    const start = new Date(referenceDate.getFullYear(), referenceDate.getMonth(), 1)
+    const end = new Date(referenceDate.getFullYear(), referenceDate.getMonth() + 1, 0)
     return {
-      start: start.toISOString().split("T")[0],
-      end: end.toISOString().split("T")[0],
+      start: toDateString(start),
+      end: toDateString(end),
     }
   }
-    // Caso 3: recorrente semanal — sua vez de completar
-  if (budget.period === "weekly") {
-    const dayOfWeek = now.getDay() // 0 = domingo, 1 = segunda, ..., 6 = sábado
 
-    // 1. Cria uma data a partir de hoje, e volta X dias até o domingo da semana atual
-    const startDate = new Date(now) // clona `now`, não cria uma data nova do zero
-    startDate.setDate(now.getDate() - dayOfWeek) // volta X dias a partir do dia-do-mês atual
-    
-    // 2. Cria uma segunda data, a partir do domingo encontrado, e soma 6 dias, achando o sábado
-    const endDate = new Date(startDate) // clona o domingo que acabamos de achar
-    endDate.setDate(startDate.getDate() + 6) // avança 6 dias a partir dele
-    
-    // 3. Retorna as duas, convertidas com .toISOString().split("T")[0]
+  if (budget.period === "weekly") {
+    const dayOfWeek = referenceDate.getDay()
+
+    const startDate = new Date(referenceDate)
+    startDate.setDate(referenceDate.getDate() - dayOfWeek)
+
+    const endDate = new Date(startDate)
+    endDate.setDate(startDate.getDate() + 6)
+
     return {
-      start: startDate.toISOString().split("T")[0],
-      end: endDate.toISOString().split("T")[0],
+      start: toDateString(startDate),
+      end: toDateString(endDate),
     };
   }
-  return null; // caso o período não seja reconhecido, retorna null
+  return null;
 }
     
 
+// Função para determinar o status do orçamento com base no gasto e no valor alvo
+type BudgetHistoryEntry = {
+  budget_id: string
+  period: string // "YYYY-MM"
+  amount: number | string
+}
+
+export function findBudgetAmountForMonth(
+  history: BudgetHistoryEntry[],
+  budgetId: string,
+  targetMonth: string // "YYYY-MM"
+): number | null {
+    // 1. Só as entradas desse orçamento, até (inclusive) o mês alvo
+    const candidates = history.filter(
+        (e) => e.budget_id === budgetId && e.period <= targetMonth
+    )
+
+    if (candidates.length === 0) {
+        return null
+    }
+
+    // 2. A mais recente dentre as candidatas — reduce comparando o period,
+    // igual você faria pra achar o maior número de um array
+    const mostRecent = candidates.reduce((latest, current) =>
+        current.period > latest.period ? current : latest
+    )
+
+    return typeof mostRecent.amount === "string"
+        ? parseFloat(mostRecent.amount)
+        : mostRecent.amount
+}
+
+
+export function intersectDateRanges(
+  rangeA: { start: string; end: string },
+  rangeB: { start: string; end: string }
+): { start: string; end: string } | null {
+  const start = rangeA.start > rangeB.start ? rangeA.start : rangeB.start
+  const end = rangeA.end < rangeB.end ? rangeA.end : rangeB.end
+
+  if (start > end) {
+    return null
+  }
+
+  return { start, end }
+}
