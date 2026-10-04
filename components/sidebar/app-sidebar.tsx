@@ -68,7 +68,7 @@ const navMain = [
       ),
       items: [
         {
-          title: "Visao geral",
+          title: "Visão geral",
           url: "/reports",
         },
         {
