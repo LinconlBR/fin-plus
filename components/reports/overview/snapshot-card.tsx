@@ -4,6 +4,7 @@ import {
   Card,
   CardAction,
   CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
@@ -11,10 +12,12 @@ import {
 // Moldura comum dos blocos da Visão geral: título + "Ver completo →" + conteúdo.
 export function SnapshotCard({
   title,
+  subtitle,
   href,
   children,
 }: {
   title: string
+  subtitle?: string
   href?: string
   children: ReactNode
 }) {
@@ -22,6 +25,7 @@ export function SnapshotCard({
     <Card>
       <CardHeader>
         <CardTitle>{title}</CardTitle>
+        {subtitle && <CardDescription>{subtitle}</CardDescription>}
         {href && (
           <CardAction>
             <Link

@@ -1,7 +1,8 @@
 import {
   changeTone,
-  getPreviousPeriodRangeStrings,
-  getPeriodRangeStrings,
+  getComparableRanges,
+  getComparisonLabel,
+  monthToDate,
   summarizePeriod,
   percentChange,
   type ReportPeriod,
@@ -25,11 +26,20 @@ const badgeVariant = {
 
 export async function PeriodComparisonContent({
   period,
+  month,
 }: {
   period: ReportPeriod
+  month: string
 }) {
-  const currentPeriod = getPeriodRangeStrings(period, new Date())
-  const previousPeriod = getPreviousPeriodRangeStrings(period, new Date())
+  // O período vem do mês navegado (no modo Ano, o ano desse mês), não de "hoje".
+  const referenceDate = monthToDate(month)
+  // Período em andamento compara do início até hoje com o mesmo trecho do anterior.
+  // As duas médias semanais usam a mesma duração, então continuam comparáveis.
+  const {
+    current: currentPeriod,
+    previous: previousPeriod,
+    partial,
+  } = getComparableRanges(period, referenceDate)
   const supabase = await createClient()
 
   const [current, previous] = await Promise.all([
@@ -123,7 +133,7 @@ export async function PeriodComparisonContent({
     },
   ]
 
-  const comparisonLabel = period === "year" ? "vs ano anterior" : "vs mês anterior"
+  const comparisonLabel = getComparisonLabel(period, partial)
 
   return (
     <Card>

@@ -1,9 +1,9 @@
 import {
   changeTone,
   changeToneClass,
-  getPreviousPeriodRangeStrings,
-  getPeriodRangeStrings,
+  getComparableRanges,
   groupExpensesByCategory,
+  monthToDate,
   percentChange,
   type ExpenseRow,
   type ReportPeriod,
@@ -15,11 +15,23 @@ import { formatPercentChange, formatCurrency } from "@/lib/format"
 import { cn } from "@/lib/utils"
 
 // Cabeçalho e linhas usam o mesmo grid, senão as colunas desalinham.
-const rankingGrid = "grid grid-cols-[130px_1fr_110px_100px] items-center gap-4"
+const rankingGrid = "grid grid-cols-[130px_1fr_110px_130px] items-center gap-4"
 
-export async function ReportCategoriesContent({ period }: { period: ReportPeriod }) {
-  const currentPeriod = getPeriodRangeStrings(period, new Date())
-  const previousPeriod = getPreviousPeriodRangeStrings(period, new Date())
+export async function ReportCategoriesContent({
+  period,
+  month,
+}: {
+  period: ReportPeriod
+  month: string
+}) {
+  // O período vem do mês navegado (no modo Ano, o ano desse mês), não de "hoje".
+  const referenceDate = monthToDate(month)
+  // Período em andamento compara do início até hoje com o mesmo trecho do anterior.
+  const {
+    current: currentPeriod,
+    previous: previousPeriod,
+    partial,
+  } = getComparableRanges(period, referenceDate)
   const supabase = await createClient()
 
   const [current, previous] = await Promise.all([
@@ -64,7 +76,12 @@ export async function ReportCategoriesContent({ period }: { period: ReportPeriod
     )
   }
 
-  const comparisonLabel = period === "year" ? "vs ano anterior" : "vs mês anterior"
+  // O cabeçalho é estreito: no período em andamento a legenda curta basta.
+  const comparisonLabel = partial
+    ? "vs mesmo período"
+    : period === "year"
+      ? "vs ano anterior"
+      : "vs mês anterior"
 
   return (
     <div className="flex flex-col gap-4 lg:flex-row">

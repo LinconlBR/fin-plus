@@ -1,7 +1,7 @@
 import {
   changeTone,
   changeToneClass,
-  getFlowMonthsCount,
+  getFlowWindow,
   getMonthsRangeStrings,
   groupByMonth,
   type ReportPeriod,
@@ -18,11 +18,14 @@ const tableGrid = "grid grid-cols-[1fr_120px_120px_130px] items-center gap-4"
 
 export async function IncomeVsExpensesContent({
   period,
+  month,
 }: {
   period: ReportPeriod
+  month: string
 }) {
-  const monthsCount = getFlowMonthsCount(period)
-  const { start, end } = getMonthsRangeStrings(monthsCount)
+  // Mês: os 6 meses que terminam no mês navegado. Ano: o ano-calendário dele.
+  const { monthsCount, referenceDate, label: windowLabel } = getFlowWindow(period, month)
+  const { start, end } = getMonthsRangeStrings(monthsCount, referenceDate)
   const supabase = await createClient()
 
   const { data } = await supabase
@@ -32,7 +35,7 @@ export async function IncomeVsExpensesContent({
     .lte("date", end)
     .throwOnError()
 
-  const flow = groupByMonth((data ?? []) as FlowRow[], monthsCount)
+  const flow = groupByMonth((data ?? []) as FlowRow[], monthsCount, referenceDate)
 
   const isEmpty = flow.every((m) => m.income === 0 && m.expense === 0)
 
@@ -46,8 +49,6 @@ export async function IncomeVsExpensesContent({
       </div>
     )
   }
-
-  const windowLabel = monthsCount === 12 ? "Últimos 12 meses" : "Últimos 6 meses"
 
   return (
     <div className="flex flex-col gap-4">

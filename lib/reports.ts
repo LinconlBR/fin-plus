@@ -497,15 +497,25 @@ export function filterByDate<T extends { date: string }>(
   return rows.filter((row) => row.date >= range.start && row.date <= range.end)
 }
 
+// ============================================================
+// EM lib/reports.ts: APAGUE os três blocos antigos da Visão geral
+// (OverviewInsightInput, getOverviewInsight e buildOverviewSummaryText)
+// e cole estes no lugar. filterByDate continua como está.
+// Mudança: o texto agora fala do período que está sendo visto
+// ("em Mar/2025"), em vez de sempre dizer "neste mês".
+// ============================================================
+
 export type OverviewInsightInput = {
   period: ReportPeriod
+  // Só quando o período visto NÃO é o atual (ex.: "Mar/2025" ou "2025").
+  periodName?: string | null
   income: number
   expense: number
   net: number
   savingsRate: number
   previousExpense: number
   topCategory: { name: string; percentage: number } | null
-  goalsPercentage: number | null // null = o usuário ainda não tem metas
+  goalsPercentage: number | null // null = sem metas, ou período que não é o atual
 }
 
 // Insight por regras: é o que aparece quando a IA falha ou ainda não respondeu.
@@ -513,7 +523,11 @@ export type OverviewInsightInput = {
 export function getOverviewInsight(input: OverviewInsightInput): string {
   if (input.income === 0 && input.expense === 0) return ""
 
-  const when = input.period === "year" ? "neste ano" : "neste mês"
+  const when = input.periodName
+    ? `em ${input.periodName}`
+    : input.period === "year"
+      ? "neste ano"
+      : "neste mês"
   const before = input.period === "year" ? "ano anterior" : "mês anterior"
   const top = input.topCategory
     ? ` ${input.topCategory.name} é a categoria que mais pesa (${Math.round(input.topCategory.percentage)}% dos gastos).`
@@ -541,7 +555,7 @@ export function buildOverviewSummaryText(input: OverviewInsightInput): string {
 
   const expenseChange = percentChange(input.expense, input.previousExpense)
   const parts = [
-    `Período: ${input.period === "year" ? "ano" : "mês"}`,
+    `Período: ${input.periodName ?? (input.period === "year" ? "ano" : "mês")}`,
     `Receitas: ${input.income.toFixed(2)}`,
     `Despesas: ${input.expense.toFixed(2)}`,
     `Saldo do período: ${input.net.toFixed(2)}`,
@@ -559,4 +573,108 @@ export function buildOverviewSummaryText(input: OverviewInsightInput): string {
     parts.push(`Progresso geral das metas: ${input.goalsPercentage.toFixed(0)}%`)
   }
   return parts.join("; ")
+}
+
+// ---------- Navegação de período nos relatórios ----------
+
+const monthAbbreviations = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"]
+
+// "2026-03" -> Date no dia 1 daquele mês. É a referência dos cálculos de período.
+export function monthToDate(month: string): Date {
+  const [year, m] = month.split("-").map(Number)
+  return new Date(year, m - 1, 1)
+}
+
+// "2026-03" -> "Mar/2026"
+export function formatMonthShort(month: string): string {
+  const [year, m] = month.split("-").map(Number)
+  return `${monthAbbreviations[m - 1]}/${year}`
+}
+
+// A janela das barras de Receitas vs despesas.
+// Mês: os 6 meses que terminam no mês navegado.
+// Ano: o ano-calendário do mês navegado (Jan–Dez; no ano atual, Jan até o mês corrente).
+export function getFlowWindow(
+  period: ReportPeriod,
+  month: string,
+  today: Date = new Date()
+): { monthsCount: number; referenceDate: Date; label: string } {
+  const [year] = month.split("-").map(Number)
+
+  if (period === "month") {
+    return {
+      monthsCount: 6,
+      referenceDate: monthToDate(month),
+      label: `6 meses até ${formatMonthShort(month)}`,
+    }
+  }
+
+  const monthsCount = year === today.getFullYear() ? today.getMonth() + 1 : 12
+  return {
+    monthsCount,
+    referenceDate: new Date(year, monthsCount - 1, 1),
+    label: `Ano de ${year}`,
+  }
+}
+
+// Lê período e mês da URL e devolve valores válidos, presos entre a primeira
+// transação e o mês atual. Digitar ?month=2030-01 à mão cai no mês atual.
+export function resolvePeriodParams(
+  params: { period?: string | string[]; month?: string | string[] },
+  firstTransactionDate: string | null | undefined,
+  today: Date = new Date()
+): { period: ReportPeriod; month: string; minMonth: string; maxMonth: string } {
+  const { minMonth, maxMonth } = getMonthBounds(firstTransactionDate, today)
+  return {
+    period: parsePeriod(params.period),
+    month: clampMonth(parseMonth(params.month) ?? maxMonth, minMonth, maxMonth),
+    minMonth,
+    maxMonth,
+  }
+}
+
+
+// ---------- Comparação de períodos "do mesmo tamanho" ----------
+
+export type ComparableRanges = {
+  current: { start: string; end: string }
+  previous: { start: string; end: string }
+  // true quando o período visto ainda está em andamento (contém hoje).
+  partial: boolean
+}
+
+// Os dois intervalos que devem ser comparados.
+// Período já encerrado: o período inteiro contra o período anterior inteiro.
+// Período em andamento (o mês ou o ano atual): do início até HOJE, contra o mesmo
+// trecho do período anterior. No dia 14 de outubro, compara 01–14/10 com 01–14/09;
+// no ano, 01/01–14/10 com 01/01–14/10 do ano anterior. Se o dia não existe lá
+// (31 em mês de 30 dias, 29/02), vale o último dia daquele mês.
+export function getComparableRanges(
+  period: ReportPeriod,
+  referenceDate: Date,
+  today: Date = new Date()
+): ComparableRanges {
+  const current = getPeriodRangeStrings(period, referenceDate)
+  const previous = getPreviousPeriodRangeStrings(period, referenceDate)
+  const todayString = toDateString(today)
+
+  const partial = todayString >= current.start && todayString <= current.end
+  if (!partial) return { current, previous, partial: false }
+
+  // Mês: o mês do período anterior. Ano: o mesmo mês de hoje, no ano anterior.
+  const [previousYear, previousStartMonth] = previous.start.split("-").map(Number)
+  const targetMonth = period === "month" ? previousStartMonth : today.getMonth() + 1
+  const lastDayOfTargetMonth = new Date(previousYear, targetMonth, 0).getDate()
+  const day = Math.min(today.getDate(), lastDayOfTargetMonth)
+
+  return {
+    current: { start: current.start, end: todayString },
+    previous: { start: previous.start, end: toDateString(new Date(previousYear, targetMonth - 1, day)) },
+    partial: true,
+  }
+}
+
+export function getComparisonLabel(period: ReportPeriod, partial: boolean): string {
+  const before = period === "year" ? "ano anterior" : "mês anterior"
+  return partial ? `vs mesmo período do ${before}` : `vs ${before}`
 }

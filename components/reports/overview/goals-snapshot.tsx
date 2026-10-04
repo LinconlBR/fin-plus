@@ -14,13 +14,15 @@ export function GoalsSnapshot({
   summary,
   hasGoals,
   href,
+  note,
 }: {
   summary: Summary
   hasGoals: boolean
   href: string
+  note?: string
 }) {
   return (
-    <SnapshotCard title="Metas" href={hasGoals ? href : undefined}>
+    <SnapshotCard title="Metas" subtitle={note} href={hasGoals ? href : undefined}>
       {hasGoals ? (
         <div className="space-y-3">
           <div className="flex items-baseline justify-between">

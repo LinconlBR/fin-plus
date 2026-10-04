@@ -5,12 +5,14 @@ import type { BalanceProjection } from "@/lib/reports"
 export function ProjectionSnapshot({
   projection,
   href,
+  note,
 }: {
   projection: BalanceProjection
   href: string
+  note?: string
 }) {
   return (
-    <SnapshotCard title="Projeção de saldo" href={href}>
+    <SnapshotCard title="Projeção de saldo" subtitle={note} href={href}>
       {projection.hasEnoughData ? (
         <div className="space-y-1">
           <p className="text-3xl font-semibold tabular-nums">

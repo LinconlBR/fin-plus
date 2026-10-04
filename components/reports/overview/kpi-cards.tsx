@@ -5,7 +5,6 @@ import {
   changeTone,
   percentChange,
   type PeriodSummary,
-  type ReportPeriod,
 } from "@/lib/reports"
 import {
   formatCurrency,
@@ -30,16 +29,14 @@ type Kpi = {
 export function KpiCards({
   current,
   previous,
-  period,
+  comparisonLabel,
   href,
 }: {
   current: PeriodSummary
   previous: PeriodSummary
-  period: ReportPeriod
+  comparisonLabel: string
   href: string
 }) {
-  const compare = period === "year" ? "vs ano anterior" : "vs mês anterior"
-
   const incomeChange = percentChange(current.income, previous.income)
   const expenseChange = percentChange(current.expense, previous.expense)
   const netChange = percentChange(current.net, previous.net)
@@ -87,7 +84,7 @@ export function KpiCards({
               <p className="text-2xl font-semibold tabular-nums">{kpi.value}</p>
               <div className="flex flex-wrap items-center gap-2">
                 <Badge variant={badgeVariant[kpi.tone]}>{kpi.change}</Badge>
-                <span className="text-xs text-muted-foreground">{compare}</span>
+                <span className="text-xs text-muted-foreground">{comparisonLabel}</span>
               </div>
             </CardContent>
           </Card>

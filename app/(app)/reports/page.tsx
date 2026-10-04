@@ -1,8 +1,14 @@
-import { parsePeriod } from "@/lib/reports"
+import { resolveReportPeriod } from "@/lib/report-period"
+import { PeriodNavigator } from "@/components/reports/period-navigator"
 import { OverviewContent } from "@/components/reports/overview/overview-content"
 
 export default async function ReportsPage(props: PageProps<"/reports">) {
-  const { period } = await props.searchParams
+  const { period, month, minMonth, maxMonth } = await resolveReportPeriod(props.searchParams)
 
-  return <OverviewContent period={parsePeriod(period)} />
+  return (
+    <>
+      <PeriodNavigator period={period} month={month} minMonth={minMonth} maxMonth={maxMonth} />
+      <OverviewContent period={period} month={month} />
+    </>
+  )
 }
