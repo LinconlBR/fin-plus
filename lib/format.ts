@@ -45,3 +45,17 @@ export function formatPercentChange(value: number | string | null): string {
   if (value === null) return "—"
   return percentChangeFormatter.format(toNumber(value)) + "%"
 }
+
+
+const pointsFormatter = new Intl.NumberFormat(locale, {
+  minimumFractionDigits: 1,
+  maximumFractionDigits: 1,
+  signDisplay: "exceptZero",
+})
+
+// Diferença entre duas porcentagens, em pontos percentuais.
+// Ex.: taxa de poupança de 25% para 38% = "+13,0 p.p." (e não "+52%").
+export function formatPercentPoints(value: number | null): string {
+  if (value === null) return "—"
+  return pointsFormatter.format(value) + " p.p."
+}

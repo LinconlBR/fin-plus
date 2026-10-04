@@ -5,11 +5,11 @@ import { usePathname, useSearchParams } from "next/navigation"
 import { parsePeriod } from "@/lib/reports"
 
 const tabs = [
-	{ label: "Visão Geral", route: "/reports" },
-	{ label: "Gastos por Categoria", route: "/reports/categories" },
+	{ label: "Visão geral", route: "/reports" },
+	{ label: "Gastos por categoria", route: "/reports/categories" },
 	{ label: "Receitas vs despesas", route: "/reports/income-vs-expense" },
 	{ label: "Comparativo de períodos", route: "/reports/period-comparison" },
-	{ label: "Evolução das metass", route: "/reports/goals-evolution" },
+	{ label: "Evolução das metas", route: "/reports/goals-evolution" },
 	{ label: "Projeção de saldo", route: "/reports/balance-projection" },
 ] as const
 

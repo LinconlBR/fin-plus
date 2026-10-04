@@ -485,3 +485,78 @@ export function buildDailyBalanceSeries(
   }
   return points
 }
+
+// ---------- Visão geral ----------
+
+// Filtra linhas com campo `date` ("YYYY-MM-DD") dentro de um intervalo inclusivo.
+// Strings nesse formato comparam direto, sem passar por Date.
+export function filterByDate<T extends { date: string }>(
+  rows: T[],
+  range: { start: string; end: string }
+): T[] {
+  return rows.filter((row) => row.date >= range.start && row.date <= range.end)
+}
+
+export type OverviewInsightInput = {
+  period: ReportPeriod
+  income: number
+  expense: number
+  net: number
+  savingsRate: number
+  previousExpense: number
+  topCategory: { name: string; percentage: number } | null
+  goalsPercentage: number | null // null = o usuário ainda não tem metas
+}
+
+// Insight por regras: é o que aparece quando a IA falha ou ainda não respondeu.
+// Uma frase só, escolhida por prioridade (o problema mais importante primeiro).
+export function getOverviewInsight(input: OverviewInsightInput): string {
+  if (input.income === 0 && input.expense === 0) return ""
+
+  const when = input.period === "year" ? "neste ano" : "neste mês"
+  const before = input.period === "year" ? "ano anterior" : "mês anterior"
+  const top = input.topCategory
+    ? ` ${input.topCategory.name} é a categoria que mais pesa (${Math.round(input.topCategory.percentage)}% dos gastos).`
+    : ""
+
+  if (input.net < 0) {
+    return `Suas despesas superaram as receitas ${when}.${top} Vale revisar onde cortar.`
+  }
+
+  const expenseChange = percentChange(input.expense, input.previousExpense)
+  if (expenseChange !== null && expenseChange >= 10) {
+    return `Seus gastos subiram ${Math.round(expenseChange)}% em relação ao ${before}.${top}`
+  }
+
+  if (input.savingsRate >= 20) {
+    return `Você guardou ${Math.round(input.savingsRate)}% da receita ${when}. Bom ritmo, continue assim!${top}`
+  }
+
+  return `Você guardou ${Math.round(input.savingsRate)}% da receita ${when}.${top}`
+}
+
+// Resumo em texto que vai no prompt da IA. Vazio = nada pra analisar (a consulta fica desligada).
+export function buildOverviewSummaryText(input: OverviewInsightInput): string {
+  if (input.income === 0 && input.expense === 0) return ""
+
+  const expenseChange = percentChange(input.expense, input.previousExpense)
+  const parts = [
+    `Período: ${input.period === "year" ? "ano" : "mês"}`,
+    `Receitas: ${input.income.toFixed(2)}`,
+    `Despesas: ${input.expense.toFixed(2)}`,
+    `Saldo do período: ${input.net.toFixed(2)}`,
+    `Taxa de poupança: ${input.savingsRate.toFixed(0)}%`,
+    expenseChange === null
+      ? "Despesas vs período anterior: sem dados anteriores"
+      : `Despesas vs período anterior: ${expenseChange >= 0 ? "+" : ""}${expenseChange.toFixed(0)}%`,
+  ]
+  if (input.topCategory) {
+    parts.push(
+      `Categoria que mais pesa: ${input.topCategory.name} (${input.topCategory.percentage.toFixed(0)}% das despesas)`
+    )
+  }
+  if (input.goalsPercentage !== null) {
+    parts.push(`Progresso geral das metas: ${input.goalsPercentage.toFixed(0)}%`)
+  }
+  return parts.join("; ")
+}
