@@ -1,6 +1,12 @@
 import { createClient } from "@/lib/supabase/server"
 import { ChartAreaInteractive } from "@/components/dashboard/chart/chart-interactive"
-import { getPeriodRangeStrings, getWeekRangeStrings, toDateString } from "@/lib/reports"
+import {
+  buildDailyBalanceSeries,
+  getPeriodRangeStrings,
+  getWeekBounds,
+  getWeekRangeWithinMonth,
+  toDateString,
+} from "@/lib/reports"
 
 export async function DashboardChart({
   month,
@@ -13,33 +19,38 @@ export async function DashboardChart({
 }) {
   const supabase = await createClient()
 
-  // Decide o intervalo a partir do modo ativo — mês navegado ou semana navegada.
-  const [weekYear, weekM, weekD] = week.split("-").map(Number)
-const weekRange = getWeekRangeStrings(new Date(weekYear, weekM - 1, weekD))
-
-const range = chartRange === "week" ? weekRange : (() => {
+  // Mês navegado, ou a semana navegada RECORTADA pelo mês (só os dias dele).
   const [year, m] = month.split("-").map(Number)
-  return getPeriodRangeStrings("month", new Date(year, m - 1, 1))
-})()
+  const range =
+    chartRange === "week"
+      ? getWeekRangeWithinMonth(week, month)
+      : getPeriodRangeStrings("month", new Date(year, m - 1, 1))
 
-  const { data: transactionsBefore } = await supabase
-    .from("transactions")
-    .select("amount, type")
-    .lt("date", range.start)
+  const { minWeek, maxWeek } = getWeekBounds(month)
 
-  const saldoInicial = (transactionsBefore ?? []).reduce((acc, t) => {
-    return t.type === "income" ? acc + Number(t.amount) : acc - Number(t.amount)
-  }, 0)
+  // Tudo que veio antes do intervalo vira o saldo de partida do gráfico.
+  const [before, inRange] = await Promise.all([
+    supabase
+      .from("transactions")
+      .select("amount, type")
+      .lt("date", range.start)
+      .throwOnError(),
+    supabase
+      .from("transactions")
+      .select("amount, type, date")
+      .gte("date", range.start)
+      .lte("date", range.end)
+      .order("date", { ascending: true })
+      .throwOnError(),
+  ])
 
-  const { data: transactionsInRange } = await supabase
-    .from("transactions")
-    .select("amount, type, date")
-    .gte("date", range.start)
-    .lte("date", range.end)
-    .order("date", { ascending: true })
+  const initialBalance = (before.data ?? []).reduce(
+    (acc, t) => (t.type === "income" ? acc + Number(t.amount) : acc - Number(t.amount)),
+    0
+  )
 
   const grouped: Record<string, { net: number; expense: number }> = {}
-  for (const t of transactionsInRange ?? []) {
+  for (const t of inRange.data ?? []) {
     const day = t.date
     if (!grouped[day]) grouped[day] = { net: 0, expense: 0 }
     if (t.type === "income") {
@@ -50,22 +61,23 @@ const range = chartRange === "week" ? weekRange : (() => {
     }
   }
 
-  const chartPoints: { date: string; currentBalance: number; expense: number }[] = []
-let saldoAcumulado = saldoInicial
+  // Um ponto por dia, parando em hoje (nada de dias futuros preenchidos).
+  const chartPoints = buildDailyBalanceSeries(
+    grouped,
+    initialBalance,
+    range.start,
+    range.end,
+    toDateString(new Date())
+  )
 
-const [sy, sm, sd] = range.start.split("-").map(Number)
-const [ey, em, ed] = range.end.split("-").map(Number)
-const cursor = new Date(sy, sm - 1, sd)
-const last = new Date(ey, em - 1, ed)
-
-while (cursor <= last) {
-  const day = toDateString(cursor)
-  const values = grouped[day]
-  if (values) saldoAcumulado += values.net
-  chartPoints.push({ date: day, currentBalance: saldoAcumulado, expense: values?.expense ?? 0 })
-  cursor.setDate(cursor.getDate() + 1)
-}
-
-
-    return <ChartAreaInteractive data={chartPoints} chartRange={chartRange} month={month} week={week} />
+  return (
+    <ChartAreaInteractive
+      data={chartPoints}
+      chartRange={chartRange}
+      month={month}
+      week={week}
+      minWeek={minWeek}
+      maxWeek={maxWeek}
+    />
+  )
 }

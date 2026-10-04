@@ -4,6 +4,7 @@ import Link from "next/link"
 import { usePathname, useSearchParams } from "next/navigation"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { getWeekRangeWithinMonth } from "@/lib/reports"
 
 function shiftWeek(week: string, deltaDays: number): string {
   const [year, m, d] = week.split("-").map(Number)
@@ -11,18 +12,32 @@ function shiftWeek(week: string, deltaDays: number): string {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`
 }
 
-function formatWeekLabel(week: string): string {
-  const [year, m, d] = week.split("-").map(Number)
-  // `week` já É o domingo daquela semana (é assim que guardamos na URL),
-  // então não precisamos recalcular o início — só achar o fim, +6 dias.
-  const startOfWeek = new Date(year, m - 1, d)
-  const endOfWeek = new Date(year, m - 1, d + 6)
-
-  const options: Intl.DateTimeFormatOptions = { day: "2-digit", month: "2-digit", year: "numeric" }
-  return `${startOfWeek.toLocaleDateString("pt-BR", options)} - ${endOfWeek.toLocaleDateString("pt-BR", options)}`
+// "2026-10-01" -> "01/10/2026". Sem Date nem Intl: o texto sai idêntico no
+// servidor e no navegador, sem risco de diferença de fuso ou de hidratação.
+function formatDate(date: string): string {
+  const [year, month, day] = date.split("-")
+  return `${day}/${month}/${year}`
 }
 
-export function WeekNavigator({ currentWeek }: { currentWeek: string }) {
+function formatWeekLabel(week: string, month: string): string {
+  // A semana é recortada pelo mês: o rótulo mostra só os dias que o gráfico mostra.
+  const { start, end } = getWeekRangeWithinMonth(week, month)
+  return start === end ? formatDate(start) : `${formatDate(start)} - ${formatDate(end)}`
+}
+
+// minWeek/maxWeek chegam prontos do servidor (getWeekBounds). O componente não
+// lê o relógio: assim servidor e navegador sempre concordam sobre o que é "hoje".
+export function WeekNavigator({
+  currentWeek,
+  month,
+  minWeek,
+  maxWeek,
+}: {
+  currentWeek: string
+  month: string
+  minWeek: string
+  maxWeek: string
+}) {
   const pathname = usePathname()
   const searchParams = useSearchParams()
 
@@ -32,21 +47,40 @@ export function WeekNavigator({ currentWeek }: { currentWeek: string }) {
     return `${pathname}?${params.toString()}`
   }
 
+  const previousWeek = shiftWeek(currentWeek, -7)
+  const nextWeek = shiftWeek(currentWeek, 7)
+  const canGoPrevious = previousWeek >= minWeek
+  const canGoNext = nextWeek <= maxWeek
+
   return (
     <div className="flex items-center gap-2">
-      <Link href={buildHref(shiftWeek(currentWeek, -7))}>
-        <Button variant="outline" size="icon">
+      {canGoPrevious ? (
+        <Link href={buildHref(previousWeek)}>
+          <Button variant="outline" size="icon" aria-label="Semana anterior">
+            <ChevronLeft className="size-4" />
+          </Button>
+        </Link>
+      ) : (
+        <Button variant="outline" size="icon" aria-label="Semana anterior" disabled>
           <ChevronLeft className="size-4" />
         </Button>
-      </Link>
-      <span className="min-w-32 text-center text-sm font-medium capitalize">
-        {formatWeekLabel(currentWeek)}
+      )}
+
+      <span className="min-w-32 text-center text-sm font-medium">
+        {formatWeekLabel(currentWeek, month)}
       </span>
-      <Link href={buildHref(shiftWeek(currentWeek, 7))}>
-        <Button variant="outline" size="icon">
+
+      {canGoNext ? (
+        <Link href={buildHref(nextWeek)}>
+          <Button variant="outline" size="icon" aria-label="Próxima semana">
+            <ChevronRight className="size-4" />
+          </Button>
+        </Link>
+      ) : (
+        <Button variant="outline" size="icon" aria-label="Próxima semana" disabled>
           <ChevronRight className="size-4" />
         </Button>
-      </Link>
+      )}
     </div>
   )
 }

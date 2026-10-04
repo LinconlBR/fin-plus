@@ -3,22 +3,43 @@ import { DashboardChart } from "@/components/dashboard/chart/chart"
 import { DashboardLastTransactions } from "@/components/dashboard/last-transactions"
 import { DashboardInsights } from "@/components/dashboard/insights"
 import { MonthNavigator } from "@/components/month-navigator"
-import { toDateString, getWeekRangeStrings } from "@/lib/reports"
+import { createClient } from "@/lib/supabase/server"
+import {
+  clampMonth,
+  clampWeekToMonth,
+  getMonthBounds,
+  getWeekRangeStrings,
+  parseMonth,
+  parseWeek,
+} from "@/lib/reports"
 
 export default async function Dashboard(props: PageProps<"/dashboard">) {
   const searchParams = await props.searchParams
+  const supabase = await createClient()
+  const today = new Date()
 
-  const month =
-    typeof searchParams.month === "string"
-      ? searchParams.month
-      : toDateString(new Date()).slice(0, 7)
+  // Mês da primeira transação: é o limite de quanto dá pra voltar.
+  const { data: firstTransaction } = await supabase
+    .from("transactions")
+    .select("date")
+    .order("date", { ascending: true })
+    .limit(1)
+    .maybeSingle()
+
+  const { minMonth, maxMonth } = getMonthBounds(firstTransaction?.date, today)
+
+  // O que vem da URL é validado e depois "preso" nos limites: digitar
+  // ?month=2030-01 à mão cai no mês atual, não num mês futuro.
+  const month = clampMonth(parseMonth(searchParams.month) ?? maxMonth, minMonth, maxMonth)
 
   const chartRange = searchParams.chartRange === "week" ? "week" : "month"
 
-  const week =
-    typeof searchParams.week === "string"
-      ? searchParams.week
-      : getWeekRangeStrings(new Date()).start
+  // A semana também é presa ao mês exibido (e nunca passa da semana de hoje).
+  const week = clampWeekToMonth(
+    parseWeek(searchParams.week) ?? getWeekRangeStrings(today).start,
+    month,
+    today
+  )
 
   return (
     <main className="flex min-h-screen flex-col">
@@ -27,7 +48,7 @@ export default async function Dashboard(props: PageProps<"/dashboard">) {
         <h1 className="text-2xl font-bold tracking-tight text-foreground md:text-3xl">
           Dashboard
         </h1>
-        <MonthNavigator currentMonth={month} />
+        <MonthNavigator currentMonth={month} minMonth={minMonth} maxMonth={maxMonth} />
       </div>
 
       <div className="space-y-6 p-6 md:p-8">

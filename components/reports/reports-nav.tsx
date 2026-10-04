@@ -10,7 +10,6 @@ const tabs = [
 	{ label: "Receitas vs despesas", route: "/reports/income-vs-expense" },
 	{ label: "Comparativo de períodos", route: "/reports/period-comparison" },
 	{ label: "Evolução das metass", route: "/reports/goals-evolution" },
-	{ label: "Orçamento vs realizado", route: "/reports/budget-vs-actual" },
 	{ label: "Projeção de saldo", route: "/reports/balance-projection" },
 ] as const
 

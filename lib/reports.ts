@@ -355,3 +355,133 @@ export function getWeekRangeStrings(referenceDate: Date = new Date()) {
   const { start, end } = getWeekRange(referenceDate)
   return { start: toDateString(start), end: toDateString(end) }
 }
+
+// ---------- Validação do que vem da URL ----------
+
+// Só aceita "YYYY-MM" com mês de 01 a 12. Qualquer outra coisa (inclusive array) vira undefined.
+export function parseMonth(value: string | string[] | undefined): string | undefined {
+  return typeof value === "string" && /^\d{4}-(0[1-9]|1[0-2])$/.test(value) ? value : undefined
+}
+
+// Só aceita "YYYY-MM-DD" que exista de verdade.
+export function parseWeek(value: string | string[] | undefined): string | undefined {
+  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return undefined
+  const [y, m, d] = value.split("-").map(Number)
+  // O Date "rola" datas impossíveis (31/02 vira março): se ao converter de volta
+  // o texto mudou, a data original não existia.
+  return toDateString(new Date(y, m - 1, d)) === value ? value : undefined
+}
+
+// ---------- Limites de mês ----------
+
+export function clampMonth(month: string, minMonth: string, maxMonth: string): string {
+  if (month < minMonth) return minMonth
+  if (month > maxMonth) return maxMonth
+  return month
+}
+
+// Menor mês navegável = o da primeira transação (ou o mês atual, se não houver
+// nenhuma ou se ela for futura). Maior mês navegável = o mês atual.
+export function getMonthBounds(
+  firstTransactionDate: string | null | undefined,
+  today: Date = new Date()
+): { minMonth: string; maxMonth: string } {
+  const maxMonth = toDateString(today).slice(0, 7)
+  const firstMonth = firstTransactionDate?.slice(0, 7)
+  const minMonth = firstMonth && firstMonth < maxMonth ? firstMonth : maxMonth
+  return { minMonth, maxMonth }
+}
+
+// ---------- Limites de semana ----------
+
+// Domingos de todas as semanas que tocam o mês "YYYY-MM".
+export function getMonthWeekStarts(month: string): string[] {
+  const [year, m] = month.split("-").map(Number)
+  const firstDay = new Date(year, m - 1, 1)
+  const lastDay = new Date(year, m, 0)
+  // Domingo da semana do dia 1 (o JS aceita dia zero/negativo e volta sozinho).
+  const cursor = new Date(year, m - 1, 1 - firstDay.getDay())
+
+  const starts: string[] = []
+  while (cursor <= lastDay) {
+    starts.push(toDateString(cursor))
+    cursor.setDate(cursor.getDate() + 7)
+  }
+  return starts
+}
+
+// Primeira e última semana navegáveis do mês. A última nunca passa da semana de hoje:
+// no mês atual vale a semana atual, nos meses passados vale a última semana do mês.
+export function getWeekBounds(
+  month: string,
+  today: Date = new Date()
+): { minWeek: string; maxWeek: string } {
+  const starts = getMonthWeekStarts(month)
+  const currentSunday = getWeekRangeStrings(today).start
+  const lastOfMonth = starts[starts.length - 1]
+  return {
+    minWeek: starts[0],
+    maxWeek: lastOfMonth < currentSunday ? lastOfMonth : currentSunday,
+  }
+}
+
+// Alinha a data ao domingo da semana dela e prende entre minWeek e maxWeek.
+export function clampWeekToMonth(week: string, month: string, today: Date = new Date()): string {
+  const [y, m, d] = week.split("-").map(Number)
+  const sunday = getWeekRangeStrings(new Date(y, m - 1, d)).start
+  const { minWeek, maxWeek } = getWeekBounds(month, today)
+  if (sunday < minWeek) return minWeek
+  if (sunday > maxWeek) return maxWeek
+  return sunday
+}
+
+// A semana recortada pelo mês: só os dias que pertencem a ele.
+// Ex.: semana 27/09–03/10 no mês 2026-10 vira 01/10–03/10.
+export function getWeekRangeWithinMonth(
+  week: string,
+  month: string
+): { start: string; end: string } {
+  const [wy, wm, wd] = week.split("-").map(Number)
+  const full = getWeekRangeStrings(new Date(wy, wm - 1, wd))
+  const [y, m] = month.split("-").map(Number)
+  const monthRange = getPeriodRangeStrings("month", new Date(y, m - 1, 1))
+  return {
+    start: full.start > monthRange.start ? full.start : monthRange.start,
+    end: full.end < monthRange.end ? full.end : monthRange.end,
+  }
+}
+
+// ---------- Série diária do gráfico do Dashboard ----------
+
+export type DailyBalancePoint = {
+  date: string
+  currentBalance: number
+  expense: number
+}
+
+// Um ponto por dia entre start e end, carregando o saldo adiante nos dias sem
+// transação. Nunca passa de "hoje": dias que ainda não aconteceram não viram ponto.
+export function buildDailyBalanceSeries(
+  grouped: Record<string, { net: number; expense: number }>,
+  initialBalance: number,
+  start: string,
+  end: string,
+  today: string
+): DailyBalancePoint[] {
+  const lastDay = end < today ? end : today
+  const [sy, sm, sd] = start.split("-").map(Number)
+  const [ey, em, ed] = lastDay.split("-").map(Number)
+  const cursor = new Date(sy, sm - 1, sd)
+  const last = new Date(ey, em - 1, ed)
+
+  const points: DailyBalancePoint[] = []
+  let balance = initialBalance
+  while (cursor <= last) {
+    const day = toDateString(cursor)
+    const values = grouped[day]
+    if (values) balance += values.net
+    points.push({ date: day, currentBalance: balance, expense: values?.expense ?? 0 })
+    cursor.setDate(cursor.getDate() + 1)
+  }
+  return points
+}

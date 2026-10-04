@@ -37,11 +37,15 @@ export function ChartAreaInteractive({
   chartRange,
   month,
   week,
+  minWeek,
+  maxWeek,
 }: {
   data: ChartPoint[]
   chartRange: "month" | "week"
   month: string
   week: string
+  minWeek: string
+  maxWeek: string
 }) {
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -73,7 +77,14 @@ export function ChartAreaInteractive({
             </Link>
           </ToggleGroup>
 
-          {chartRange === "week" && <WeekNavigator currentWeek={week} />}
+          {chartRange === "week" && (
+            <WeekNavigator
+              currentWeek={week}
+              month={month}
+              minWeek={minWeek}
+              maxWeek={maxWeek}
+            />
+          )}
         </CardAction>
       </CardHeader>
       <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
@@ -111,8 +122,8 @@ export function ChartAreaInteractive({
                 />
               }
             />
-            <Area dataKey="expense" type="natural" fill="url(#fillExpense)" stroke="var(--color-expense)" stackId="a" />
-            <Area dataKey="currentBalance" type="natural" fill="url(#fillBalance)" stroke="var(--color-currentBalance)" stackId="a" />
+            <Area dataKey="currentBalance" type="monotone" fill="url(#fillBalance)" stroke="var(--color-currentBalance)" />
+            <Area dataKey="expense" type="monotone" fill="url(#fillExpense)" stroke="var(--color-expense)" />
           </AreaChart>
         </ChartContainer>
       </CardContent>

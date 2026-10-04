@@ -88,10 +88,6 @@ const navMain = [
           url: "/reports/goals-evolution",
         },
         {
-          title: "Orçamento vs realizado",
-          url: "/reports/budget-vs-actual",
-        },
-        {
           title: "Projeção de saldo",
           url: "/reports/balance-projection",
         }

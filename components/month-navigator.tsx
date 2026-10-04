@@ -17,7 +17,17 @@ function formatMonthLabel(month: string): string {
   return date.toLocaleDateString("pt-BR", { month: "long", year: "numeric" })
 }
 
-export function MonthNavigator({ currentMonth }: { currentMonth: string }) {
+// minMonth/maxMonth são opcionais: sem eles o navegador não tem limite
+// (é o caso de Orçamentos, que continua como estava).
+export function MonthNavigator({
+  currentMonth,
+  minMonth,
+  maxMonth,
+}: {
+  currentMonth: string
+  minMonth?: string
+  maxMonth?: string
+}) {
   const pathname = usePathname()
   const searchParams = useSearchParams()
 
@@ -27,21 +37,42 @@ export function MonthNavigator({ currentMonth }: { currentMonth: string }) {
     return `${pathname}?${params.toString()}`
   }
 
+  const previousMonth = shiftMonth(currentMonth, -1)
+  const nextMonth = shiftMonth(currentMonth, 1)
+  // Strings "YYYY-MM" comparam corretamente com <= e >=, sem converter pra Date.
+  const canGoPrevious = !minMonth || previousMonth >= minMonth
+  const canGoNext = !maxMonth || nextMonth <= maxMonth
+
   return (
     <div className="flex items-center gap-2">
-      <Link href={buildHref(shiftMonth(currentMonth, -1))}>
-        <Button variant="outline" size="icon">
+      {canGoPrevious ? (
+        <Link href={buildHref(previousMonth)}>
+          <Button variant="outline" size="icon" aria-label="Mês anterior">
+            <ChevronLeft className="size-4" />
+          </Button>
+        </Link>
+      ) : (
+        // Sem <Link> em volta: botão desabilitado dentro de link é pouco confiável.
+        <Button variant="outline" size="icon" aria-label="Mês anterior" disabled>
           <ChevronLeft className="size-4" />
         </Button>
-      </Link>
+      )}
+
       <span className="min-w-32 text-center text-sm font-medium capitalize">
         {formatMonthLabel(currentMonth)}
       </span>
-      <Link href={buildHref(shiftMonth(currentMonth, 1))}>
-        <Button variant="outline" size="icon">
+
+      {canGoNext ? (
+        <Link href={buildHref(nextMonth)}>
+          <Button variant="outline" size="icon" aria-label="Próximo mês">
+            <ChevronRight className="size-4" />
+          </Button>
+        </Link>
+      ) : (
+        <Button variant="outline" size="icon" aria-label="Próximo mês" disabled>
           <ChevronRight className="size-4" />
         </Button>
-      </Link>
+      )}
     </div>
   )
 }
