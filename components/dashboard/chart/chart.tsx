@@ -56,5 +56,5 @@ const range = chartRange === "week" ? weekRange : (() => {
     return { date, currentBalance: saldoAcumulado, expense: values.expense }
   })
 
-    return <ChartAreaInteractive data={chartPoints} />
+    return <ChartAreaInteractive data={chartPoints} chartRange={chartRange} month={month} week={week} />
 }

@@ -7,7 +7,6 @@ import {
   getPeriodRangeStrings,
   getPreviousPeriodRangeStrings,
   percentChange,
-  toDateString,
 } from "@/lib/reports"
 
 interface CardData {
@@ -62,10 +61,9 @@ function generateCardData(
   ]
 }
 
-export async function DashboardCards({ month }: { month?: string }) {
+export async function DashboardCards({ month }: { month: string }) {
   
-  const resolvedMonth = month ?? toDateString(new Date()).slice(0, 7)
-  // ...troca todo uso de `month` por `resolvedMonth` daqui pra baixo
+
   const supabase = await createClient()
 
   const {
@@ -80,7 +78,7 @@ export async function DashboardCards({ month }: { month?: string }) {
 
   const firstName = profile?.full_name?.split(" ")[0] ?? ""
 
-  const [year, m] = resolvedMonth.split("-").map(Number)
+  const [year, m] = month.split("-").map(Number)
   const referenceDate = new Date(year, m - 1, 1)
   const currentRange = getPeriodRangeStrings("month", referenceDate)
   const previousRange = getPreviousPeriodRangeStrings("month", referenceDate)
