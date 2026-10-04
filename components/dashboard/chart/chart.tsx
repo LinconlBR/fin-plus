@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server"
 import { ChartAreaInteractive } from "@/components/dashboard/chart/chart-interactive"
-import { getPeriodRangeStrings, getWeekRangeStrings } from "@/lib/reports"
+import { getPeriodRangeStrings, getWeekRangeStrings, toDateString } from "@/lib/reports"
 
 export async function DashboardChart({
   month,
@@ -50,11 +50,22 @@ const range = chartRange === "week" ? weekRange : (() => {
     }
   }
 
-  let saldoAcumulado = saldoInicial
-  const chartPoints = Object.entries(grouped).map(([date, values]) => {
-    saldoAcumulado += values.net
-    return { date, currentBalance: saldoAcumulado, expense: values.expense }
-  })
+  const chartPoints: { date: string; currentBalance: number; expense: number }[] = []
+let saldoAcumulado = saldoInicial
+
+const [sy, sm, sd] = range.start.split("-").map(Number)
+const [ey, em, ed] = range.end.split("-").map(Number)
+const cursor = new Date(sy, sm - 1, sd)
+const last = new Date(ey, em - 1, ed)
+
+while (cursor <= last) {
+  const day = toDateString(cursor)
+  const values = grouped[day]
+  if (values) saldoAcumulado += values.net
+  chartPoints.push({ date: day, currentBalance: saldoAcumulado, expense: values?.expense ?? 0 })
+  cursor.setDate(cursor.getDate() + 1)
+}
+
 
     return <ChartAreaInteractive data={chartPoints} chartRange={chartRange} month={month} week={week} />
 }
