@@ -1,5 +1,10 @@
 "use client"
 
+
+import { useSearchParams } from "next/navigation"
+import { toDateString } from "@/lib/reports"
+import { MonthNavigator } from "@/components/month-navigator"
+
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
@@ -22,7 +27,10 @@ const currencyFormatter = new Intl.NumberFormat("pt-BR", {
 
 
 export function BudgetsContent() {
-    const { data, isLoading, isError } = useBudgets()
+
+    const searchParams = useSearchParams()
+    const month = searchParams.get("month") ?? toDateString(new Date()).slice(0, 7)
+    const { data, isLoading, isError } = useBudgets(month)
     const budgets = data ?? []
 
     
@@ -64,18 +72,24 @@ export function BudgetsContent() {
 
     if (budgets.length === 0) {
   return (
-    <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed p-12 text-center">
-      <p className="font-medium">Você ainda não tem orçamentos</p>
-      <p className="text-sm text-muted-foreground">
-        Crie um limite para começar a acompanhar seus gastos por categoria.
-      </p>
-      <BudgetsDialog />
+    <div className="space-y-6">
+      <MonthNavigator currentMonth={month} />
+      <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed p-12 text-center">
+        <p className="font-medium">Nenhum orçamento neste mês</p>
+        <p className="text-sm text-muted-foreground">
+          Não há orçamentos registrados para este período, ou nenhum existia ainda nesta data.
+        </p>
+        <BudgetsDialog />
+      </div>
     </div>
   )
+
 }
     const budgetInsight = getBudgetInsight(budgetsWithStatus)
-    return (
+return (
   <div className="space-y-6">
+    <MonthNavigator currentMonth={month} />
+
     {/* Cards de resumo */}
     <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
       <Card>
@@ -110,12 +124,12 @@ export function BudgetsContent() {
 
     {/* Insight */}
     {(aiInsight || budgetInsight) && (
-        <div className="flex items-start gap-3 rounded-lg border border-border bg-accent-violet/10 p-4">
-            <Lightbulb className="mt-0.5 size-4 shrink-0 text-accent-violet" />
-            <p className="text-sm text-foreground/90">{aiInsight || budgetInsight}</p>
-        </div>
+      <div className="flex items-start gap-3 rounded-lg border border-border bg-accent-violet/10 p-4">
+        <Lightbulb className="mt-0.5 size-4 shrink-0 text-accent-violet" />
+        <p className="text-sm text-foreground/90">{aiInsight || budgetInsight}</p>
+      </div>
     )}
- 
+
     {/* Grid de orçamentos, já ordenado por urgência */}
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {sortedBudgets.map((budget) => {
@@ -124,7 +138,7 @@ export function BudgetsContent() {
           (budget.spent / budget.targetAmount) * 100,
           100
         )
- 
+
         return (
           <Card key={budget.id} className={styles.border}>
             <CardContent className="space-y-3">
@@ -149,9 +163,9 @@ export function BudgetsContent() {
                   <DeleteBudgetButton id={budget.id} />
                 </div>
               </div>
- 
+
               <Progress value={percentage} indicatorClassName={styles.indicator} />
- 
+
               <div className="flex items-baseline justify-between">
                 <Badge variant={styles.badgeVariant}>
                   {styles.label}
@@ -168,6 +182,4 @@ export function BudgetsContent() {
     </div>
   </div>
 )
-
 }
-

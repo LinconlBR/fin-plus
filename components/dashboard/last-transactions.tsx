@@ -1,23 +1,22 @@
 import { createClient } from "@/lib/supabase/server"
 import { CategoryIcon } from "@/components/categories/category-icons"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { getPeriodRangeStrings } from "@/lib/reports"
 
-const dateFormatter = new Intl.DateTimeFormat("pt-BR", {
-  day: "2-digit",
-  month: "2-digit",
-})
+const dateFormatter = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit" })
+const currencyFormatter = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" })
 
-const currencyFormatter = new Intl.NumberFormat("pt-BR", {
-  style: "currency",
-  currency: "BRL",
-})
-
-export async function DashboardLastTransactions() {
+export async function DashboardLastTransactions({ month }: { month: string }) {
   const supabase = await createClient()
+
+  const [year, m] = month.split("-").map(Number)
+  const range = getPeriodRangeStrings("month", new Date(year, m - 1, 1))
 
   const { data: recentTransactions } = await supabase
     .from("transactions")
     .select("*, categories(name, icon, color)")
+    .gte("date", range.start)
+    .lte("date", range.end)
     .order("date", { ascending: false })
     .limit(5)
 
@@ -56,7 +55,7 @@ export async function DashboardLastTransactions() {
             </div>
           ))
         ) : (
-          <p className="text-sm text-muted-foreground">Nenhuma transação ainda.</p>
+          <p className="text-sm text-muted-foreground">Nenhuma transação neste mês.</p>
         )}
       </CardContent>
     </Card>

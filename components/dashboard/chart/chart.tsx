@@ -1,29 +1,56 @@
 import { createClient } from "@/lib/supabase/server"
 import { ChartAreaInteractive } from "@/components/dashboard/chart/chart-interactive"
+import {
+  buildDailyBalanceSeries,
+  getPeriodRangeStrings,
+  getWeekBounds,
+  getWeekRangeWithinMonth,
+  toDateString,
+} from "@/lib/reports"
 
-export async function DashboardChart() {
+export async function DashboardChart({
+  month,
+  week,
+  chartRange,
+}: {
+  month: string
+  week: string
+  chartRange: "month" | "week"
+}) {
   const supabase = await createClient()
 
-  const ninetyDaysAgo = new Date()
-  ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90)
+  // Mês navegado, ou a semana navegada RECORTADA pelo mês (só os dias dele).
+  const [year, m] = month.split("-").map(Number)
+  const range =
+    chartRange === "week"
+      ? getWeekRangeWithinMonth(week, month)
+      : getPeriodRangeStrings("month", new Date(year, m - 1, 1))
 
-  const { data: transactionsBefore } = await supabase
-    .from("transactions")
-    .select("*")
-    .lt("date", ninetyDaysAgo.toISOString().split("T")[0])
+  const { minWeek, maxWeek } = getWeekBounds(month)
 
-  const saldoInicial = (transactionsBefore ?? []).reduce((acc, t) => {
-    return t.type === "income" ? acc + Number(t.amount) : acc - Number(t.amount)
-  }, 0)
+  // Tudo que veio antes do intervalo vira o saldo de partida do gráfico.
+  const [before, inRange] = await Promise.all([
+    supabase
+      .from("transactions")
+      .select("amount, type")
+      .lt("date", range.start)
+      .throwOnError(),
+    supabase
+      .from("transactions")
+      .select("amount, type, date")
+      .gte("date", range.start)
+      .lte("date", range.end)
+      .order("date", { ascending: true })
+      .throwOnError(),
+  ])
 
-  const { data: transactions90Days } = await supabase
-    .from("transactions")
-    .select("*")
-    .gte("date", ninetyDaysAgo.toISOString().split("T")[0])
-    .order("date", { ascending: true })
+  const initialBalance = (before.data ?? []).reduce(
+    (acc, t) => (t.type === "income" ? acc + Number(t.amount) : acc - Number(t.amount)),
+    0
+  )
 
   const grouped: Record<string, { net: number; expense: number }> = {}
-  for (const t of transactions90Days ?? []) {
+  for (const t of inRange.data ?? []) {
     const day = t.date
     if (!grouped[day]) grouped[day] = { net: 0, expense: 0 }
     if (t.type === "income") {
@@ -34,11 +61,23 @@ export async function DashboardChart() {
     }
   }
 
-  let saldoAcumulado = saldoInicial
-  const chartPoints = Object.entries(grouped).map(([date, values]) => {
-    saldoAcumulado += values.net
-    return { date, currentBalance: saldoAcumulado, expense: values.expense }
-  })
+  // Um ponto por dia, parando em hoje (nada de dias futuros preenchidos).
+  const chartPoints = buildDailyBalanceSeries(
+    grouped,
+    initialBalance,
+    range.start,
+    range.end,
+    toDateString(new Date())
+  )
 
-  return <ChartAreaInteractive data={chartPoints} />
+  return (
+    <ChartAreaInteractive
+      data={chartPoints}
+      chartRange={chartRange}
+      month={month}
+      week={week}
+      minWeek={minWeek}
+      maxWeek={maxWeek}
+    />
+  )
 }

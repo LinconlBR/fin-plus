@@ -25,6 +25,7 @@ decisão de arquitetura foi tomada.
 | ![TanStack Table](https://img.shields.io/badge/TanStack_Table-FF4154?logoColor=white) | **TanStack Table v9** | Motor de tabelas (Transações) |
 | ![TanStack Form](https://img.shields.io/badge/TanStack_Form-FF4154?logoColor=white) | **TanStack Form** | Formulários, integrado a Zod |
 | ![Zod](https://img.shields.io/badge/Zod-3E67B1?logo=zod&logoColor=white) | **Zod** | Validação de dados (cliente e servidor) |
+| ![Recharts](https://img.shields.io/badge/Recharts-22B5BF?logoColor=white) | **Recharts** | Gráficos (Dashboard e Relatórios) |
 | ![Google Gemini](https://img.shields.io/badge/Google_Gemini-8E75B2?logo=googlegemini&logoColor=white) | **Google Gemini API** | Insights financeiros personalizados por IA |
 | ![Vercel](https://img.shields.io/badge/Vercel-000000?logo=vercel&logoColor=white) | **Vercel** | Deploy e hospedagem |
 
@@ -86,13 +87,48 @@ renderização — ver Troubleshooting.
 
 **Insight de orçamento com IA (Gemini) e fallback baseado em regras.** A versão
 baseada em regras sempre existe como *fallback* — `aiInsight || budgetInsight` na
-exibição, então falha de rede/API cai de volta pra uma mensagem funcional.
+exibição, então falha de rede/API cai de volta pra uma mensagem funcional. O mesmo padrão vale
+para as Metas e para a Visão geral dos relatórios.
 
 **`type` (receita/despesa) fica salvo na própria transação**, mesmo sendo redundante
 com o `type` da categoria escolhida — porque categoria pode ser apagada
 (`ON DELETE SET NULL`), e o histórico financeiro não pode virar ambíguo por causa
 disso. O formulário deriva `type` da categoria automaticamente; o campo nunca é
 perguntado duas vezes ao usuário.
+
+**Metas: o progresso é a soma de `goal_contributions`, nunca um número editado.**
+Cada aporte é uma linha com data. Assim dá pra saber *quando* cada valor foi guardado
+(é o que alimenta a evolução das metas nos relatórios) e o status da meta é calculado
+pelo ritmo (quanto falta × quanto tempo falta), não só pelo valor acumulado.
+
+**Relatórios: página fina, `Content` busca, blocos "burros", cálculo em funções
+puras.** O `page.tsx` só valida a URL; um Server Component (`*Content`) busca no
+Supabase e entrega números prontos a blocos que só recebem props. Toda regra de
+cálculo (agrupar por categoria, projeção, variação, janelas de data) vive em
+`lib/reports.ts` como função pura, sem I/O — por isso dá pra testar com valores
+esperados sem subir o app.
+
+**Datas como texto `"YYYY-MM-DD"`, nunca `toISOString()`.** `toISOString()` converte
+pra UTC e, em fuso negativo (Brasil), pode empurrar uma data pro dia anterior. As
+datas viram texto com os getters locais, e dias e meses são comparados como string
+(que ordena certo nesse formato).
+
+**Navegação de período na URL, validada no servidor.** `?month=2026-03` (e `?week=` no
+gráfico do Dashboard) permite compartilhar o link e voltar pelo histórico do
+navegador. A página valida o formato e "prende" o valor entre a primeira transação e
+o mês atual: digitar um mês futuro na URL cai no mês atual. Os limites chegam por
+props, calculados no servidor, para servidor e navegador concordarem sobre "hoje".
+
+**Histórico do limite de orçamento (`budget_history`).** Para navegar a meses passados
+com o limite certo, cada `createBudget`/`updateBudget` grava um snapshot do mês.
+Orçamento sem histórico no mês visto não aparece, em vez de ser aproximado com o valor
+de hoje: dado aproximado parecendo exato é pior que dado ausente. Na visão mensal, o
+orçamento semanal vale ×4 e o único é recortado pela interseção com o mês.
+
+**Comparação de períodos "do mesmo tamanho".** No mês ou ano em andamento, compara do
+início até hoje com o mesmo trecho do período anterior (dia 14 com dia 14), não com o
+período anterior inteiro; períodos encerrados comparam inteiro com inteiro. A média
+semanal usa a mesma duração dos dois lados.
 
 ## Estrutura principal
 
@@ -102,19 +138,33 @@ app/
     dashboard/
     transactions/
     budgets/
+    goals/
+    customize/categories/ # gerenciar categorias (hub "Personalizar")
+    reports/              # layout com abas + visão geral e 5 relatórios
   auth/                   # login, signup, callback OAuth
   layout.tsx
 components/
   ui/                     # shadcn/ui (Base UI) — botões, dialogs, form, etc.
   transactions/           # tabela, dialog de criação/edição, ações
   budgets/                # cards, dialog, insight de IA
+  goals/                  # cards, dialogs de meta e de contribuição, insight de IA
+  categories/             # dialog, seletor de ícone e de cor
+  dashboard/              # cards, gráfico (mês/semana), últimas transações
+  reports/                # um conjunto por relatório + navegação de período
   sidebar/                # navegação principal
-hooks/                    # use-transactions, use-budgets, use-categories (TanStack Query)
+  month-navigator.tsx     # navegadores de período (limites vindos do servidor)
+  week-navigator.tsx
+  year-navigator.tsx
+hooks/                    # use-transactions, use-budgets, use-categories, use-goals (TanStack Query)
 lib/
-  actions/                # Server Actions (createTransaction, createBudget, etc.)
+  actions/                # Server Actions (transações, orçamentos, metas, categorias, IA)
   schema/                 # validação Zod
   supabase/               # clients (browser/server)
-  budgets.ts              # getBudgetPeriodRange (lógica pura, sem I/O)
+  budgets.ts              # lógica pura de orçamento (período, status, limite por mês)
+  goals.ts                # lógica pura de metas (status por ritmo, resumo)
+  reports.ts              # lógica pura dos relatórios (períodos, agrupamentos, projeção, comparação)
+  report-period.ts        # lê e valida o período da URL (o único ponto com I/O)
+  format.ts               # moeda, porcentagem, variação
 ```
 
 ## Rotas disponíveis
@@ -125,37 +175,57 @@ lib/
 | `/auth/login` | ❌ | Login (e-mail, Google, Facebook) |
 | `/auth/signup` | ❌ | Cadastro |
 | `/auth/callback` | ❌ | Callback do fluxo OAuth |
-| `/dashboard` | ✅ | Resumo financeiro, gráfico de evolução |
+| `/dashboard` | ✅ | Resumo do mês (navegável), gráfico de saldo x despesas por mês ou semana, últimas transações |
 | `/transactions` | ✅ | Listagem, criação, edição e exclusão de transações |
-| `/budgets` | ✅ | Orçamentos por categoria + insight de IA |
-| `/goals` | ⏳ | Metas de economia — ainda não implementada |
-| `/reports` | ⏳ | Relatórios — ainda não implementada |
-| `/categories` | ⏳ | Gerenciar categorias — ainda não implementada |
+| `/budgets` | ✅ | Orçamentos por categoria, navegação por mês com o limite que valia em cada um, insight de IA |
+| `/goals` | ✅ | Metas de economia com aportes, status por ritmo e insight de IA |
+| `/customize/categories` | ✅ | Gerenciar categorias (ícone e cor) |
+| `/reports` | ✅ | Visão geral: resumo, categorias, receitas x despesas, projeção, metas e insight |
+| `/reports/categories` | ✅ | Gastos por categoria |
+| `/reports/income-vs-expense` | ✅ | Receitas vs despesas por mês |
+| `/reports/period-comparison` | ✅ | Comparativo com o período anterior |
+| `/reports/goals-evolution` | ✅ | Evolução das metas |
+| `/reports/balance-projection` | ✅ | Projeção de saldo |
+
+Os relatórios aceitam `?period=month` ou `?period=year` e `?month=AAAA-MM` (o mês
+navegado; no modo ano vale o ano desse mês).
 
 ## Banco de dados (Supabase)
 
-5 tabelas em `public`, todas com RLS habilitado: `profiles`, `categories` (com `icon`/
+7 tabelas em `public`, todas com RLS habilitado: `profiles`, `categories` (com `icon`/
 `color`, populadas via trigger no cadastro), `transactions`, `budgets` (limite
-recorrente ou único por categoria), `goals` (metas de economia de longo prazo).
+recorrente ou único por categoria), `budget_history` (limite de cada orçamento por
+mês), `goals` (metas de economia de longo prazo) e `goal_contributions` (os aportes
+de cada meta).
 
-⚠️ **Furo de dado conhecido, ainda não corrigido**: `category_id` em `transactions` e
-`budgets` usa `ON DELETE SET NULL`. Apagar uma categoria deixaria registros órfãos com
-`category_id = null` batendo uns nos outros no cálculo de gasto por orçamento
-(`null === null`). Precisa ser resolvido antes de construir a tela de gerenciar
-categorias.
+**Categoria apagada vira `null`, o histórico fica.** `category_id` em `transactions` e
+`budgets` usa `ON DELETE SET NULL`: apagar uma categoria desvincula os registros em
+vez de apagá-los. O cálculo de gasto por orçamento ignora `category_id = null`
+(antes, `null === null` fazia registros órfãos "baterem" uns nos outros) e os
+relatórios agrupam o que ficou órfão em "Sem categoria".
+
+⚠️ A coluna `goals.current_amount` é legada: o app não lê nem escreve nela (o progresso
+vem de `goal_contributions`). Pode ser removida numa migração futura.
 
 ## Funcionalidades implementadas
 
 - [x] Cadastro, login (e-mail + Google + Facebook), logout
 - [x] Layout com sidebar persistente, navegação real, breadcrumb dinâmico
-- [x] Dashboard com dados reais
+- [x] Dashboard com dados reais: resumo do mês navegável, gráfico de saldo x despesas
+      por mês ou semana, últimas transações
 - [x] Transações: listagem, busca, criação, edição e exclusão, validação em duas
       camadas, `type` derivado automaticamente da categoria
 - [x] Orçamentos: recorrentes ou únicos, cards com progresso e cores por status,
-      insight gerado por IA com fallback baseado em regras, CRUD completo
-- [ ] Metas de economia de longo prazo
-- [ ] Tela de gerenciar categorias — bloqueada até resolver o furo de dado acima
-- [ ] Relatórios e gráficos analíticos
+      insight gerado por IA com fallback baseado em regras, CRUD completo, navegação
+      por mês com o histórico do limite
+- [x] Metas de economia: aportes, status por ritmo, insight de IA com fallback
+- [x] Gerenciar categorias, com ícone e cor
+- [x] Relatórios: visão geral, gastos por categoria, receitas vs despesas, comparativo
+      de períodos, evolução das metas e projeção de saldo — com navegação por mês/ano e
+      comparação de períodos do mesmo tamanho
+- [ ] Exportação de relatórios (CSV/PDF)
+- [ ] Página de Configurações (perfil, senha, notificações)
+- [ ] Dicas financeiras
 - [ ] SMTP próprio (Resend/SendGrid/Postmark) — antes do lançamento
 - [ ] Botão de login com Apple removido dos wireframes/telas (pendente)
 
@@ -166,8 +236,9 @@ categorias.
 1. Acesse [app.supabase.com](https://app.supabase.com) e crie um projeto novo.
 2. Abra `SQL Editor`, copia o conteúdo de [`schema.sql`](./schema.sql) (na raiz do
    repositório) e cola lá. Clica em **RUN**.
-3. Confira em `Table Editor` se `profiles`, `categories`, `transactions`, `budgets` e
-   `goals` foram criadas, todas com o cadeado de RLS habilitado.
+3. Confira em `Table Editor` se `profiles`, `categories`, `transactions`, `budgets`,
+   `budget_history`, `goals` e `goal_contributions` foram criadas, todas com o cadeado de
+   RLS habilitado.
 
 ### 2) Configurar autenticação
 

@@ -6,8 +6,8 @@
 -- constraints, Row Level Security e o trigger de cadastro.
 --
 -- Ordem importa: domains antes das tabelas que os usam; tabelas na ordem de
--- dependência de foreign key (profiles → categories → transactions/budgets;
--- profiles → goals).
+-- dependência de foreign key (profiles → categories → transactions/budgets →
+-- budget_history; profiles → goals → goal_contributions).
 -- ============================================================================
 
 -- ----------------------------------------------------------------------------
@@ -152,6 +152,8 @@ create table public.goals (
   user_id uuid not null references public.profiles(id) on update cascade on delete cascade,
   name text not null,
   target_amount positive_money_amount not null,
+  -- LEGADO: o app não lê nem escreve esta coluna. O progresso da meta vem da
+  -- soma de goal_contributions. Pode ser removida numa migração futura.
   current_amount non_negative_money_amount not null default 0,
   deadline date
 );
@@ -162,6 +164,94 @@ create policy "Usuários gerenciam as próprias metas"
   on public.goals for all
   using (auth.uid() = user_id)
   with check (auth.uid() = user_id);
+
+-- ----------------------------------------------------------------------------
+-- Tabela: goal_contributions
+-- ----------------------------------------------------------------------------
+-- Cada aporte feito numa meta. O progresso da meta é SEMPRE a soma destas
+-- linhas, nunca um valor editado direto: assim o histórico de quando cada valor
+-- foi guardado se preserva (usado em Relatórios → Evolução das metas).
+
+create table public.goal_contributions (
+  id uuid primary key default gen_random_uuid(),
+  created_at timestamptz not null default now(),
+  goal_id uuid not null references public.goals(id) on delete cascade,
+  user_id uuid not null references public.profiles(id) on delete cascade,
+  amount positive_money_amount not null,
+  date date not null default current_date
+);
+
+alter table public.goal_contributions enable row level security;
+
+create policy "Usuários gerenciam as próprias contribuições"
+  on public.goal_contributions for all
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
+-- ----------------------------------------------------------------------------
+-- Tabela: budget_history
+-- ----------------------------------------------------------------------------
+-- Um "snapshot" do limite de cada orçamento por mês, gravado por
+-- createBudget/updateBudget (upsert). Permite navegar até meses passados e
+-- comparar o gasto com o limite que valia NAQUELE mês. Orçamento sem nenhuma
+-- linha até o mês visto simplesmente não aparece: não se aproxima com o valor
+-- de hoje.
+--
+-- period é texto "YYYY-MM": ordena e compara como string, sem Date nem fuso.
+-- Não tem user_id: a RLS descobre o dono pelo orçamento (budgets.user_id).
+-- Apagar o orçamento apaga o histórico dele (on delete cascade).
+--
+-- Orçamentos criados ANTES desta tabela existir não têm linha nenhuma e somem
+-- de qualquer mês. Num banco já em uso, faça o backfill uma vez:
+--   insert into budget_history (budget_id, period, amount)
+--   select b.id, to_char(b.start_date, 'YYYY-MM'), b.target_amount
+--   from budgets b
+--   where not exists (select 1 from budget_history h where h.budget_id = b.id);
+
+create table public.budget_history (
+  id uuid primary key default gen_random_uuid(),
+  budget_id uuid not null references public.budgets(id) on delete cascade,
+  period text not null,
+  amount positive_money_amount not null,
+  unique (budget_id, period)
+);
+
+alter table public.budget_history enable row level security;
+
+create policy "Usuários veem o histórico dos próprios orçamentos"
+  on public.budget_history for select
+  using (
+    exists (
+      select 1 from public.budgets
+      where budgets.id = budget_history.budget_id and budgets.user_id = auth.uid()
+    )
+  );
+
+-- O upsert de createBudget/updateBudget precisa das duas: insert (mês novo)
+-- e update (mesmo mês editado de novo).
+create policy "Usuários criam histórico dos próprios orçamentos"
+  on public.budget_history for insert
+  with check (
+    exists (
+      select 1 from public.budgets
+      where budgets.id = budget_history.budget_id and budgets.user_id = auth.uid()
+    )
+  );
+
+create policy "Usuários atualizam histórico dos próprios orçamentos"
+  on public.budget_history for update
+  using (
+    exists (
+      select 1 from public.budgets
+      where budgets.id = budget_history.budget_id and budgets.user_id = auth.uid()
+    )
+  )
+  with check (
+    exists (
+      select 1 from public.budgets
+      where budgets.id = budget_history.budget_id and budgets.user_id = auth.uid()
+    )
+  );
 
 -- ----------------------------------------------------------------------------
 -- Trigger: criação automática de profile + categorias padrão no cadastro

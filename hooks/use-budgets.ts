@@ -2,7 +2,8 @@
 
 import { useQuery } from "@tanstack/react-query"
 import { createClient } from "@/lib/supabase/client"
-import { getBudgetPeriodRange } from "@/lib/budgets"
+import { findBudgetAmountForMonth, intersectDateRanges} from "@/lib/budgets"
+import { getPeriodRangeStrings,toDateString } from "@/lib/reports"
 
 // define o schema que vem da daatabase, que é diferente do schema que a gente quer usar na UI
 type BudgetRow = {
@@ -58,56 +59,78 @@ async function fetchBudgets(): Promise<Budget[]> {
 export type BudgetWithSpent = Budget & { spent: number }
 
 // busca os orçamentos do Supabase, calcula o gasto de cada orçamento e transforma o schema da database para o schema que a gente quer usar na UI
-export async function fetchBudgetsWithSpent(): Promise<BudgetWithSpent[]> {
+export async function fetchBudgetsWithSpent(month?: string): Promise<BudgetWithSpent[]> {
   const supabase = createClient()
   const budgets = await fetchBudgets()
 
-  const { data: transactions} = await supabase
+  const targetMonth = month ?? toDateString(new Date()).slice(0, 7)
+  const [year, m] = targetMonth.split("-").map(Number)
+  const referenceDate = new Date(year, m - 1, 1)
+  const monthRange = getPeriodRangeStrings("month", referenceDate) // reaproveita de lib/reports.ts
+
+  const { data: transactions } = await supabase
     .from("transactions")
     .select("category_id, amount, date")
     .eq("type", "expense")
     .throwOnError()
 
-  return budgets.map((budget) => {
-    if (!budget.period) return { ...budget, spent: 0 }
+  const { data: history } = await supabase
+    .from("budget_history")
+    .select("budget_id, period, amount")
+    .throwOnError()
 
-        const range = getBudgetPeriodRange({
-            is_recurring: budget.isRecurring,
-            period: budget.period,
-            start_date: budget.startDate,
-            end_date: budget.endDate,
-        })
+  const results: BudgetWithSpent[] = []
 
-    if (!range) return { ...budget, spent: 0 }
+  for (const budget of budgets) {
+    if (!budget.period) continue
 
-    // budget.category_id !== null é a correção do furo de dado: sem essa
-    // checagem explícita, um orçamento órfão (categoria apagada,
-    // category_id = null) bateria com QUALQUER transação também órfã
-    // (category_id = null), já que null === null é `true` em JavaScript —
-    // somando gastos de categorias completamente diferentes por engano.
+    let targetAmount: number
+    let spendingRange: { start: string; end: string } | null
+
+    if (budget.isRecurring) {
+      // mensal ou semanal: os dois usam o histórico, só muda o multiplicador
+      const historicalAmount = findBudgetAmountForMonth(history ?? [], budget.id, targetMonth)
+      if (historicalAmount === null) continue // sem histórico nesse mês: esconde
+
+      targetAmount = budget.period === "weekly" ? historicalAmount * 4 : historicalAmount
+      spendingRange = monthRange
+    } else {
+      // único: não usa histórico, só cruza o range fixo com o mês navegado
+      spendingRange = intersectDateRanges(monthRange, {
+        start: budget.startDate,
+        end: budget.endDate ?? budget.startDate,
+      })
+      if (!spendingRange) continue // não cruza esse mês: esconde
+
+      targetAmount = budget.targetAmount
+    }
+
     const spent = (transactions ?? [])
       .filter(
         (t) =>
           budget.category_id !== null &&
           t.category_id === budget.category_id &&
-          t.date >= range.start &&
-          t.date <= range.end
+          t.date >= spendingRange.start &&
+          t.date <= spendingRange.end
       )
       .reduce((acc, t) => acc + Number(t.amount), 0)
 
-    return { ...budget, spent }
-  })
-}
+    results.push({ ...budget, targetAmount, spent })
+  }
 
+  return results
+}
 // hook tanstack query para buscar os orçamentos do Supabase, calcular o gasto de cada orçamento e transformar 
 // o schema da database para o schema que a gente quer usar na UI
-export function useBudgets() {
+export function useBudgets(month?: string) {
   return useQuery({
     // queryKey identifica essa busca de forma única no cache do TanStack Query —
     // é como uma "chave de dicionário". Se outro componente pedir a mesma
     // queryKey, o TanStack Query reaproveita o cache em vez de buscar de novo.
-    queryKey: ["budgets"],
+    queryKey: ["budgets", month ?? "current"],
     // queryFn é a função que vai buscar os dados de fato. Ela pode ser assíncrona e retornar uma Promise.
-    queryFn: fetchBudgetsWithSpent,
+    // O TanStack Query chama queryFn com o contexto da query, então precisamos
+    // encapsular a função que já aceita um mês opcional para manter a assinatura correta.
+    queryFn: () => fetchBudgetsWithSpent(month),
   })
 }

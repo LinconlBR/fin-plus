@@ -68,12 +68,24 @@ const navMain = [
       ),
       items: [
         {
+          title: "Visão geral",
+          url: "/reports",
+        },
+        {
           title: "Gastos por categoria",
-          url: "/reports/category-expenses",
+          url: "/reports/categories",
         },
         {
           title: "Receitas vs despesas",
-          url: "/reports/income-vs-expenses",
+          url: "/reports/income-vs-expense",
+        },
+        {
+          title: "Comparativo de períodos",
+          url: "/reports/period-comparison",
+        },
+        {
+          title: "Evolução das metas",
+          url: "/reports/goals-evolution",
         },
         {
           title: "Projeção de saldo",
