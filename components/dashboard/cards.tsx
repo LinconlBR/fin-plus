@@ -3,11 +3,7 @@ import { ArrowDownLeft, ArrowUpRight, Wallet } from "lucide-react"
 import { createClient } from "@/lib/supabase/server"
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
-import {
-  getPeriodRangeStrings,
-  getPreviousPeriodRangeStrings,
-  percentChange,
-} from "@/lib/reports"
+import { getComparableRanges, percentChange } from "@/lib/reports"
 
 interface CardData {
   label: string
@@ -24,12 +20,15 @@ function generateCardData(
   totalExpenses: number,
   balance: number,
   incomeTrend: number | null,
-  expenseTrend: number | null
+  expenseTrend: number | null,
+  partial: boolean
 ): CardData[] {
-  const formatTrend = (trend: number | null, label: string) => {
-    if (trend === null) return `Sem dados do ${label} anterior`
+  // Mês em andamento: a comparação é com o mesmo trecho do mês anterior, e o texto diz isso.
+  const compared = partial ? "mesmo período do mês anterior" : "mês anterior"
+  const formatTrend = (trend: number | null) => {
+    if (trend === null) return `Sem dados do ${compared}`
     const sign = trend >= 0 ? "+" : ""
-    return `${sign}${trend.toFixed(0)}% em relação ao ${label} anterior`
+    return `${sign}${trend.toFixed(0)}% em relação ao ${compared}`
   }
 
   return [
@@ -47,7 +46,7 @@ function generateCardData(
       dotColor: "bg-income",
       iconBg: "bg-income/15",
       borderColor: "border-income/60 shadow-glow-secondary",
-      trendLabel: formatTrend(incomeTrend, "mês"),
+      trendLabel: formatTrend(incomeTrend),
     },
     {
       label: "Despesas do Mês",
@@ -56,7 +55,7 @@ function generateCardData(
       dotColor: "bg-expense",
       iconBg: "bg-expense/15",
       borderColor: "border-expense/60 shadow-glow-primary",
-      trendLabel: formatTrend(expenseTrend, "mês"),
+      trendLabel: formatTrend(expenseTrend),
     },
   ]
 }
@@ -80,8 +79,13 @@ export async function DashboardCards({ month }: { month: string }) {
 
   const [year, m] = month.split("-").map(Number)
   const referenceDate = new Date(year, m - 1, 1)
-  const currentRange = getPeriodRangeStrings("month", referenceDate)
-  const previousRange = getPreviousPeriodRangeStrings("month", referenceDate)
+  // Mês em andamento compara do dia 1 até hoje com o mesmo trecho do mês anterior;
+  // mês encerrado compara inteiro com inteiro.
+  const {
+    current: currentRange,
+    previous: previousRange,
+    partial,
+  } = getComparableRanges("month", referenceDate)
 
   // Busca em paralelo: as transações DO mês navegado, as do mês anterior
   // (só pra comparação de tendência), e TUDO antes do início do mês
@@ -128,7 +132,7 @@ export async function DashboardCards({ month }: { month: string }) {
   const incomeTrend = percentChange(totalIncome, previousIncome)
   const expenseTrend = percentChange(totalExpenses, previousExpenses)
 
-  const cards = generateCardData(totalIncome, totalExpenses, balance, incomeTrend, expenseTrend)
+  const cards = generateCardData(totalIncome, totalExpenses, balance, incomeTrend, expenseTrend, partial)
 
   return (
     <div className="space-y-4">
