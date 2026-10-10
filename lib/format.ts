@@ -86,6 +86,17 @@ const monthYearFormatter = new Intl.DateTimeFormat(locale, {
   year: "numeric",
 })
 
+const dateFormatter = new Intl.DateTimeFormat(locale, {
+  day: "2-digit",
+  month: "2-digit",
+  year: "numeric",
+})
+
+// "10/10/2026"
+export function formatDate(value: string): string {
+  return dateFormatter.format(parseDateString(value))
+}
+
 // "10/10"
 export function formatDayMonth(value: string): string {
   return dayMonthFormatter.format(parseDateString(value))

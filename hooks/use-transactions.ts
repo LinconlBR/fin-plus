@@ -31,7 +31,7 @@ export type Transaction = {
   category: { name: string; icon: string; color: string }
   category_id: string
   type: "income" | "expense"
-  createdAt: string
+  date: string
   amount: number
 }
 
@@ -76,7 +76,7 @@ async function fetchTransactions(): Promise<Transaction[]> {
     },
     type: row.type,
     category_id: row.category_id ?? "",
-    createdAt: row.date ?? toDateString(new Date()),
+    date: row.date ?? toDateString(new Date()),
     amount: Number(row.amount), // mesmo cuidado de sempre: numeric pode vir como string
   }))
 }

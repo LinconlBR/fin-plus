@@ -67,7 +67,7 @@ export function TransactionDialog({
       description: transaction?.title ?? "",
       amount: transaction?.amount ?? 0,
       category_id: transaction?.category_id ?? "",
-      date: transaction?.createdAt ?? toDateString(new Date()),
+      date: transaction?.date ?? toDateString(new Date()),
     },
     validators: {
       onSubmit: transactionSchema,
