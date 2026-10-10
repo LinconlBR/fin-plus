@@ -26,6 +26,7 @@ import { createGoal, updateGoal } from "@/lib/actions/goals"
 
 
 import type { Goal } from "@/hooks/use-goals"
+import { toDateString } from "@/lib/reports"
 
 export function GoalDialog({
   goal,
@@ -161,7 +162,7 @@ export function GoalDialog({
                                     onChange={(e) => field.handleChange(e.target.value)}
                                     aria-invalid={isInvalid}
                                     />
-                                    {goal?.deadline && new Date(goal.deadline) < new Date() && !isInvalid && (
+                                    {goal?.deadline && goal.deadline < toDateString(new Date()) && !isInvalid && (
                                     <p className="text-sm text-warning">
                                         Essa meta passou do prazo. Defina um novo prazo pra continuar.
                                     </p>
