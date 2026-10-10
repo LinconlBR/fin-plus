@@ -21,7 +21,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
-import { ChevronsUpDownIcon, BadgeCheckIcon, CreditCardIcon, BellIcon, LogOutIcon, Settings} from "lucide-react"
+import { ChevronsUpDownIcon, CreditCardIcon, BellIcon, LogOutIcon, Settings} from "lucide-react"
 
 
 export function NavUser({
