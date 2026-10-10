@@ -7,20 +7,19 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar"
-import { createClient } from "@/lib/supabase/server"
+import { requireUser } from "@/lib/auth"
 
 
 
 export default async function Layout({ children }: { children: React.ReactNode }) {
   
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  const { data: profile } = await supabase.from("profiles").select("*").eq("id", user?.id).single()
+  const { supabase, user } = await requireUser()
+  const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle().throwOnError()
 
   return (
 
     <SidebarProvider>
-      <AppSidebar user={{ name: profile?.full_name ?? "", email: user?.email ?? "", avatar: "/avatar.svg"}} />
+      <AppSidebar user={{ name: profile?.full_name ?? "", email: user.email ?? "", avatar: "/avatar.svg"}} />
         <SidebarInset>
             <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
                 <div className="flex items-center gap-2 px-4">
