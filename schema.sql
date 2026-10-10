@@ -25,11 +25,6 @@ create domain positive_money_amount as numeric(12,2)
   check (value > 0);
 -- Uso: valores-alvo (orçamentos, metas) — não faz sentido um limite/objetivo de R$ 0.
 
-create domain non_negative_money_amount as numeric(12,2)
-  check (value >= 0);
--- Uso: valores acumulados que podem legitimamente começar em zero
--- (ex: current_amount de uma meta recém-criada).
-
 -- ----------------------------------------------------------------------------
 -- Tabela: profiles
 -- ----------------------------------------------------------------------------
@@ -47,11 +42,12 @@ alter table public.profiles enable row level security;
 
 create policy "Usuários veem o próprio perfil"
   on public.profiles for select
-  using (auth.uid() = id);
+  using ((select auth.uid()) = id);
 
 create policy "Usuários atualizam o próprio perfil"
   on public.profiles for update
-  using (auth.uid() = id);
+  using ((select auth.uid()) = id)
+  with check ((select auth.uid()) = id);
 
 -- ----------------------------------------------------------------------------
 -- Tabela: categories
@@ -73,8 +69,8 @@ alter table public.categories enable row level security;
 
 create policy "Usuários gerenciam as próprias categorias"
   on public.categories for all
-  using (auth.uid() = user_id)
-  with check (auth.uid() = user_id);
+  using ((select auth.uid()) = user_id)
+  with check ((select auth.uid()) = user_id);
 
 -- ----------------------------------------------------------------------------
 -- Tabela: transactions
@@ -108,7 +104,8 @@ alter table public.transactions enable row level security;
 
 create policy "Usuários gerenciam as próprias transações"
   on public.transactions for all
-  using (auth.uid() = user_id);
+  using ((select auth.uid()) = user_id)
+  with check ((select auth.uid()) = user_id);
 
 -- ----------------------------------------------------------------------------
 -- Tabela: budgets
@@ -136,8 +133,8 @@ alter table public.budgets enable row level security;
 
 create policy "Usuários gerenciam os próprios orçamentos"
   on public.budgets for all
-  using (auth.uid() = user_id)
-  with check (auth.uid() = user_id);
+  using ((select auth.uid()) = user_id)
+  with check ((select auth.uid()) = user_id);
 
 -- ----------------------------------------------------------------------------
 -- Tabela: goals
@@ -152,9 +149,7 @@ create table public.goals (
   user_id uuid not null references public.profiles(id) on update cascade on delete cascade,
   name text not null,
   target_amount positive_money_amount not null,
-  -- LEGADO: o app não lê nem escreve esta coluna. O progresso da meta vem da
-  -- soma de goal_contributions. Pode ser removida numa migração futura.
-  current_amount non_negative_money_amount not null default 0,
+  -- O progresso da meta NÃO é uma coluna: vem da soma de goal_contributions.
   deadline date
 );
 
@@ -162,8 +157,8 @@ alter table public.goals enable row level security;
 
 create policy "Usuários gerenciam as próprias metas"
   on public.goals for all
-  using (auth.uid() = user_id)
-  with check (auth.uid() = user_id);
+  using ((select auth.uid()) = user_id)
+  with check ((select auth.uid()) = user_id);
 
 -- ----------------------------------------------------------------------------
 -- Tabela: goal_contributions
@@ -185,8 +180,8 @@ alter table public.goal_contributions enable row level security;
 
 create policy "Usuários gerenciam as próprias contribuições"
   on public.goal_contributions for all
-  using (auth.uid() = user_id)
-  with check (auth.uid() = user_id);
+  using ((select auth.uid()) = user_id)
+  with check ((select auth.uid()) = user_id);
 
 -- ----------------------------------------------------------------------------
 -- Tabela: budget_history
@@ -223,7 +218,7 @@ create policy "Usuários veem o histórico dos próprios orçamentos"
   using (
     exists (
       select 1 from public.budgets
-      where budgets.id = budget_history.budget_id and budgets.user_id = auth.uid()
+      where budgets.id = budget_history.budget_id and budgets.user_id = (select auth.uid())
     )
   );
 
@@ -234,7 +229,7 @@ create policy "Usuários criam histórico dos próprios orçamentos"
   with check (
     exists (
       select 1 from public.budgets
-      where budgets.id = budget_history.budget_id and budgets.user_id = auth.uid()
+      where budgets.id = budget_history.budget_id and budgets.user_id = (select auth.uid())
     )
   );
 
@@ -243,13 +238,13 @@ create policy "Usuários atualizam histórico dos próprios orçamentos"
   using (
     exists (
       select 1 from public.budgets
-      where budgets.id = budget_history.budget_id and budgets.user_id = auth.uid()
+      where budgets.id = budget_history.budget_id and budgets.user_id = (select auth.uid())
     )
   )
   with check (
     exists (
       select 1 from public.budgets
-      where budgets.id = budget_history.budget_id and budgets.user_id = auth.uid()
+      where budgets.id = budget_history.budget_id and budgets.user_id = (select auth.uid())
     )
   );
 
@@ -293,6 +288,56 @@ create trigger on_auth_user_created
 create unique index budgets_user_category_unique
   on public.budgets (user_id, category_id)
   where category_id is not null;
+
+-- Nomes de categoria únicos por usuário e tipo, sem diferenciar maiúsculas
+-- nem espaços nas pontas
+create unique index categories_user_name_type_unique
+  on public.categories (user_id, lower(btrim(name)), type);
+
+-- Índices nas chaves estrangeiras (consultas do app e RLS). Cobertos por
+-- índices únicos já existentes: categories.user_id e budget_history.budget_id.
+create index transactions_user_date_idx on public.transactions (user_id, date desc);
+create index transactions_category_id_idx on public.transactions (category_id);
+create index budgets_user_id_idx on public.budgets (user_id);
+create index budgets_category_id_idx on public.budgets (category_id);
+create index goals_user_id_idx on public.goals (user_id);
+create index goal_contributions_goal_id_idx on public.goal_contributions (goal_id);
+create index goal_contributions_user_id_idx on public.goal_contributions (user_id);
+
+-- Toda tabela nova no schema public nasce com RLS ligado. Este gatilho já
+-- existe no projeto Supabase de produção; aqui ele fica documentado para que
+-- um projeto novo fique igual.
+create or replace function public.rls_auto_enable()
+returns event_trigger
+language plpgsql
+security definer
+set search_path = pg_catalog
+as $$
+declare
+  cmd record;
+begin
+  for cmd in
+    select * from pg_event_trigger_ddl_commands()
+    where command_tag in ('CREATE TABLE', 'CREATE TABLE AS', 'SELECT INTO')
+      and object_type in ('table', 'partitioned table')
+  loop
+    if cmd.schema_name = 'public' then
+      begin
+        execute format('alter table if exists %s enable row level security', cmd.object_identity);
+      exception when others then
+        raise log 'rls_auto_enable: failed to enable RLS on %', cmd.object_identity;
+      end;
+    end if;
+  end loop;
+end;
+$$;
+
+revoke execute on function public.rls_auto_enable() from public, anon, authenticated;
+
+create event trigger ensure_rls
+  on ddl_command_end
+  when tag in ('CREATE TABLE', 'CREATE TABLE AS', 'SELECT INTO')
+  execute function public.rls_auto_enable();
 
 -- O histórico do mês corrente é gravado pelo banco, não pelo app
 create or replace function public.snapshot_budget_history()
