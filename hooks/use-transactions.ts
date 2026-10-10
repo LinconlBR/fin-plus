@@ -4,6 +4,7 @@
 
 import { useQuery } from "@tanstack/react-query"
 import { createClient } from "@/lib/supabase/client"
+import { toDateString } from "@/lib/reports"
 //  é o createClient de lib/supabase/client.ts (versão do NAVEGADOR),
 // não o de lib/supabase/server.ts. Esse arquivo inteiro roda no cliente,
 // então precisa da versão que não depende de cookies via next/headers.
@@ -75,7 +76,7 @@ async function fetchTransactions(): Promise<Transaction[]> {
     },
     type: row.type,
     category_id: row.category_id ?? "",
-    createdAt: row.date ?? new Date().toISOString(),
+    createdAt: row.date ?? toDateString(new Date()),
     amount: Number(row.amount), // mesmo cuidado de sempre: numeric pode vir como string
   }))
 }

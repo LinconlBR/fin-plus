@@ -13,6 +13,7 @@ import { GoalDialog } from "@/components/goals/goal-dialog"
 import { GoalContributionDialog } from "@/components/goals/goal-contribution-dialog"
 import { DeleteGoalButton } from "@/components/goals/delete-goal-button"
 import { generateGoalsInsight } from "@/lib/actions/ai"
+import { formatMonthYear } from "@/lib/format"
 import {
   getGoalStatus,
   getGoalsSummary,
@@ -23,11 +24,6 @@ import {
 const currencyFormatter = new Intl.NumberFormat("pt-BR", {
   style: "currency",
   currency: "BRL",
-})
-
-const dateFormatter = new Intl.DateTimeFormat("pt-BR", {
-  month: "short",
-  year: "numeric",
 })
 
 export function GoalsContent() {
@@ -151,7 +147,7 @@ export function GoalsContent() {
 
                 {goal.deadline && status !== "concluida" && (
                   <p className="text-xs text-muted-foreground">
-                    Previsão: {dateFormatter.format(new Date(goal.deadline))}
+                    Previsão: {formatMonthYear(goal.deadline)}
                   </p>
                 )}
 

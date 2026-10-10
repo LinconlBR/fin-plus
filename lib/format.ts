@@ -59,3 +59,44 @@ export function formatPercentPoints(value: number | null): string {
   if (value === null) return "—"
   return pointsFormatter.format(value) + " p.p."
 }
+
+// ---------- Datas ----------
+// Datas do banco chegam como texto "YYYY-MM-DD" (sem horário). Fazer
+// new Date("2026-10-10") interpreta isso como meia-noite em UTC; no Brasil
+// (UTC-3) isso é 21:00 do dia 9, e a tela mostraria "09/10". Por isso o texto
+// é desmontado à mão e vira uma data local ao meio-dia, que nenhum fuso
+// consegue empurrar para outro dia.
+export function parseDateString(value: string): Date {
+  const [year, month, day] = value.slice(0, 10).split("-").map(Number)
+  return new Date(year, month - 1, day, 12)
+}
+
+const dayMonthFormatter = new Intl.DateTimeFormat(locale, {
+  day: "2-digit",
+  month: "2-digit",
+})
+
+const monthDayFormatter = new Intl.DateTimeFormat(locale, {
+  month: "short",
+  day: "numeric",
+})
+
+const monthYearFormatter = new Intl.DateTimeFormat(locale, {
+  month: "short",
+  year: "numeric",
+})
+
+// "10/10"
+export function formatDayMonth(value: string): string {
+  return dayMonthFormatter.format(parseDateString(value))
+}
+
+// "out. 10"
+export function formatMonthDay(value: string): string {
+  return monthDayFormatter.format(parseDateString(value))
+}
+
+// "out. de 2026"
+export function formatMonthYear(value: string): string {
+  return monthYearFormatter.format(parseDateString(value))
+}

@@ -41,7 +41,7 @@ export async function createBudget(formData: FormData): Promise<ActionResult> {
     target_amount,
     period,
     is_recurring,
-    start_date: start_date ?? new Date().toISOString(), // TODO Branch 2: toDateString
+    start_date, // obrigatório no schema: sem fallback
     end_date: end_date ?? null,
     user_id: user.id,
   })
@@ -76,7 +76,7 @@ export async function updateBudget(
       target_amount,
       period,
       is_recurring,
-      start_date: start_date ?? new Date().toISOString(), // TODO Branch 2: toDateString
+      start_date, // obrigatório no schema: sem fallback
       end_date: end_date ?? null,
     })
     .eq("id", id)
