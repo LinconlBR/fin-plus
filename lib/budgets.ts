@@ -1,5 +1,4 @@
 
-import { type BudgetWithSpent } from "@/hooks/use-budgets"
 import { toDateString } from "@/lib/reports"
 
 type Budget = {
@@ -52,7 +51,7 @@ export function getBudgetStatus(
 
   return "normal"
 }
-export function getBudgetInsight(budgetsWithStatus: (BudgetWithSpent & { status: string })[]): string {
+export function getBudgetInsight(budgetsWithStatus: { category: string; status: string }[]): string {
     
     // Obtendo os nomes das categorias que excederam o orçamento
     const exceededBudgets = budgetsWithStatus
