@@ -130,7 +130,7 @@ export function GoalsContent() {
                     <GoalDialog
                       goal={goal}
                       trigger={
-                        <Button variant="ghost" size="icon">
+                        <Button variant="ghost" size="icon" aria-label="Editar meta">
                           <Pencil className="size-4" />
                         </Button>
                       }

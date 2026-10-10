@@ -107,7 +107,7 @@ export const transactionsColumns = columnHelper.columns([
           <TransactionDialog
             transaction={transaction}
             trigger={
-              <Button variant="ghost" size="icon">
+              <Button variant="ghost" size="icon" aria-label="Editar transação">
                 <Pencil className="size-4" />
               </Button>
             }

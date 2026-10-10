@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { usePathname, useSearchParams } from "next/navigation"
 import { ChevronLeft, ChevronRight } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { Button, buttonVariants } from "@/components/ui/button"
 import { getWeekRangeWithinMonth } from "@/lib/reports"
 
 function shiftWeek(week: string, deltaDays: number): string {
@@ -55,10 +55,12 @@ export function WeekNavigator({
   return (
     <div className="flex items-center gap-2">
       {canGoPrevious ? (
-        <Link href={buildHref(previousWeek)}>
-          <Button variant="outline" size="icon" aria-label="Semana anterior">
-            <ChevronLeft className="size-4" />
-          </Button>
+        <Link
+          href={buildHref(previousWeek)}
+          aria-label="Semana anterior"
+          className={buttonVariants({ variant: "outline", size: "icon" })}
+        >
+          <ChevronLeft className="size-4" />
         </Link>
       ) : (
         <Button variant="outline" size="icon" aria-label="Semana anterior" disabled>
@@ -71,10 +73,12 @@ export function WeekNavigator({
       </span>
 
       {canGoNext ? (
-        <Link href={buildHref(nextWeek)}>
-          <Button variant="outline" size="icon" aria-label="Próxima semana">
-            <ChevronRight className="size-4" />
-          </Button>
+        <Link
+          href={buildHref(nextWeek)}
+          aria-label="Próxima semana"
+          className={buttonVariants({ variant: "outline", size: "icon" })}
+        >
+          <ChevronRight className="size-4" />
         </Link>
       ) : (
         <Button variant="outline" size="icon" aria-label="Próxima semana" disabled>

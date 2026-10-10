@@ -35,7 +35,7 @@ export function DeleteGoalButton({ id }: { id: string }) {
     <AlertDialog>
       <AlertDialogTrigger
         render={
-          <Button variant="ghost" size="icon">
+          <Button variant="ghost" size="icon" aria-label="Excluir meta">
             <Trash2 className="size-4 text-destructive" />
           </Button>
         }
