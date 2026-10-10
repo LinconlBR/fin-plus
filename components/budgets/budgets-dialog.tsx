@@ -32,8 +32,9 @@ import {
 import { budgetSchema } from "@/lib/schema/budgets"
 import { createBudget, updateBudget } from "@/lib/actions/budgets"
 import { useCategories } from "@/hooks/use-categories"
-
+import { useBudgetCategoryIds } from "@/hooks/use-budget-category-ids"
 import type { BudgetWithSpent } from "@/hooks/use-budgets"
+
 
 export function BudgetsDialog({
   budget,
@@ -48,11 +49,10 @@ export function BudgetsDialog({
 
   const mutation = useMutation({
     mutationFn: async (formData: FormData) => {
-      if (budget) {
-        await updateBudget(budget.id, formData)
-      } else {
-        await createBudget(formData)
-      }
+      const result = budget
+        ? await updateBudget(budget.id, formData)
+        : await createBudget(formData)
+      if (result?.error) throw new Error(result.error)
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["budgets"] })
@@ -94,8 +94,29 @@ export function BudgetsDialog({
     },
   })
 
+  const { data: usedCategoryIds } = useBudgetCategoryIds()
+
+// A categoria só fica travada se o orçamento já tem uma. Um orçamento órfão
+// (categoria apagada, category_id nulo) pode escolher uma categoria livre.
+const categoryLocked = !!budget?.category_id
+
+const selectableCategories = categoryLocked
+  ? categories
+  : usedCategoryIds
+    ? categories?.filter((c) => !usedCategoryIds.includes(c.id))
+    : []
+
+const allCategoriesUsed =
+  !categoryLocked && !!usedCategoryIds && selectableCategories?.length === 0
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        setOpen(next)
+        mutation.reset()
+      }}
+    >
       <DialogTrigger render={trigger ?? <Button>+ Novo orçamento</Button>} />
       <DialogContent>
         <DialogHeader>
@@ -118,6 +139,7 @@ export function BudgetsDialog({
                   <Field data-invalid={isInvalid}>
                     <FieldLabel htmlFor={field.name}>Categoria</FieldLabel>
                     <Select
+                      disabled={categoryLocked}
                       value={field.state.value}
                       onValueChange={(value) => {
                         if (value !== null) field.handleChange(value)
@@ -126,12 +148,12 @@ export function BudgetsDialog({
                       <SelectTrigger id={field.name} aria-invalid={isInvalid}>
                         <SelectValue placeholder="Selecione uma categoria">
                           {(value: string) =>
-                            categories?.find((c) => c.id === value)?.name
+                            selectableCategories?.find((c) => c.id === value)?.name
                           }
                         </SelectValue>
                       </SelectTrigger>
                       <SelectContent>
-                        {categories?.map((category) => (
+                        {selectableCategories?.map((category) => (
                           <SelectItem key={category.id} value={category.id}>
                             {category.name}
                           </SelectItem>
@@ -139,6 +161,17 @@ export function BudgetsDialog({
                       </SelectContent>
                     </Select>
                     {isInvalid && <FieldError errors={field.state.meta.errors} />}
+                    {categoryLocked &&  (
+                      <p className="text-muted-foreground text-sm">
+                        A categoria de um orçamento não pode ser alterada.
+                      </p>
+                    )}
+                    {allCategoriesUsed && (
+                      <p className="text-muted-foreground text-sm">
+                        Todas as suas categorias já têm orçamento. Edite um existente ou crie
+                        uma nova categoria.
+                      </p>
+                    )}
                   </Field>
                 )
               }}
@@ -285,7 +318,10 @@ export function BudgetsDialog({
 
           {mutation.isError && <FieldError>{mutation.error.message}</FieldError>}
 
-          <Button type="submit" disabled={mutation.isPending} className="mt-6 w-full">
+          <Button 
+            type="submit" 
+            disabled={mutation.isPending || allCategoriesUsed} 
+            className="mt-6 w-full">
             {mutation.isPending
               ? "Salvando..."
               : budget
