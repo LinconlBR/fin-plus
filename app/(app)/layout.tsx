@@ -14,7 +14,7 @@ import { requireUser } from "@/lib/auth"
 export default async function Layout({ children }: { children: React.ReactNode }) {
   
   const { supabase, user } = await requireUser()
-  const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).single()
+  const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle().throwOnError()
 
   return (
 
