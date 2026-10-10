@@ -265,6 +265,7 @@ create or replace function public.handle_new_user()
 returns trigger
 language plpgsql
 security definer
+set search_path = ''
 as $$
 begin
   insert into public.profiles (id, full_name)
@@ -312,6 +313,68 @@ create trigger budgets_snapshot_history
   after insert or update of target_amount on public.budgets
   for each row execute function public.snapshot_budget_history();
   
+-- ----------------------------------------------------------------------------
+-- Higiene das funções: ninguém chama funções de trigger direto
+-- ----------------------------------------------------------------------------
+-- Funções de trigger não precisam de EXECUTE para os papéis da API; sem isso
+-- elas apareceriam como RPCs chamáveis em /rest/v1/rpc/.
+revoke execute on function public.handle_new_user() from public, anon, authenticated;
+revoke execute on function public.snapshot_budget_history() from public, anon, authenticated;
+
+-- ----------------------------------------------------------------------------
+-- Tabela: ai_usage — limite de uso das Server Actions de IA
+-- ----------------------------------------------------------------------------
+-- Uma linha por usuário por hora (janela fixa). Fica no banco, e não em
+-- memória, porque em serverless cada instância teria o seu próprio contador.
+
+create table public.ai_usage (
+  user_id uuid not null references public.profiles(id) on delete cascade,
+  window_start timestamptz not null,
+  calls integer not null default 0 check (calls >= 0),
+  primary key (user_id, window_start)
+);
+
+alter table public.ai_usage enable row level security;
+
+create policy "Usuários veem o próprio uso de IA" on public.ai_usage
+  for select to authenticated using ((select auth.uid()) = user_id);
+create policy "Usuários registram o próprio uso de IA" on public.ai_usage
+  for insert to authenticated with check ((select auth.uid()) = user_id);
+create policy "Usuários atualizam o próprio uso de IA" on public.ai_usage
+  for update to authenticated
+  using ((select auth.uid()) = user_id) with check ((select auth.uid()) = user_id);
+
+-- Devolve true se ainda há cota na hora atual (e já consome uma chamada) e
+-- false se acabou. O UPDATE só acontece quando há cota, então a checagem e o
+-- consumo são atômicos: duas chamadas simultâneas não passam do teto.
+create function public.consume_ai_quota(max_calls integer default 30)
+returns boolean
+language plpgsql
+set search_path = ''
+as $$
+declare
+  used integer;
+begin
+  if (select auth.uid()) is null then
+    return false;
+  end if;
+
+  delete from public.ai_usage
+  where user_id = (select auth.uid()) and window_start < now() - interval '1 day';
+
+  insert into public.ai_usage as u (user_id, window_start, calls)
+  values ((select auth.uid()), date_trunc('hour', now()), 1)
+  on conflict (user_id, window_start)
+  do update set calls = u.calls + 1 where u.calls < max_calls
+  returning u.calls into used;
+
+  return used is not null;
+end;
+$$;
+
+revoke execute on function public.consume_ai_quota(integer) from public, anon;
+grant execute on function public.consume_ai_quota(integer) to authenticated;
+
 -- ============================================================================
 -- Fim do schema.
 -- ============================================================================
