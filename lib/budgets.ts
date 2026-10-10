@@ -1,13 +1,4 @@
 
-import { toDateString } from "@/lib/reports"
-
-type Budget = {
-  is_recurring: boolean
-  period: "weekly" | "monthly"
-  start_date: string
-  end_date: string | null
-}
-
 
 // Mapeia cada status pra suas classes de cor — centralizado aqui evita
 // repetir a mesma lógica de cor em 3 lugares diferentes do JSX embaixo.
@@ -88,47 +79,6 @@ export function getBudgetInsight(budgetsWithStatus: { category: string; status: 
     return ""
 }
 
-export function getBudgetPeriodRange(
-  budget: Budget,
-  referenceDate: Date = new Date()
-): { start: string; end: string } | null {
-
-  if (!budget || !budget.period) {
-    return null;
-  }
-
-  if (!budget.is_recurring) {
-    return {
-      start: budget.start_date,
-      end: budget.end_date ?? budget.start_date,
-    }
-  }
-
-  if (budget.period === "monthly") {
-    const start = new Date(referenceDate.getFullYear(), referenceDate.getMonth(), 1)
-    const end = new Date(referenceDate.getFullYear(), referenceDate.getMonth() + 1, 0)
-    return {
-      start: toDateString(start),
-      end: toDateString(end),
-    }
-  }
-
-  if (budget.period === "weekly") {
-    const dayOfWeek = referenceDate.getDay()
-
-    const startDate = new Date(referenceDate)
-    startDate.setDate(referenceDate.getDate() - dayOfWeek)
-
-    const endDate = new Date(startDate)
-    endDate.setDate(startDate.getDate() + 6)
-
-    return {
-      start: toDateString(startDate),
-      end: toDateString(endDate),
-    };
-  }
-  return null;
-}
     
 
 // Função para determinar o status do orçamento com base no gasto e no valor alvo
