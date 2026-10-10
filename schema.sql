@@ -288,6 +288,30 @@ create trigger on_auth_user_created
   after insert on auth.users
   for each row execute function public.handle_new_user();
 
+
+-- Um orçamento por categoria por usuário (category_id nulo não conflita)
+create unique index budgets_user_category_unique
+  on public.budgets (user_id, category_id)
+  where category_id is not null;
+
+-- O histórico do mês corrente é gravado pelo banco, não pelo app
+create or replace function public.snapshot_budget_history()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  insert into public.budget_history (budget_id, period, amount)
+  values (new.id, to_char(current_date, 'YYYY-MM'), new.target_amount)
+  on conflict (budget_id, period) do update set amount = excluded.amount;
+  return new;
+end;
+$$;
+
+create trigger budgets_snapshot_history
+  after insert or update of target_amount on public.budgets
+  for each row execute function public.snapshot_budget_history();
+  
 -- ============================================================================
 -- Fim do schema.
 -- ============================================================================
