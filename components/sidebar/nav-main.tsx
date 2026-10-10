@@ -1,6 +1,7 @@
 "use client"
 
 import { usePathname } from "next/navigation"
+import Link from "next/link"
 import { cn } from "@/lib/utils"
 import {
   Collapsible,
@@ -61,7 +62,7 @@ export function NavMain({
               <SidebarMenuSub>
                 {item.items?.map((subItem) => (
                   <SidebarMenuSubItem key={subItem.title}>
-                    <SidebarMenuSubButton render={<a href={subItem.url} />}>
+                    <SidebarMenuSubButton render={<Link href={subItem.url} />}>
                       <span>{subItem.title}</span>
                     </SidebarMenuSubButton>
                   </SidebarMenuSubItem>
@@ -75,7 +76,7 @@ export function NavMain({
             return (
               <SidebarMenuItem key={item.title}>
                 <SidebarMenuButton
-                  render={<a href={item.url} />}
+                  render={<Link href={item.url} />}
                   isActive={isActive}
                   className={cn(
                     "border",

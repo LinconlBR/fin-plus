@@ -71,7 +71,7 @@ export const categoriesColumns = columnHelper.columns([
           <CategoryDialog
             category={category}
             trigger={
-              <Button variant="ghost" size="icon">
+              <Button variant="ghost" size="icon" aria-label="Editar categoria">
                 <Pencil className="size-4" />
               </Button>
             }

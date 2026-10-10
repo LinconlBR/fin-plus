@@ -77,23 +77,6 @@ export  function getGoalStatus(goal: GoalWithProgress): GoalStatus {
 }
 
 
-export function getGoalStatusInsight(goal: GoalWithProgress): string {
-    const status = getGoalStatus(goal)
-
-    switch (status) {
-        case "concluida":
-            return "Parabéns! Você atingiu sua meta."
-        case "atrasada":
-            return "Você está atrasado em relação à sua meta. Considere aumentar suas contribuições."
-
-        case "no_ritmo":
-            return "Você está no ritmo certo para atingir sua meta. Continue assim!"
-        case "sem_prazo":
-            return "Este objetivo não possui um prazo definido. Definir um prazo pode ajudar a manter o foco."
-    }
-}
-
-
 export function getGoalProgressPercentage(goal: GoalWithProgress): number {
     if (goal.target_amount === 0) {
         return 0

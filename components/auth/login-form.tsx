@@ -78,8 +78,9 @@ import { loginSchema } from "@/lib/schema/login"
 
 export function LoginForm({
   className,
+  oauthError = false,
   ...props
-}: React.ComponentProps<"div">) {
+}: React.ComponentProps<"div"> & { oauthError?: boolean }) {
   const router = useRouter()  
   const mutation = useMutation({
       mutationFn: async (formData: FormData) => {
@@ -189,6 +190,11 @@ export function LoginForm({
                 </form.Field>
               <Field>
                 <FieldDescription>
+                  {oauthError && !mutation.isError && (
+                    <span className="text-rose-600" role="alert">
+                      Não foi possível entrar com o provedor escolhido. Tente novamente.
+                    </span>
+                  )}
                   {mutation.isError && (
                     <span className="text-rose-600">
                       {mutation.error instanceof Error

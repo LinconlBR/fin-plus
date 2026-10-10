@@ -2,7 +2,7 @@
 
 ### Web app de acompanhamento financeiro pessoal
 
-![dashboard-dark](public/login.png)
+![dashboard-dark](public/login.webp)
 
 Fin+ conecta gastos reais do usuário às metas que ele define — fechando o ciclo
 **registro → análise → ajuste de comportamento**, em vez de só categorizar despesas
