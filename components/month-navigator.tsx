@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { usePathname, useSearchParams } from "next/navigation"
 import { ChevronLeft, ChevronRight } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { Button, buttonVariants } from "@/components/ui/button"
 
 function shiftMonth(month: string, delta: number): string {
   const [year, m] = month.split("-").map(Number)
@@ -46,10 +46,12 @@ export function MonthNavigator({
   return (
     <div className="flex items-center gap-2">
       {canGoPrevious ? (
-        <Link href={buildHref(previousMonth)}>
-          <Button variant="outline" size="icon" aria-label="Mês anterior">
-            <ChevronLeft className="size-4" />
-          </Button>
+        <Link
+          href={buildHref(previousMonth)}
+          aria-label="Mês anterior"
+          className={buttonVariants({ variant: "outline", size: "icon" })}
+        >
+          <ChevronLeft className="size-4" />
         </Link>
       ) : (
         // Sem <Link> em volta: botão desabilitado dentro de link é pouco confiável.
@@ -63,10 +65,12 @@ export function MonthNavigator({
       </span>
 
       {canGoNext ? (
-        <Link href={buildHref(nextMonth)}>
-          <Button variant="outline" size="icon" aria-label="Próximo mês">
-            <ChevronRight className="size-4" />
-          </Button>
+        <Link
+          href={buildHref(nextMonth)}
+          aria-label="Próximo mês"
+          className={buttonVariants({ variant: "outline", size: "icon" })}
+        >
+          <ChevronRight className="size-4" />
         </Link>
       ) : (
         <Button variant="outline" size="icon" aria-label="Próximo mês" disabled>

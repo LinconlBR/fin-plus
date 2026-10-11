@@ -155,7 +155,7 @@ return (
                   <BudgetsDialog
                     budget={budget}
                     trigger={
-                      <Button variant="ghost" size="icon">
+                      <Button variant="ghost" size="icon" aria-label="Editar orçamento">
                         <Pencil className="size-4" />
                       </Button>
                     }

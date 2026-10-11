@@ -15,6 +15,7 @@ export async function resolveReportPeriod(searchParams: Promise<SearchParams>) {
     .order("date", { ascending: true })
     .limit(1)
     .maybeSingle()
+    .throwOnError()
 
   return resolvePeriodParams(params, first?.date)
 }

@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { usePathname, useSearchParams } from "next/navigation"
 import { ChevronLeft, ChevronRight } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { Button, buttonVariants } from "@/components/ui/button"
 import { clampMonth } from "@/lib/reports"
 
 // "2026-03" + 1 ano = "2027-03": o mês do ano se mantém, só o ano anda.
@@ -44,10 +44,12 @@ export function YearNavigator({
   return (
     <div className="flex items-center gap-2">
       {canGoPrevious ? (
-        <Link href={buildHref(-1)}>
-          <Button variant="outline" size="icon" aria-label="Ano anterior">
-            <ChevronLeft className="size-4" />
-          </Button>
+        <Link
+          href={buildHref(-1)}
+          aria-label="Ano anterior"
+          className={buttonVariants({ variant: "outline", size: "icon" })}
+        >
+          <ChevronLeft className="size-4" />
         </Link>
       ) : (
         <Button variant="outline" size="icon" aria-label="Ano anterior" disabled>
@@ -58,10 +60,12 @@ export function YearNavigator({
       <span className="min-w-32 text-center text-sm font-medium tabular-nums">{year}</span>
 
       {canGoNext ? (
-        <Link href={buildHref(1)}>
-          <Button variant="outline" size="icon" aria-label="Próximo ano">
-            <ChevronRight className="size-4" />
-          </Button>
+        <Link
+          href={buildHref(1)}
+          aria-label="Próximo ano"
+          className={buttonVariants({ variant: "outline", size: "icon" })}
+        >
+          <ChevronRight className="size-4" />
         </Link>
       ) : (
         <Button variant="outline" size="icon" aria-label="Próximo ano" disabled>

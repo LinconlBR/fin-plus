@@ -19,6 +19,7 @@ export async function DashboardLastTransactions({ month }: { month: string }) {
     .lte("date", range.end)
     .order("date", { ascending: false })
     .limit(5)
+    .throwOnError()
 
   return (
     <Card>

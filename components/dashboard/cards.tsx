@@ -73,7 +73,8 @@ export async function DashboardCards({ month }: { month: string }) {
     .from("profiles")
     .select("full_name")
     .eq("id", user?.id)
-    .single()
+    .maybeSingle()
+    .throwOnError()
 
   const firstName = profile?.full_name?.split(" ")[0] ?? ""
 

@@ -33,7 +33,7 @@ export function DeleteBudgetButton({ id }: { id: string }) {
     <AlertDialog>
       <AlertDialogTrigger
         render={
-          <Button variant="ghost" size="icon">
+          <Button variant="ghost" size="icon" aria-label="Excluir orçamento">
             <Trash2 className="size-4 text-destructive" />
           </Button>
         }

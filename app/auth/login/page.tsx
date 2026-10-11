@@ -2,7 +2,12 @@ import Link from "next/link"
 import { BadgeSwissFranc } from "lucide-react"
 import { LoginForm } from "@/components/auth/login-form"
 
-export default function LoginPage() {
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>
+}) {
+  const { error } = await searchParams
   return (
     <main className="min-h-screen bg-background text-foreground">
       <header className="mx-auto flex max-w-7xl items-center px-6 py-6">
@@ -16,7 +21,7 @@ export default function LoginPage() {
 
       <div className="flex min-h-svh flex-col items-center justify-center bg-muted p-6 md:p-10">
         <div className="w-full max-w-sm md:max-w-4xl">
-          <LoginForm />
+          <LoginForm oauthError={error === "oauth"} />
         </div>
       </div>
     </main>
