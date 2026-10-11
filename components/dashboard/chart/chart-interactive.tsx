@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/chart"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { WeekNavigator } from "@/components/week-navigator"
+import { formatMonthDay } from "@/lib/format"
 
 const chartConfig = {
   currentBalance: { label: "Saldo", color: "var(--accent-cyan)" },
@@ -107,17 +108,13 @@ export function ChartAreaInteractive({
               axisLine={false}
               tickMargin={8}
               minTickGap={32}
-              tickFormatter={(value) =>
-                new Date(value).toLocaleDateString("pt-BR", { month: "short", day: "numeric" })
-              }
+              tickFormatter={(value) => formatMonthDay(value)}
             />
             <ChartTooltip
               cursor={false}
               content={
                 <ChartTooltipContent
-                  labelFormatter={(value) =>
-                    new Date(value).toLocaleDateString("pt-BR", { month: "short", day: "numeric" })
-                  }
+                  labelFormatter={(value) => formatMonthDay(value)}
                   indicator="dot"
                 />
               }

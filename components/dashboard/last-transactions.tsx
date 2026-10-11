@@ -2,8 +2,8 @@ import { createClient } from "@/lib/supabase/server"
 import { CategoryIcon } from "@/components/categories/category-icons"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { getPeriodRangeStrings } from "@/lib/reports"
+import { formatDayMonth } from "@/lib/format"
 
-const dateFormatter = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit" })
 const currencyFormatter = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" })
 
 export async function DashboardLastTransactions({ month }: { month: string }) {
@@ -38,7 +38,7 @@ export async function DashboardLastTransactions({ month }: { month: string }) {
                   <p className="text-sm font-medium">{t.description}</p>
                   <p className="text-xs text-muted-foreground">
                     {t.categories?.name ?? "Sem categoria"} •{" "}
-                    {dateFormatter.format(new Date(t.date))}
+                    {formatDayMonth(t.date)}
                   </p>
                 </div>
               </div>

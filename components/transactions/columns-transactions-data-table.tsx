@@ -13,6 +13,7 @@ import { type DataTableFeatures } from "@/components/ui/data-table/data-table-fe
 
 
 import { type Transaction } from "@/hooks/use-transactions"
+import { formatDate } from "@/lib/format"
 
   
 
@@ -85,7 +86,7 @@ export const transactionsColumns = columnHelper.columns([
       }
     },
   }),
-  columnHelper.accessor("createdAt", {
+  columnHelper.accessor("date", {
     header:  ({ column }) => {
       return (
         <Button
@@ -97,6 +98,9 @@ export const transactionsColumns = columnHelper.columns([
         </Button>
       )
     },
+    // O banco guarda "2026-08-05"; a tela mostra "05/08/2026". A ordenação
+    // continua usando o valor original, que já ordena certo como texto.
+    cell: ({ getValue }) => formatDate(getValue()),
   }),
   columnHelper.display({
     id: "actions",

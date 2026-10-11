@@ -28,7 +28,7 @@ export async function createTransaction(formData: FormData) {
 
     const amount = parsed.data.amount?.toString() ?? "0"
     const description = parsed.data.description?.toString() ?? "sem descrição"
-    const date = parsed.data.date?.toString() ?? new Date().toISOString()
+    const date = parsed.data.date // obrigatório no schema: sem fallback
     const category_id = parsed.data.category_id?.toString() ?? ""
 
     // 2.5. buscar o type da categoria escolhida — nunca confiamos num type
@@ -81,7 +81,7 @@ export async function updateTransaction(id: string, formData: FormData) {
 
     const amount = parsed.data.amount?.toString() ?? "0"
     const description = parsed.data.description?.toString() ?? "sem descrição"
-    const date = parsed.data.date?.toString() ?? new Date().toISOString()
+    const date = parsed.data.date // obrigatório no schema: sem fallback
     const category_id = parsed.data.category_id?.toString() ?? ""
 
     const { data: category, error: categoryError } = await supabase

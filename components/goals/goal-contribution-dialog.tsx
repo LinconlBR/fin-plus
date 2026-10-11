@@ -23,6 +23,7 @@ import {
 
 import { goalContributionFormSchema } from "@/lib/schema/goal-contribution-form"
 import { createGoalContribution } from "@/lib/actions/goal-contributions"
+import { toDateString } from "@/lib/reports"
 
 
 export function GoalContributionDialog({
@@ -52,7 +53,7 @@ export function GoalContributionDialog({
     const form = useForm({
         defaultValues: {
             amount: 0,
-            date: new Date().toISOString().split("T")[0],
+            date: toDateString(new Date()),
         },
         validators: { 
             onSubmit:goalContributionFormSchema     

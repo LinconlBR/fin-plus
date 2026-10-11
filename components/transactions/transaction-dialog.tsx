@@ -32,6 +32,7 @@ import { createTransaction, updateTransaction } from "@/lib/actions/transactions
 import { useCategories } from "@/hooks/use-categories"
 
 import type { Transaction } from "@/hooks/use-transactions"
+import { toDateString } from "@/lib/reports"
 
 export function TransactionDialog({
   transaction,
@@ -66,7 +67,7 @@ export function TransactionDialog({
       description: transaction?.title ?? "",
       amount: transaction?.amount ?? 0,
       category_id: transaction?.category_id ?? "",
-      date: transaction?.createdAt ?? new Date().toISOString().split("T")[0],
+      date: transaction?.date ?? toDateString(new Date()),
     },
     validators: {
       onSubmit: transactionSchema,

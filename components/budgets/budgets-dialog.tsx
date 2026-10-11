@@ -34,6 +34,7 @@ import { createBudget, updateBudget } from "@/lib/actions/budgets"
 import { useCategories } from "@/hooks/use-categories"
 import { useBudgetCategoryIds } from "@/hooks/use-budget-category-ids"
 import type { BudgetWithSpent } from "@/hooks/use-budgets"
+import { toDateString } from "@/lib/reports"
 
 
 export function BudgetsDialog({
@@ -70,7 +71,7 @@ export function BudgetsDialog({
       // formulário — só vira texto ("true"/"false") na hora de montar o
       // FormData pro Server Action, porque FormData só entende strings.
       is_recurring: budget?.isRecurring ?? true,
-      start_date: budget?.startDate ?? new Date().toISOString().split("T")[0],
+      start_date: budget?.startDate ?? toDateString(new Date()),
       end_date: budget?.endDate ?? undefined,
     },
     validators: {
