@@ -12,6 +12,8 @@ export const AI_CALLS_PER_HOUR = 30
 
 export type InsightDeps = {
   getUserId: () => Promise<string | null>
+  // Plano da pessoa permite IA? (sempre true enquanto os planos não são cobrados)
+  hasAccess: () => Promise<boolean>
   consumeQuota: (maxCalls: number) => Promise<boolean>
   generate: (prompt: string) => Promise<string>
   logError: (message: string, error: unknown) => void
@@ -31,6 +33,9 @@ export async function runInsight(
   try {
     const userId = await deps.getUserId()
     if (!userId) return ""
+
+    // Sem o plano necessário, não gasta cota nem chama a IA.
+    if (!(await deps.hasAccess())) return ""
 
     // Falha fechada: se a checagem de cota der erro, não chama a IA.
     const allowed = await deps.consumeQuota(AI_CALLS_PER_HOUR)

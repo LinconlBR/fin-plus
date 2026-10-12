@@ -3,6 +3,8 @@
 import { createClient } from "@/lib/supabase/server"
 import { runInsight, type InsightDeps } from "@/lib/ai-insight"
 
+import { canUseFeature } from "@/lib/plans"
+
 import OpenAI from "openai"
 
 const ai = new OpenAI({
@@ -24,6 +26,9 @@ async function realDeps(): Promise<InsightDeps> {
       } = await supabase.auth.getUser()
       return user?.id ?? null
     },
+    // Hoje todo mundo é tratado como "free" e a trava está desligada (lib/plans.ts).
+    // Quando existir a assinatura, o plano real entra aqui.
+    hasAccess: async () => canUseFeature("free", "ai_insights"),
     consumeQuota: async (maxCalls) => {
       const { data, error } = await supabase.rpc("consume_ai_quota", {
         max_calls: maxCalls,
