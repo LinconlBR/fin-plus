@@ -453,3 +453,24 @@ create policy "Usuários atualizam as próprias preferências"
 -- ============================================================================
 -- Fim do schema.
 -- ============================================================================
+-- ============================================================================
+-- Exclusão da própria conta (ver db/migrations/20261013_delete_my_account.sql)
+-- ============================================================================
+create or replace function public.delete_my_account()
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  uid uuid := (select auth.uid());
+begin
+  if uid is null then
+    raise exception 'not authenticated';
+  end if;
+  delete from auth.users where id = uid;
+end;
+$$;
+
+revoke execute on function public.delete_my_account() from public, anon;
+grant execute on function public.delete_my_account() to authenticated;
