@@ -83,12 +83,12 @@ export async function generateOverviewInsight(summary: string): Promise<string> 
   )
 }
 
-export async function generateTipsReport(summary: string): Promise<string> {
+export async function generateSavingsSuggestions(summary: string): Promise<string> {
   return runInsight(
     await realDeps(),
     (s) =>
-      `Você é um assistente financeiro do app Fin+. Com base no resumo abaixo, escreva dicas práticas e específicas, em português, no formato "Tema: dica", uma por linha, usando apenas estes temas: Gastos, Orçamentos, Metas, Economia. Escreva uma linha por tema, cada dica com no máximo 25 palavras. Pule o tema que o resumo não permitir analisar. Sem numeração, sem marcadores e sem introdução.\n\nResumo:\n${s}`,
+      `Você é um assistente financeiro do app Fin+. Com base nos gastos reais do usuário abaixo, sugira exatamente 4 ações práticas de economia, em português, uma por linha, no formato "Título | detalhe". O título tem no máximo 8 palavras. O detalhe tem no máximo 10 palavras e, se citar um valor estimado, deve se basear apenas nos números do resumo (nunca invente valores). Sem numeração, sem marcadores e sem introdução.\n\nResumo: ${s}`,
     summary,
-    "dicas financeiras"
+    "sugestões de economia"
   )
 }
