@@ -18,6 +18,7 @@ import { useCategories } from "@/hooks/use-categories"
 import { useTransactions } from "@/hooks/use-transactions"
 import { importTransactions } from "@/lib/actions/transactions-import"
 import { parseCsv } from "@/lib/csv"
+import { cellsToTable } from "@/lib/spreadsheet"
 import { formatCurrency, formatDate } from "@/lib/format"
 import { MAX_IMPORT_ROWS } from "@/lib/schema/transaction-import"
 import {
@@ -121,7 +122,17 @@ export function ImportDialog() {
       return
     }
     try {
-      const parsed = parseCsv(await file.text())
+      const isXlsx = /\.xlsx$/i.test(file.name)
+      if (/\.xls$/i.test(file.name)) {
+        setError("Arquivos .xls antigos não são aceitos. Exporte como .xlsx ou CSV.")
+        return
+      }
+      // Carrega o leitor de planilhas só quando alguém escolhe um XLSX.
+      const parsed = isXlsx
+        ? cellsToTable(
+            await (await import("read-excel-file/universal")).readSheet(file)
+          )
+        : parseCsv(await file.text())
       if (parsed.length < 2) {
         setError("Não encontrei linhas de dados neste arquivo.")
         return
@@ -139,7 +150,7 @@ export function ImportDialog() {
         buildPreview(parsed, header, detected)
       }
     } catch {
-      setError("Não consegui ler este arquivo. Use um CSV.")
+      setError("Não consegui ler este arquivo. Use um CSV ou XLSX.")
     }
   }
 
@@ -181,7 +192,7 @@ export function ImportDialog() {
         <DialogHeader>
           <DialogTitle>Importar extrato</DialogTitle>
           <DialogDescription>
-            Traz as transações dos últimos 3 meses de um CSV do seu banco. Você revisa tudo antes de salvar.
+            Traz as transações dos últimos 3 meses de um CSV ou XLSX do seu banco. Você revisa tudo antes de salvar.
           </DialogDescription>
         </DialogHeader>
 
@@ -189,13 +200,13 @@ export function ImportDialog() {
           <div className="space-y-2">
             <input
               type="file"
-              accept=".csv,.txt,text/csv"
+              accept=".csv,.txt,.xlsx,text/csv"
               onChange={(e) => onFile(e.target.files?.[0])}
-              aria-label="Arquivo CSV do extrato"
+              aria-label="Arquivo do extrato (CSV ou XLSX)"
               className="block w-full text-sm file:mr-3 file:rounded-md file:border file:bg-transparent file:px-3 file:py-1.5 file:text-sm"
             />
             <p className="text-xs text-muted-foreground">
-              Aceita CSV de qualquer banco (com ; , ou tabulação). Extrato em PDF: em breve.
+              Aceita CSV ou XLSX de qualquer banco. Extrato em PDF: em breve.
             </p>
           </div>
         )}
