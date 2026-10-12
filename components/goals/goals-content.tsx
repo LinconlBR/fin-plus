@@ -1,36 +1,36 @@
-"use client"
+"use client";
 
-import { useQuery } from "@tanstack/react-query"
-import { Pencil, Lightbulb, Plus } from "lucide-react"
+import { useQuery } from "@tanstack/react-query";
+import { Pencil, Lightbulb, Plus } from "lucide-react";
 
-import { Card, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Progress } from "@/components/ui/progress"
-import { Badge } from "@/components/ui/badge"
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
 
-import { useGoals, type GoalWithProgress } from "@/hooks/use-goals"
-import { GoalDialog } from "@/components/goals/goal-dialog"
-import { GoalContributionDialog } from "@/components/goals/goal-contribution-dialog"
-import { DeleteGoalButton } from "@/components/goals/delete-goal-button"
-import { generateGoalsInsight } from "@/lib/actions/ai"
-import { formatMonthYear } from "@/lib/format"
+import { useGoals, type GoalWithProgress } from "@/hooks/use-goals";
+import { GoalDialog } from "@/components/goals/goal-dialog";
+import { GoalContributionDialog } from "@/components/goals/goal-contribution-dialog";
+import { DeleteGoalButton } from "@/components/goals/delete-goal-button";
+import { generateGoalsInsight } from "@/lib/actions/ai";
+import { formatMonthYear } from "@/lib/format";
 import {
   getGoalStatus,
   getGoalsSummary,
   getGoalProgressPercentage,
   statusStyles,
-} from "@/lib/goals"
+} from "@/lib/goals";
 
 const currencyFormatter = new Intl.NumberFormat("pt-BR", {
   style: "currency",
   currency: "BRL",
-})
+});
 
 export function GoalsContent() {
-  const { data, isLoading, isError } = useGoals()
-  const goals = data ?? []
+  const { data, isLoading, isError } = useGoals();
+  const goals = data ?? [];
 
-  const summary = getGoalsSummary(goals)
+  const summary = getGoalsSummary(goals);
 
   // Resumo em texto, montado a partir dos dados reais — é isso que vai pra
   // IA gerar o insight personalizado. Muda sempre que os dados mudam, o que
@@ -39,19 +39,20 @@ export function GoalsContent() {
     .map(
       (g) =>
         `${g.name}: guardou ${g.current_amount} de ${g.target_amount} (${getGoalStatus(
-          g
-        )})`
+          g,
+        )})`,
     )
-    .join("; ")
+    .join("; ");
 
   const { data: aiInsight } = useQuery({
     queryKey: ["goals-insight", goalsSummaryText],
     queryFn: () => generateGoalsInsight(goalsSummaryText),
     enabled: goals.length > 0,
-  })
+    staleTime: 1000 * 60 * 30, // <- nova
+  });
 
-  if (isLoading) return <div>Carregando metas...</div>
-  if (isError) return <div>Erro ao carregar metas.</div>
+  if (isLoading) return <div>Carregando metas...</div>;
+  if (isError) return <div>Erro ao carregar metas.</div>;
 
   if (goals.length === 0) {
     return (
@@ -62,17 +63,17 @@ export function GoalsContent() {
         </p>
         <GoalDialog />
       </div>
-    )
+    );
   }
 
   // Fallback baseado em regras — usado se a IA falhar ou ainda não respondeu.
-  const atrasada = goals.find((g) => getGoalStatus(g) === "atrasada")
-  const todasConcluidas = goals.every((g) => getGoalStatus(g) === "concluida")
+  const atrasada = goals.find((g) => getGoalStatus(g) === "atrasada");
+  const todasConcluidas = goals.every((g) => getGoalStatus(g) === "concluida");
   const rulesInsight = atrasada
     ? `Sua meta "${atrasada.name}" está atrasada em relação ao prazo. Considere aumentar suas contribuições.`
     : todasConcluidas
-    ? "Parabéns! Todas as suas metas estão concluídas."
-    : "Suas metas estão no ritmo certo. Continue assim!"
+      ? "Parabéns! Todas as suas metas estão concluídas."
+      : "Suas metas estão no ritmo certo. Continue assim!";
 
   return (
     <div className="space-y-6">
@@ -82,7 +83,8 @@ export function GoalsContent() {
           <div className="flex items-center justify-between">
             <p className="font-medium">Progresso Geral das Metas</p>
             <span className="text-sm text-muted-foreground">
-              {summary.activeCount} meta{summary.activeCount === 1 ? "" : "s"} ativa
+              {summary.activeCount} meta{summary.activeCount === 1 ? "" : "s"}{" "}
+              ativa
               {summary.activeCount === 1 ? "" : "s"}
             </span>
           </div>
@@ -93,7 +95,10 @@ export function GoalsContent() {
             </span>
           </div>
 
-          <Progress value={summary.overallPercentage} indicatorClassName="bg-success" />
+          <Progress
+            value={summary.overallPercentage}
+            indicatorClassName="bg-success"
+          />
 
           <div className="flex items-center justify-between text-sm text-muted-foreground">
             <span>{currencyFormatter.format(summary.totalSaved)}</span>
@@ -106,16 +111,18 @@ export function GoalsContent() {
       {(aiInsight || rulesInsight) && (
         <div className="flex items-start gap-3 rounded-lg border border-border bg-accent-violet/10 p-4">
           <Lightbulb className="mt-0.5 size-4 shrink-0 text-accent-violet" />
-          <p className="text-sm text-foreground/90">{aiInsight || rulesInsight}</p>
+          <p className="text-sm text-foreground/90">
+            {aiInsight || rulesInsight}
+          </p>
         </div>
       )}
 
       {/* Grid de metas */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {goals.map((goal: GoalWithProgress) => {
-          const status = getGoalStatus(goal)
-          const styles = statusStyles[status]
-          const percentage = getGoalProgressPercentage(goal)
+          const status = getGoalStatus(goal);
+          const styles = statusStyles[status];
+          const percentage = getGoalProgressPercentage(goal);
 
           return (
             <Card key={goal.id} className={styles.border}>
@@ -126,7 +133,11 @@ export function GoalsContent() {
                     <GoalDialog
                       goal={goal}
                       trigger={
-                        <Button variant="ghost" size="icon" aria-label="Editar meta">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          aria-label="Editar meta"
+                        >
                           <Pencil className="size-4" />
                         </Button>
                       }
@@ -135,7 +146,10 @@ export function GoalsContent() {
                   </div>
                 </div>
 
-                <Progress value={percentage} indicatorClassName={styles.indicator} />
+                <Progress
+                  value={percentage}
+                  indicatorClassName={styles.indicator}
+                />
 
                 <div className="flex items-baseline justify-between">
                   <Badge variant={styles.badgeVariant}>{styles.label}</Badge>
@@ -153,7 +167,8 @@ export function GoalsContent() {
 
                 {status === "concluida" ? (
                   <p className="text-center text-sm text-muted-foreground">
-                    Meta concluída! Apague-a ou aumente o valor-alvo pra continuar economizando.
+                    Meta concluída! Apague-a ou aumente o valor-alvo pra
+                    continuar economizando.
                   </p>
                 ) : (
                   <GoalContributionDialog
@@ -168,9 +183,9 @@ export function GoalsContent() {
                 )}
               </CardContent>
             </Card>
-          )
+          );
         })}
       </div>
     </div>
-  )
+  );
 }

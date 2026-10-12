@@ -1,10 +1,16 @@
 "use server"
 
-import { GoogleGenAI } from "@google/genai"
 import { createClient } from "@/lib/supabase/server"
 import { runInsight, type InsightDeps } from "@/lib/ai-insight"
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY })
+import OpenAI from "openai"
+
+const ai = new OpenAI({
+  baseURL: "https://api.groq.com/openai/v1",
+  apiKey: process.env.GROQ_API_KEY,
+  maxRetries: 0,   // sem tentar de novo sozinho: falha rápido e cai no texto de regras
+  timeout: 10_000, // desiste em 10 s
+})
 
 // Monta as dependências reais. Cada chamada cria seu próprio client do
 // Supabase porque ele lê os cookies da requisição atual.
@@ -26,14 +32,25 @@ async function realDeps(): Promise<InsightDeps> {
       return data === true
     },
     generate: async (prompt) => {
-      const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
-        contents: prompt,
+      const response = await ai.chat.completions.create({
+        model: process.env.GROQ_MODEL ?? "llama-3.3-70b-versatile",
+        messages: [{ role: "user", content: prompt }],
+        max_tokens: 800,
       })
-      return response.text ?? ""
+      return response.choices[0]?.message?.content ?? ""
     },
     logError: (message, error) => console.error(message, error),
   }
+}
+
+export async function generateDashboardTips(summary: string): Promise<string> {
+  return runInsight(
+    await realDeps(),
+    (s) =>
+      `Você é um assistente financeiro do app Fin+. Com base neste resumo do mês do usuário, escreva exatamente 3 dicas práticas e específicas, em português, uma por linha, cada uma com no máximo 20 palavras. Sem numeração, sem marcadores e sem introdução.\n\nResumo: ${s}`,
+    summary,
+    "dicas do dashboard"
+  )
 }
 
 export async function generateBudgetInsight(summary: string): Promise<string> {
