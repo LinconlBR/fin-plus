@@ -25,6 +25,7 @@ import {
   DEFAULT_LAYOUT,
   type WidgetPreference,
 } from "@/lib/dashboard-layout"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Switch } from "@/components/ui/switch"
@@ -62,7 +63,10 @@ function SortableRow({
           </button>
 
           <div className={item.visible ? "flex-1" : "flex-1 opacity-50"}>
-            <p className="text-sm font-medium">{info.label}</p>
+            <p className="flex items-center gap-2 text-sm font-medium">
+              {info.label}
+              {!info.defaultVisible && <Badge variant="outline">Opcional</Badge>}
+            </p>
             <p className="text-xs text-muted-foreground">{info.description}</p>
           </div>
 

@@ -4,9 +4,14 @@ import { DashboardCards } from "@/components/dashboard/cards"
 import { DashboardChart } from "@/components/dashboard/chart/chart"
 import { DashboardLastTransactions } from "@/components/dashboard/last-transactions"
 import { DashboardInsights } from "@/components/dashboard/insights"
+import { DashboardTopCategories } from "@/components/dashboard/top-categories"
+import { DashboardSpendingPace } from "@/components/dashboard/spending-pace"
+import { DashboardBiggestExpenses } from "@/components/dashboard/biggest-expenses"
+import { DashboardBudgetsAtRisk } from "@/components/dashboard/budgets-at-risk"
+import { DashboardGoalsProgress } from "@/components/dashboard/goals-progress"
 import { MonthNavigator } from "@/components/month-navigator"
 import { buttonVariants } from "@/components/ui/button"
-import { buildDashboardRows, type WidgetId } from "@/lib/dashboard-layout"
+import { WIDGET_SIZE, buildDashboardRows, type WidgetId } from "@/lib/dashboard-layout"
 import { getDashboardLayout } from "@/lib/preferences"
 import { createClient } from "@/lib/supabase/server"
 import {
@@ -54,6 +59,11 @@ export default async function Dashboard(props: PageProps<"/dashboard">) {
     insights: <DashboardInsights month={month} />,
     chart: <DashboardChart month={month} week={week} chartRange={chartRange} />,
     transactions: <DashboardLastTransactions month={month} />,
+    "top-categories": <DashboardTopCategories month={month} />,
+    "spending-pace": <DashboardSpendingPace month={month} />,
+    "biggest-expenses": <DashboardBiggestExpenses month={month} />,
+    "budgets-at-risk": <DashboardBudgetsAtRisk month={month} />,
+    "goals-progress": <DashboardGoalsProgress />,
   }
 
   return (
@@ -91,10 +101,18 @@ export default async function Dashboard(props: PageProps<"/dashboard">) {
             row.length === 1 ? (
               <div key={row[0]}>{widgets[row[0]]}</div>
             ) : (
-              // Gráfico e últimas transações lado a lado: o gráfico leva 2/3, as transações 1/3.
-              <div key={row.join("+")} className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+              // Dois blocos dividem a linha: gráfico (2/3) + transações (1/3), ou dois blocos
+              // pequenos (1/2 cada). Em telas estreitas empilham.
+              <div
+                key={row.join("+")}
+                className={
+                  row.every((id) => WIDGET_SIZE[id] === "half")
+                    ? "grid grid-cols-1 gap-6 lg:grid-cols-2"
+                    : "grid grid-cols-1 gap-6 lg:grid-cols-3"
+                }
+              >
                 {row.map((id) => (
-                  <div key={id} className={id === "chart" ? "lg:col-span-2" : undefined}>
+                  <div key={id} className={WIDGET_SIZE[id] === "wide" ? "lg:col-span-2" : undefined}>
                     {widgets[id]}
                   </div>
                 ))}

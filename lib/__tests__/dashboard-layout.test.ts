@@ -1,14 +1,36 @@
 import { describe, expect, it } from "vitest"
 import {
+  DASHBOARD_WIDGETS,
   DEFAULT_LAYOUT,
   WIDGET_IDS,
   buildDashboardRows,
   normalizeLayout,
+  type WidgetId,
   type WidgetPreference,
 } from "@/lib/dashboard-layout"
 
-const layout = (...entries: [WidgetPreference["id"], boolean][]): WidgetPreference[] =>
+const layout = (...entries: [WidgetId, boolean][]): WidgetPreference[] =>
   entries.map(([id, visible]) => ({ id, visible }))
+
+// Layout com todos os blocos, só com os indicados visíveis (na ordem dada) e o resto oculto.
+const only = (...visible: WidgetId[]): WidgetPreference[] => [
+  ...visible.map((id) => ({ id, visible: true })),
+  ...WIDGET_IDS.filter((id) => !visible.includes(id)).map((id) => ({ id, visible: false })),
+]
+
+describe("DEFAULT_LAYOUT", () => {
+  it("os 4 blocos originais ligados e os opcionais desligados", () => {
+    const visible = DEFAULT_LAYOUT.filter((w) => w.visible).map((w) => w.id)
+    expect(visible).toEqual(["cards", "insights", "chart", "transactions"])
+    expect(DEFAULT_LAYOUT.filter((w) => !w.visible).length).toBeGreaterThanOrEqual(3)
+  })
+
+  it("segue a ordem e a visibilidade padrão de DASHBOARD_WIDGETS", () => {
+    expect(DEFAULT_LAYOUT).toEqual(
+      DASHBOARD_WIDGETS.map((w) => ({ id: w.id, visible: w.defaultVisible }))
+    )
+  })
+})
 
 describe("normalizeLayout", () => {
   it.each([null, undefined, "texto", 42, {}, []])("devolve o padrão para %j", (saved) => {
@@ -16,15 +38,23 @@ describe("normalizeLayout", () => {
   })
 
   it("respeita a ordem e a visibilidade salvas", () => {
-    const saved = layout(["chart", true], ["cards", false], ["transactions", true], ["insights", true])
+    const saved = [...DEFAULT_LAYOUT].reverse().map((w, i) => ({ ...w, visible: i % 2 === 0 }))
     expect(normalizeLayout(saved)).toEqual(saved)
   })
 
-  it("acrescenta no fim, visíveis, os blocos que faltam", () => {
-    const result = normalizeLayout(layout(["chart", false]))
-    expect(result.map((w) => w.id)).toEqual(["chart", "cards", "insights", "transactions"])
+  it("blocos que faltam entram no fim com a visibilidade padrão (opcionais desligados)", () => {
+    // Quem salvou o layout quando só existiam os 4 blocos originais.
+    const result = normalizeLayout(
+      layout(["chart", false], ["cards", true], ["insights", true], ["transactions", true])
+    )
+    expect(result.slice(0, 4).map((w) => w.id)).toEqual(["chart", "cards", "insights", "transactions"])
     expect(result[0].visible).toBe(false)
-    expect(result.slice(1).every((w) => w.visible)).toBe(true)
+
+    const added = result.slice(4)
+    expect(added.map((w) => w.id).sort()).toEqual(
+      DASHBOARD_WIDGETS.filter((w) => !w.defaultVisible).map((w) => w.id).sort()
+    )
+    expect(added.every((w) => !w.visible)).toBe(true)
   })
 
   it("descarta blocos desconhecidos e entradas malformadas", () => {
@@ -65,24 +95,44 @@ describe("buildDashboardRows", () => {
   })
 
   it("mantém a ordem escolhida, inclusive o par invertido", () => {
-    const rows = buildDashboardRows(
-      layout(["transactions", true], ["chart", true], ["insights", true], ["cards", true])
-    )
-    expect(rows).toEqual([["transactions", "chart"], ["insights"], ["cards"]])
+    expect(buildDashboardRows(only("transactions", "chart", "insights", "cards"))).toEqual([
+      ["transactions", "chart"],
+      ["insights"],
+      ["cards"],
+    ])
   })
 
   it("gráfico e transações separados ocupam a linha inteira", () => {
-    const rows = buildDashboardRows(
-      layout(["chart", true], ["cards", true], ["transactions", true], ["insights", true])
-    )
-    expect(rows).toEqual([["chart"], ["cards"], ["transactions"], ["insights"]])
+    expect(buildDashboardRows(only("chart", "cards", "transactions", "insights"))).toEqual([
+      ["chart"],
+      ["cards"],
+      ["transactions"],
+      ["insights"],
+    ])
   })
 
   it("ocultar o bloco do meio junta os vizinhos", () => {
-    const rows = buildDashboardRows(
-      layout(["chart", true], ["cards", false], ["transactions", true], ["insights", true])
-    )
-    expect(rows).toEqual([["chart", "transactions"], ["insights"]])
+    expect(buildDashboardRows(only("chart", "transactions", "insights"))).toEqual([
+      ["chart", "transactions"],
+      ["insights"],
+    ])
+  })
+
+  it("dois blocos pequenos vizinhos dividem a linha", () => {
+    expect(buildDashboardRows(only("top-categories", "spending-pace"))).toEqual([
+      ["top-categories", "spending-pace"],
+    ])
+  })
+
+  it("três blocos pequenos: um par e um sozinho", () => {
+    expect(
+      buildDashboardRows(only("top-categories", "spending-pace", "goals-progress"))
+    ).toEqual([["top-categories", "spending-pace"], ["goals-progress"]])
+  })
+
+  it("bloco pequeno não divide linha com gráfico, transações ou blocos de linha inteira", () => {
+    expect(buildDashboardRows(only("chart", "top-categories"))).toEqual([["chart"], ["top-categories"]])
+    expect(buildDashboardRows(only("cards", "goals-progress"))).toEqual([["cards"], ["goals-progress"]])
   })
 
   it("blocos ocultos não aparecem; tudo oculto => sem linhas", () => {
