@@ -36,6 +36,7 @@ import {
   findHeaderRow,
   isMappingUsable,
   markDuplicates,
+  type DuplicateKind,
   type ColumnField,
   type ColumnMapping,
   type ImportRow,
@@ -49,7 +50,7 @@ function normalizeName(text: string): string {
 }
 
 type PreviewRow = ImportRow & {
-  duplicate: boolean
+  duplicate: DuplicateKind
   include: boolean
   category_id: string
   // De onde veio a categoria sugerida (null = nenhuma sugestão, caiu na padrão).
@@ -150,6 +151,7 @@ export function ImportDialog() {
           : suggest(row.description, row.type)
         return {
           ...row,
+          // Idêntica: pulada. Parecida: a pessoa decide (começa desmarcada).
           include: !row.duplicate,
           category_id:
             suggestion?.category_id ?? (row.type === "income" ? defaultIncome : defaultExpense),
@@ -391,7 +393,12 @@ export function ImportDialog() {
                         <td className="p-2 whitespace-nowrap">{formatDate(row.date)}</td>
                         <td className="p-2">
                           {row.description}
-                          {row.duplicate && <span className="ml-2 text-xs text-amber-600">já existe</span>}
+                          {row.duplicate === "exact" && <span className="ml-2 text-xs text-amber-600">já existe</span>}
+                          {row.duplicate === "possible" && (
+                            <span className="ml-2 text-xs text-amber-600" title="Já existe uma transação com o mesmo valor, data próxima e descrição parecida. Marque se for outra compra.">
+                              possível duplicada
+                            </span>
+                          )}
                         </td>
                         <td className="p-2">
                           <div className="flex items-center gap-2">
