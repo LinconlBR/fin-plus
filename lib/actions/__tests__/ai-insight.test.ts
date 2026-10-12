@@ -3,6 +3,7 @@ import { MAX_SUMMARY_LENGTH, runInsight, type InsightDeps } from "@/lib/ai-insig
 
 const build = (over: Partial<InsightDeps> = {}): InsightDeps => ({
   getUserId: async () => "user-1",
+  hasAccess: async () => true,
   consumeQuota: async () => true,
   generate: async () => "dica",
   logError: vi.fn(),
@@ -12,6 +13,15 @@ const build = (over: Partial<InsightDeps> = {}): InsightDeps => ({
 const prompt = (s: string) => s
 
 describe("runInsight", () => {
+  it("sem acesso ao plano, não consome cota nem chama a IA", async () => {
+    const generate = vi.fn(async () => "x")
+    const consumeQuota = vi.fn(async () => true)
+    const deps = build({ hasAccess: async () => false, consumeQuota, generate })
+    expect(await runInsight(deps, (s) => s, "resumo", "teste")).toBe("")
+    expect(consumeQuota).not.toHaveBeenCalled()
+    expect(generate).not.toHaveBeenCalled()
+  })
+
   it("devolve o texto da IA no caminho feliz", async () => {
     expect(await runInsight(build(), prompt, "resumo", "teste")).toBe("dica")
   })
