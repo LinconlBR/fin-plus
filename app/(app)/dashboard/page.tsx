@@ -55,7 +55,7 @@ export default async function Dashboard(props: PageProps<"/dashboard">) {
         <div>
           <DashboardCards month={month} />
         </div>
-        <DashboardInsights />
+        <DashboardInsights month={month} />
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           <div className="lg:col-span-2">
             <DashboardChart month={month} week={week} chartRange={chartRange} />
