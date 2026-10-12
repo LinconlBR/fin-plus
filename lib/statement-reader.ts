@@ -17,7 +17,7 @@ export type StatementReadResult =
   | { ok: true; rows: ImportRow[]; method: "rules" | "ai"; notices: string[] }
   | { ok: false; error: string }
 
-export type AskAi = (prompt: string, maxLength: number) => Promise<string>
+export type AskAi = (prompt: string) => Promise<string>
 
 export async function readStatement(
   text: string,
@@ -39,7 +39,7 @@ export async function readStatement(
     notices.push("O extrato é longo: só o início foi lido. Importe em partes, por período.")
   }
 
-  const answer = await options.askAi(buildStatementPrompt(redacted.slice(0, MAX_STATEMENT_CHARS)), MAX_STATEMENT_CHARS + 2000)
+  const answer = await options.askAi(buildStatementPrompt(redacted.slice(0, MAX_STATEMENT_CHARS)))
   if (answer.trim() === "") {
     return {
       ok: false,

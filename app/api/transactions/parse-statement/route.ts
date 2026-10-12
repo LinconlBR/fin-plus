@@ -48,8 +48,8 @@ export async function POST(request: Request) {
 
   // A IA só é chamada se as regras não reconhecerem o layout. Passa pelas mesmas
   // proteções das outras ações de IA: plano, cota por hora e falha fechada.
-  const askAi: AskAi = async (prompt, maxLength) =>
-    runInsight(await buildInsightDeps(4000), () => prompt, "x", "leitura de extrato", maxLength)
+  const askAi: AskAi = async (prompt) =>
+    runInsight(await buildInsightDeps(4000), (p) => p, prompt, "leitura de extrato", prompt.length)
 
   const result = await readStatement(text, { categoryNames, askAi })
   if (!result.ok) return fail(result.error, 422)

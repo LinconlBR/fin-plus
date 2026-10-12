@@ -7,17 +7,23 @@ import type { InsightDeps } from "@/lib/ai-insight"
 
 import OpenAI from "openai"
 
-const ai = new OpenAI({
-  baseURL: "https://api.groq.com/openai/v1",
-  apiKey: process.env.GROQ_API_KEY,
-  maxRetries: 0,   // sem tentar de novo sozinho: falha rápido e cai no texto de regras
-  timeout: 10_000, // desiste em 10 s
-})
+// O client é criado só quando uma chamada de IA acontece (e não ao importar o
+// arquivo): sem GROQ_API_KEY o SDK lança erro na construção, e isso derrubava o
+// `next build` ao coletar as rotas que importam este módulo.
+function createAiClient() {
+  return new OpenAI({
+    baseURL: "https://api.groq.com/openai/v1",
+    apiKey: process.env.GROQ_API_KEY ?? "missing-key",
+    maxRetries: 0,   // sem tentar de novo sozinho: falha rápido e cai no texto de regras
+    timeout: 10_000, // desiste em 10 s
+  })
+}
 
 // Monta as dependências reais. Cada chamada cria seu próprio client do
 // Supabase porque ele lê os cookies da requisição atual.
 export async function buildInsightDeps(maxTokens = 800): Promise<InsightDeps> {
   const supabase = await createClient()
+  const ai = createAiClient()
 
   return {
     getUserId: async () => {

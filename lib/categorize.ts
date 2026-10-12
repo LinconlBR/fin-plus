@@ -12,7 +12,8 @@ export type CategoryRef = { id: string; name: string; type: TransactionType }
 export type CategoryRule = { merchant_key: string; type: TransactionType; category_id: string }
 export type HistoryTransaction = { description: string; type: TransactionType; category_id: string }
 
-export type SuggestionSource = "rule" | "history" | "dictionary"
+// "file": a própria planilha/PDF trouxe a categoria (ex.: exportação do Fin+).
+export type SuggestionSource = "rule" | "history" | "dictionary" | "file"
 export type Suggestion = { category_id: string; source: SuggestionSource }
 
 const ruleId = (key: string, type: TransactionType) => `${type}|${key}`
