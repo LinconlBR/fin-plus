@@ -16,7 +16,15 @@ import {
 import { Button } from "@/components/ui/button"
 import { useCategories } from "@/hooks/use-categories"
 import { useTransactions } from "@/hooks/use-transactions"
+import { useCategoryRules } from "@/hooks/use-category-rules"
 import { importTransactions } from "@/lib/actions/transactions-import"
+import { saveCategoryRules } from "@/lib/actions/category-rules"
+import {
+  buildHistoryIndex,
+  createSuggester,
+  selectRulesToLearn,
+  type SuggestionSource,
+} from "@/lib/categorize"
 import { parseCsv } from "@/lib/csv"
 import { cellsToTable } from "@/lib/spreadsheet"
 import { formatCurrency, formatDate } from "@/lib/format"
@@ -35,7 +43,15 @@ import {
 
 const MAX_FILE_BYTES = 2 * 1024 * 1024
 
-type PreviewRow = ImportRow & { duplicate: boolean; include: boolean; category_id: string }
+type PreviewRow = ImportRow & {
+  duplicate: boolean
+  include: boolean
+  category_id: string
+  // De onde veio a categoria sugerida (null = nenhuma sugestão, caiu na padrão).
+  source: SuggestionSource | null
+  // A pessoa mexeu na categoria desta linha.
+  touched: boolean
+}
 type Step = "upload" | "map" | "preview"
 
 const FIELD_LABELS: Record<ColumnField, string> = {
@@ -54,6 +70,7 @@ export function ImportDialog() {
   const queryClient = useQueryClient()
   const { data: categories = [] } = useCategories()
   const { data: existing = [] } = useTransactions()
+  const { data: rules = [] } = useCategoryRules()
 
   const [open, setOpen] = useState(false)
   const [step, setStep] = useState<Step>("upload")
@@ -97,12 +114,29 @@ export function ImportDialog() {
       existing.map((t) => ({ date: t.date, description: t.title, amount: t.amount, type: t.type }))
     )
 
+    // Sugestão: regra aprendida > histórico > dicionário. Sem nada, categoria
+    // padrão do tipo, marcada para revisão.
+    const suggest = createSuggester({
+      categories,
+      rules,
+      history: buildHistoryIndex(
+        existing.map((t) => ({ description: t.title, type: t.type, category_id: t.category_id })),
+        new Set(categories.map((c) => c.id))
+      ),
+    })
+
     setRows(
-      marked.map((row) => ({
-        ...row,
-        include: !row.duplicate,
-        category_id: row.type === "income" ? defaultIncome : defaultExpense,
-      }))
+      marked.map((row) => {
+        const suggestion = suggest(row.description, row.type)
+        return {
+          ...row,
+          include: !row.duplicate,
+          category_id:
+            suggestion?.category_id ?? (row.type === "income" ? defaultIncome : defaultExpense),
+          source: suggestion?.source ?? null,
+          touched: false,
+        }
+      })
     )
 
     const info: string[] = []
@@ -167,6 +201,14 @@ export function ImportDialog() {
       return result
     },
     onSuccess: () => {
+      // Ensina as regras com o que a pessoa confirmou. É só uma ajuda para a
+      // próxima importação: se falhar, a importação em si já deu certo.
+      const learned = selectRulesToLearn(rows)
+      if (learned.length > 0) {
+        saveCategoryRules(learned)
+          .catch(() => undefined)
+          .finally(() => queryClient.invalidateQueries({ queryKey: ["category-rules"] }))
+      }
       queryClient.invalidateQueries({ queryKey: ["transactions"] })
       setOpen(false)
       reset()
@@ -179,7 +221,12 @@ export function ImportDialog() {
   const headers = useMemo(() => table[headerIndex] ?? [], [table, headerIndex])
 
   function setAllCategory(type: "income" | "expense", category_id: string) {
-    setRows((current) => current.map((r) => (r.type === type ? { ...r, category_id } : r)))
+    // A categoria padrão só vale para linhas sem sugestão e que ninguém mexeu.
+    setRows((current) =>
+      current.map((r) =>
+        r.type === type && r.source === null && !r.touched ? { ...r, category_id } : r
+      )
+    )
   }
 
   return (
@@ -252,14 +299,14 @@ export function ImportDialog() {
             ))}
             <div className="grid gap-3 sm:grid-cols-2">
               <label className="grid gap-1 text-sm">
-                Categoria padrão das receitas
+                Categoria padrão das receitas (sem sugestão)
                 <select className={selectClass} onChange={(e) => setAllCategory("income", e.target.value)}
                   defaultValue={incomeCategories[0]?.id ?? ""}>
                   {incomeCategories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
               </label>
               <label className="grid gap-1 text-sm">
-                Categoria padrão das despesas
+                Categoria padrão das despesas (sem sugestão)
                 <select className={selectClass} onChange={(e) => setAllCategory("expense", e.target.value)}
                   defaultValue={expenseCategories[0]?.id ?? ""}>
                   {expenseCategories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -299,16 +346,30 @@ export function ImportDialog() {
                           {row.duplicate && <span className="ml-2 text-xs text-amber-600">já existe</span>}
                         </td>
                         <td className="p-2">
+                          <div className="flex items-center gap-2">
                           <select
                             className={selectClass}
                             value={row.category_id}
                             aria-label={`Categoria de ${row.description}`}
                             onChange={(e) =>
-                              setRows((cur) => cur.map((r, j) => (j === i ? { ...r, category_id: e.target.value } : r)))
+                              setRows((cur) =>
+                                cur.map((r, j) =>
+                                  j === i ? { ...r, category_id: e.target.value, touched: true } : r
+                                )
+                              )
                             }
                           >
                             {options.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                           </select>
+                          {!row.touched && row.source === null && (
+                            <span className="text-xs text-amber-600">revisar</span>
+                          )}
+                          {!row.touched && row.source !== null && (
+                            <span className="text-xs text-muted-foreground">
+                              {row.source === "dictionary" ? "sugerida" : "aprendida"}
+                            </span>
+                          )}
+                          </div>
                         </td>
                         <td className={`p-2 text-right whitespace-nowrap ${row.type === "income" ? "text-green-600" : "text-red-600"}`}>
                           {row.type === "income" ? "+" : "-"}{formatCurrency(row.amount)}
