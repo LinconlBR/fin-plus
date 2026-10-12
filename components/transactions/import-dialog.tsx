@@ -149,7 +149,10 @@ export function ImportDialog() {
       } else {
         buildPreview(parsed, header, detected)
       }
-    } catch {
+    } catch (e) {
+      // O detalhe vai para o console: sem ele, "pacote não instalado" e
+      // "arquivo corrompido" aparecem como a mesma mensagem.
+      console.error("Erro ao ler o arquivo de extrato:", e)
       setError("Não consegui ler este arquivo. Use um CSV ou XLSX.")
     }
   }
