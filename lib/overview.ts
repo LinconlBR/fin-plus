@@ -17,7 +17,7 @@ type Row = {
   categories: { name: string; color: string | null } | null
 }
 
-type CategoryTotal = { id: string; name: string; total: number }
+export type CategoryTotal = { id: string; name: string; total: number; color: string }
 
 export type MonthAnalysis = {
   input: OverviewInsightInput
@@ -31,7 +31,7 @@ export type MonthAnalysis = {
 
 function toCategoryTotals(rows: Row[]): CategoryTotal[] {
   return groupExpensesByCategory(rows.filter((r) => r.type === "expense")).items.map(
-    ({ id, name, total }) => ({ id, name, total })
+    ({ id, name, total, color }) => ({ id, name, total, color })
   )
 }
 

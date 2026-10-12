@@ -420,6 +420,36 @@ $$;
 revoke execute on function public.consume_ai_quota(integer) from public, anon;
 grant execute on function public.consume_ai_quota(integer) to authenticated;
 
+-- ----------------------------------------------------------------------------
+-- Tabela: user_preferences — preferências por usuário (layout do Dashboard)
+-- ----------------------------------------------------------------------------
+-- dashboard_layout: lista JSON [{"id": "cards", "visible": true}, ...] com a
+-- ordem e a visibilidade dos blocos. Validada e completada em lib/dashboard-layout.ts.
+
+create table public.user_preferences (
+  user_id uuid primary key references public.profiles(id) on update cascade on delete cascade,
+  dashboard_layout jsonb not null default '[]'::jsonb,
+  updated_at timestamptz not null default now(),
+  constraint dashboard_layout_is_array check (
+    jsonb_typeof(dashboard_layout) = 'array' and jsonb_array_length(dashboard_layout) <= 20
+  )
+);
+
+alter table public.user_preferences enable row level security;
+
+create policy "Usuários veem as próprias preferências"
+  on public.user_preferences for select
+  using ((select auth.uid()) = user_id);
+
+create policy "Usuários criam as próprias preferências"
+  on public.user_preferences for insert
+  with check ((select auth.uid()) = user_id);
+
+create policy "Usuários atualizam as próprias preferências"
+  on public.user_preferences for update
+  using ((select auth.uid()) = user_id)
+  with check ((select auth.uid()) = user_id);
+
 -- ============================================================================
 -- Fim do schema.
 -- ============================================================================
