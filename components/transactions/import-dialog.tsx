@@ -36,15 +36,21 @@ import {
   findHeaderRow,
   isMappingUsable,
   markDuplicates,
+  type DuplicateKind,
   type ColumnField,
   type ColumnMapping,
   type ImportRow,
 } from "@/lib/transaction-import"
 
 const MAX_FILE_BYTES = 2 * 1024 * 1024
+const MAX_PDF_BYTES = 4 * 1024 * 1024
+
+function normalizeName(text: string): string {
+  return text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim()
+}
 
 type PreviewRow = ImportRow & {
-  duplicate: boolean
+  duplicate: DuplicateKind
   include: boolean
   category_id: string
   // De onde veio a categoria sugerida (null = nenhuma sugestão, caiu na padrão).
@@ -61,6 +67,7 @@ const FIELD_LABELS: Record<ColumnField, string> = {
   debit: "Débito",
   credit: "Crédito",
   type: "Tipo (receita/despesa)",
+  category: "Categoria (opcional)",
 }
 
 const selectClass =
@@ -80,6 +87,7 @@ export function ImportDialog() {
   const [mapping, setMapping] = useState<ColumnMapping>({})
   const [rows, setRows] = useState<PreviewRow[]>([])
   const [notes, setNotes] = useState<string[]>([])
+  const [loading, setLoading] = useState(false)
 
   const incomeCategories = categories.filter((c) => c.type === "income")
   const expenseCategories = categories.filter((c) => c.type === "expense")
@@ -96,6 +104,11 @@ export function ImportDialog() {
   // Monta a prévia a partir da tabela e do mapeamento atuais.
   function buildPreview(nextTable: string[][], nextHeader: number, nextMapping: ColumnMapping) {
     const { rows: parsed, issues } = buildImportRows(nextTable, nextHeader, nextMapping)
+    showPreview(parsed, issues, [])
+  }
+
+  // Ponto comum de CSV, XLSX e PDF: daqui para frente é tudo ImportRow.
+  function showPreview(parsed: ImportRow[], issues: { line: number; reason: string }[], extraNotes: string[]) {
     const { inside, before, future } = filterImportWindow(parsed)
 
     if (inside.length > MAX_IMPORT_ROWS) {
@@ -127,9 +140,18 @@ export function ImportDialog() {
 
     setRows(
       marked.map((row) => {
-        const suggestion = suggest(row.description, row.type)
+        // Categoria que veio no próprio arquivo (mesmo tipo) vale mais que qualquer palpite.
+        const fromFile = row.categoryName
+          ? categories.find(
+              (c) => c.type === row.type && normalizeName(c.name) === normalizeName(row.categoryName!)
+            )
+          : undefined
+        const suggestion = fromFile
+          ? { category_id: fromFile.id, source: "file" as const }
+          : suggest(row.description, row.type)
         return {
           ...row,
+          // Idêntica: pulada. Parecida: a pessoa decide (começa desmarcada).
           include: !row.duplicate,
           category_id:
             suggestion?.category_id ?? (row.type === "income" ? defaultIncome : defaultExpense),
@@ -139,7 +161,7 @@ export function ImportDialog() {
       })
     )
 
-    const info: string[] = []
+    const info: string[] = [...extraNotes]
     if (before > 0) info.push(`${before} anteriores aos últimos 3 meses foram ignoradas.`)
     if (future > 0) info.push(`${future} com data futura foram ignoradas.`)
     if (issues.length > 0) info.push(`${issues.length} linhas não puderam ser lidas (ex.: linha ${issues[0].line}: ${issues[0].reason.toLowerCase()}).`)
@@ -148,14 +170,37 @@ export function ImportDialog() {
     setStep("preview")
   }
 
+  async function onPdf(file: File) {
+    setLoading(true)
+    try {
+      const body = new FormData()
+      body.append("file", file)
+      const response = await fetch("/api/transactions/parse-statement", { method: "POST", body })
+      const result = await response.json().catch(() => null)
+      if (!response.ok || !result?.rows) {
+        setError(result?.error ?? "Não consegui ler este PDF.")
+        return
+      }
+      showPreview(result.rows as ImportRow[], [], result.notices ?? [])
+    } finally {
+      setLoading(false)
+    }
+  }
+
   async function onFile(file: File | undefined) {
     if (!file) return
     setError(null)
-    if (file.size > MAX_FILE_BYTES) {
-      setError("O arquivo é grande demais (máximo 2 MB).")
+    const isPdf = /\.pdf$/i.test(file.name) || file.type === "application/pdf"
+    const limit = isPdf ? MAX_PDF_BYTES : MAX_FILE_BYTES
+    if (file.size > limit) {
+      setError(`O arquivo é grande demais (máximo ${limit / 1024 / 1024} MB).`)
       return
     }
     try {
+      if (/\.pdf$/i.test(file.name) || file.type === "application/pdf") {
+        await onPdf(file)
+        return
+      }
       const isXlsx = /\.xlsx$/i.test(file.name)
       if (/\.xls$/i.test(file.name)) {
         setError("Arquivos .xls antigos não são aceitos. Exporte como .xlsx ou CSV.")
@@ -242,7 +287,7 @@ export function ImportDialog() {
         <DialogHeader>
           <DialogTitle>Importar extrato</DialogTitle>
           <DialogDescription>
-            Traz as transações dos últimos 3 meses de um CSV ou XLSX do seu banco. Você revisa tudo antes de salvar.
+            Traz as transações dos últimos 3 meses de um CSV, XLSX ou PDF do seu banco. Você revisa tudo antes de salvar.
           </DialogDescription>
         </DialogHeader>
 
@@ -250,13 +295,18 @@ export function ImportDialog() {
           <div className="space-y-2">
             <input
               type="file"
-              accept=".csv,.txt,.xlsx,text/csv"
+              accept=".csv,.txt,.xlsx,.pdf,text/csv,application/pdf"
               onChange={(e) => onFile(e.target.files?.[0])}
-              aria-label="Arquivo do extrato (CSV ou XLSX)"
+              aria-label="Arquivo do extrato (CSV, XLSX ou PDF)"
               className="block w-full text-sm file:mr-3 file:rounded-md file:border file:bg-transparent file:px-3 file:py-1.5 file:text-sm"
             />
             <p className="text-xs text-muted-foreground">
-              Aceita CSV ou XLSX de qualquer banco. Extrato em PDF: em breve.
+              Aceita CSV, XLSX ou PDF de qualquer banco (PDF com texto selecionável, até 4 MB).
+            </p>
+            {loading && <p className="text-sm">Lendo o extrato...</p>}
+            <p className="text-xs text-muted-foreground">
+              PDFs com layout desconhecido podem ser lidos com IA: nesse caso o texto do extrato,
+              sem titular, número de conta nem cartão, é enviado ao serviço de IA.
             </p>
           </div>
         )}
@@ -343,7 +393,12 @@ export function ImportDialog() {
                         <td className="p-2 whitespace-nowrap">{formatDate(row.date)}</td>
                         <td className="p-2">
                           {row.description}
-                          {row.duplicate && <span className="ml-2 text-xs text-amber-600">já existe</span>}
+                          {row.duplicate === "exact" && <span className="ml-2 text-xs text-amber-600">já existe</span>}
+                          {row.duplicate === "possible" && (
+                            <span className="ml-2 text-xs text-amber-600" title="Já existe uma transação com o mesmo valor, data próxima e descrição parecida. Marque se for outra compra.">
+                              possível duplicada
+                            </span>
+                          )}
                         </td>
                         <td className="p-2">
                           <div className="flex items-center gap-2">
@@ -366,7 +421,11 @@ export function ImportDialog() {
                           )}
                           {!row.touched && row.source !== null && (
                             <span className="text-xs text-muted-foreground">
-                              {row.source === "dictionary" ? "sugerida" : "aprendida"}
+                              {row.source === "dictionary"
+                                ? "sugerida"
+                                : row.source === "file"
+                                  ? "do arquivo"
+                                  : "aprendida"}
                             </span>
                           )}
                           </div>

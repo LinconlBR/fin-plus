@@ -3,6 +3,7 @@
 // arquivo está em lib/csv.ts e a gravação em lib/actions/transactions-import.ts.
 
 import { toDateString } from "@/lib/reports"
+import { extractMerchantKey } from "@/lib/merchant"
 
 export type TransactionType = "income" | "expense"
 
@@ -11,6 +12,8 @@ export type ImportRow = {
   description: string
   amount: number // sempre positivo; o sinal vira "type"
   type: TransactionType
+  // Nome da categoria quando o próprio arquivo traz uma (ex.: exportação do Fin+).
+  categoryName?: string
 }
 
 // ---------- Valores ----------
@@ -97,12 +100,37 @@ export function parseDate(raw: string): string | null {
     return isRealDate(year, month, day) ? `${year}-${pad(month)}-${pad(day)}` : null
   }
 
+  // Mês por extenso/abreviado: "11 oct 2026", "11 de outubro de 2026", "Oct 11, 2026".
+  const named = /^(\d{1,2})\s+(?:de\s+)?([a-zà-ÿ]+)\.?\s+(?:de\s+)?(\d{4})$/i.exec(text)
+  if (named) {
+    const month = monthFromName(named[2])
+    const day = Number(named[1])
+    const year = Number(named[3])
+    if (month && isRealDate(year, month, day)) return `${year}-${pad(month)}-${pad(day)}`
+  }
+
   return null
+}
+
+// Prefixos de 3 letras de meses em espanhol, português e inglês.
+const MONTH_PREFIXES: Record<string, number> = {
+  ene: 1, jan: 1, feb: 2, fev: 2, mar: 3, abr: 4, apr: 4, may: 5, mai: 5,
+  jun: 6, jul: 7, ago: 8, aug: 8, sep: 9, set: 9, oct: 10, out: 10,
+  nov: 11, dic: 12, dez: 12, dec: 12,
+}
+
+function monthFromName(name: string): number | null {
+  const key = name
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .slice(0, 3)
+  return MONTH_PREFIXES[key] ?? null
 }
 
 // ---------- Colunas ----------
 
-export type ColumnField = "date" | "description" | "amount" | "debit" | "credit" | "type"
+export type ColumnField = "date" | "description" | "amount" | "debit" | "credit" | "type" | "category"
 
 export type ColumnMapping = Partial<Record<ColumnField, number>>
 
@@ -126,6 +154,7 @@ const HEADER_HINTS: Record<ColumnField, string[]> = {
   debit: ["debito", "debit", "saida", "saidas", "cargo", "retirada", "despesa"],
   credit: ["credito", "credit", "entrada", "entradas", "abono", "deposito", "receita"],
   type: ["tipo", "type", "natureza", "d c", "dc"],
+  category: ["categoria", "category", "categoria do gasto"],
 }
 
 function matchesHint(header: string, hints: string[]): number {
@@ -142,7 +171,7 @@ export function detectColumns(headers: string[]): ColumnMapping {
   const used = new Set<number>()
 
   // Ordem importa: campos mais específicos primeiro, para "tipo" não roubar "data".
-  const order: ColumnField[] = ["date", "amount", "debit", "credit", "description", "type"]
+  const order: ColumnField[] = ["date", "amount", "debit", "credit", "description", "type", "category"]
   for (const field of order) {
     let bestIndex = -1
     let bestScore = 0
@@ -241,11 +270,14 @@ export function buildImportRows(
 
     const description = cell(row, "description").replace(/\s+/g, " ").trim().slice(0, 200)
 
+    const categoryName = cell(row, "category").replace(/\s+/g, " ").trim().slice(0, 60)
+
     rows.push({
       date,
       description: description || "Sem descrição",
       amount: Math.round(Math.abs(signed) * 100) / 100,
       type,
+      ...(categoryName ? { categoryName } : {}),
     })
   }
 
@@ -296,24 +328,96 @@ export function duplicateKey(t: KeyFields): string {
   return `${t.date}|${t.type}|${t.amount.toFixed(2)}|${description}`
 }
 
-// Compara com o que já existe como multiconjunto: se há 1 igual no banco e 2 no
-// arquivo, só uma é duplicada (duas compras iguais no mesmo dia são normais).
+// "exact": mesma data, tipo, valor e descrição (o servidor também recusa).
+// "possible": mesmo tipo e valor, data a poucos dias e descrição parecida — só
+// uma dica para a prévia; quem decide é a pessoa.
+export type DuplicateKind = "exact" | "possible" | false
+
+export const POSSIBLE_DUPLICATE_DAYS = 2
+
+// Dias entre duas datas "YYYY-MM-DD". Usa UTC puro para não depender do fuso.
+export function daysBetween(a: string, b: string): number {
+  const toUtc = (d: string) => {
+    const [y, m, day] = d.split("-").map(Number)
+    return Date.UTC(y, m - 1, day)
+  }
+  return Math.round(Math.abs(toUtc(a) - toUtc(b)) / 86_400_000)
+}
+
+export function sameAmount(a: number, b: number): boolean {
+  return Math.round(a * 100) === Math.round(b * 100)
+}
+
+// "Padaria" (digitado à mão) vs "COMPRA PADARIA SAO JOAO, MADRID" (banco).
+export function similarDescription(a: string, b: string): boolean {
+  const na = normalizeHeader(a)
+  const nb = normalizeHeader(b)
+  if (na === "" || nb === "") return false
+  if (na === nb || na.includes(nb) || nb.includes(na)) return true
+
+  const wordsA = new Set(extractMerchantKey(a).split(" ").filter(Boolean))
+  const wordsB = new Set(extractMerchantKey(b).split(" ").filter(Boolean))
+  if (wordsA.size === 0 || wordsB.size === 0) return false
+  let shared = 0
+  for (const w of wordsA) if (wordsB.has(w)) shared++
+  return shared / Math.min(wordsA.size, wordsB.size) >= 0.5
+}
+
+// Duas passadas sobre o que existe (cada transação do banco só "casa" uma vez):
+// 1) idênticas; 2) com o que sobrou, as parecidas, escolhendo a data mais próxima.
+// A ordem importa: se as parecidas viessem antes, uma poderia roubar o par de
+// uma idêntica.
 export function markDuplicates<T extends KeyFields>(
   rows: T[],
   existing: KeyFields[]
-): (T & { duplicate: boolean })[] {
+): (T & { duplicate: DuplicateKind })[] {
   const available = new Map<string, number>()
   for (const t of existing) {
     const key = duplicateKey(t)
     available.set(key, (available.get(key) ?? 0) + 1)
   }
-  return rows.map((row) => {
+
+  const kinds: DuplicateKind[] = rows.map(() => false)
+  const unmatched: number[] = []
+  rows.forEach((row, i) => {
     const key = duplicateKey(row)
     const left = available.get(key) ?? 0
     if (left > 0) {
       available.set(key, left - 1)
-      return { ...row, duplicate: true }
+      kinds[i] = "exact"
+    } else {
+      unmatched.push(i)
     }
-    return { ...row, duplicate: false }
   })
+
+  // O que sobrou do banco depois da passada 1, como lista para remover ao casar.
+  const remaining: KeyFields[] = []
+  for (const t of existing) {
+    const key = duplicateKey(t)
+    const left = available.get(key) ?? 0
+    if (left > 0) {
+      available.set(key, left - 1)
+      remaining.push(t)
+    }
+  }
+
+  for (const i of unmatched) {
+    const row = rows[i]
+    let best = -1
+    let bestDays = Infinity
+    remaining.forEach((t, j) => {
+      if (t.type !== row.type || !sameAmount(t.amount, row.amount)) return
+      const days = daysBetween(t.date, row.date)
+      if (days > POSSIBLE_DUPLICATE_DAYS || days >= bestDays) return
+      if (!similarDescription(t.description, row.description)) return
+      best = j
+      bestDays = days
+    })
+    if (best >= 0) {
+      remaining.splice(best, 1)
+      kinds[i] = "possible"
+    }
+  }
+
+  return rows.map((row, i) => ({ ...row, duplicate: kinds[i] }))
 }

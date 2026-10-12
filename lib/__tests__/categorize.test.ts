@@ -116,6 +116,9 @@ describe("selectRulesToLearn", () => {
     expect(selectRulesToLearn([row({ source: "history" })])).toHaveLength(1)
     expect(selectRulesToLearn([row({ source: "rule" })])).toEqual([])
   })
+  it("confirma a categoria que veio no próprio arquivo", () => {
+    expect(selectRulesToLearn([row({ source: "file" })])).toHaveLength(1)
+  })
   it("ignora linhas não importadas, sem categoria ou sem estabelecimento", () => {
     expect(selectRulesToLearn([row({ touched: true, include: false })])).toEqual([])
     expect(selectRulesToLearn([row({ touched: true, category_id: "" })])).toEqual([])

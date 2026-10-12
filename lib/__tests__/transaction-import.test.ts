@@ -50,10 +50,17 @@ describe("parseDate", () => {
     ["2026-10-10T08:30:00Z", "2026-10-10"],
     ["10/10/2026 14:22", "2026-10-10"],
     ["2026/1/5", "2026-01-05"],
+    ["11 oct 2026", "2026-10-11"],
+    ["09 OCT 2026", "2026-10-09"],
+    ["1 ene 2026", "2026-01-01"],
+    ["5 de março de 2026", "2026-03-05"],
+    ["15 dez. 2026", "2026-12-15"],
+    ["3 set 2026", "2026-09-03"],
+    ["20 agosto 2026", "2026-08-20"],
   ])("lê %j como %s", (raw, expected) => {
     expect(parseDate(raw)).toBe(expected)
   })
-  it.each(["", "31/02/2026", "32/01/2026", "10/13/2026", "ontem", "2026-13-01"])(
+  it.each(["", "31/02/2026", "32/01/2026", "10/13/2026", "ontem", "2026-13-01", "31 nov 2026", "11 xyz 2026"])(
     "rejeita %j",
     (raw) => {
       expect(parseDate(raw)).toBeNull()
@@ -85,7 +92,7 @@ describe("detectColumns", () => {
   })
   it("reconhece o formato exportado pelo Fin+", () => {
     expect(detectColumns(["Data", "Descrição", "Categoria", "Tipo", "Valor"])).toEqual({
-      date: 0, description: 1, type: 3, amount: 4,
+      date: 0, description: 1, category: 2, type: 3, amount: 4,
     })
   })
   it("não mapeia colunas desconhecidas", () => {
@@ -156,6 +163,12 @@ describe("buildImportRows", () => {
     expect(rows[1].description).toBe("Sem descrição")
     expect(rows[2].description).toHaveLength(200)
   })
+  it("lê a coluna de categoria quando existe", () => {
+    const table = [["Data", "Desc", "Categoria", "Tipo", "Valor"], ["01/10/2026", "Café", " Alimentação ", "Despesa", "5,00"], ["02/10/2026", "Sal", "", "Receita", "9,00"]]
+    const { rows } = buildImportRows(table, 0, detectColumns(table[0]))
+    expect(rows[0].categoryName).toBe("Alimentação")
+    expect(rows[1].categoryName).toBeUndefined()
+  })
   it("respeita o índice do cabeçalho", () => {
     const table = [["Banco X"], ["Data", "Desc", "Valor"], ["01/10/2026", "a", "1"]]
     expect(buildImportRows(table, 1, { date: 0, description: 1, amount: 2 }).rows).toHaveLength(1)
@@ -190,15 +203,58 @@ describe("markDuplicates", () => {
   })
   it("marca como duplicada a que já existe", () => {
     const [row] = markDuplicates([base], [base])
-    expect(row.duplicate).toBe(true)
+    expect(row.duplicate).toBe("exact")
   })
   it("não marca quando valor, tipo ou data diferem", () => {
     expect(markDuplicates([{ ...base, amount: 51 }], [base])[0].duplicate).toBe(false)
     expect(markDuplicates([{ ...base, type: "income" as const }], [base])[0].duplicate).toBe(false)
-    expect(markDuplicates([{ ...base, date: "2026-10-02" }], [base])[0].duplicate).toBe(false)
+    // Data a 1 dia com a mesma descrição agora é só "possível" (veja abaixo).
+    expect(markDuplicates([{ ...base, date: "2026-10-09" }], [base])[0].duplicate).toBe(false)
   })
   it("compras idênticas no arquivo só são duplicadas até o limite do que existe", () => {
     const result = markDuplicates([base, base, base], [base])
-    expect(result.map((r) => r.duplicate)).toEqual([true, false, false])
+    expect(result.map((r) => r.duplicate)).toEqual(["exact", false, false])
+  })
+
+  describe("duplicadas parecidas", () => {
+    const bank = { ...base, description: "COMPRA MERCADO EXTRA SAO JOAO, MADRID" }
+    it("mesmo valor, +1 dia e mesma descrição é 'possible'", () => {
+      expect(markDuplicates([{ ...base, date: "2026-10-02" }], [base])[0].duplicate).toBe("possible")
+    })
+    it("descrição do banco diferente da digitada é 'possible'", () => {
+      expect(markDuplicates([{ ...bank, date: "2026-10-02" }], [base])[0].duplicate).toBe("possible")
+    })
+    it("fora da janela de 2 dias não é duplicada", () => {
+      expect(markDuplicates([{ ...base, date: "2026-10-04" }], [base])[0].duplicate).toBe(false)
+    })
+    it("descrição totalmente diferente não é duplicada", () => {
+      expect(markDuplicates([{ ...base, description: "Uber" }], [base])[0].duplicate).toBe(false)
+    })
+    it("valor ou tipo diferentes não são duplicadas", () => {
+      expect(markDuplicates([{ ...base, amount: 50.01, date: "2026-10-02" }], [base])[0].duplicate).toBe(false)
+      expect(markDuplicates([{ ...base, type: "income" as const, date: "2026-10-02" }], [base])[0].duplicate).toBe(false)
+    })
+    it("a idêntica leva o par; a parecida fica livre", () => {
+      const result = markDuplicates([{ ...base, date: "2026-10-02" }, base], [base])
+      expect(result.map((r) => r.duplicate)).toEqual([false, "exact"])
+    })
+    it("cada transação existente casa só uma vez", () => {
+      const result = markDuplicates(
+        [{ ...base, date: "2026-10-02" }, { ...base, date: "2026-10-03" }],
+        [base]
+      )
+      expect(result.map((r) => r.duplicate)).toEqual(["possible", false])
+    })
+    it("escolhe a data mais próxima", () => {
+      const result = markDuplicates(
+        [{ ...base, date: "2026-10-03" }],
+        [{ ...base, date: "2026-10-01" }, { ...base, date: "2026-10-02" }]
+      )
+      expect(result[0].duplicate).toBe("possible")
+    })
+    it("funciona na virada de mês e de ano", () => {
+      const dec = { ...base, date: "2026-12-31" }
+      expect(markDuplicates([{ ...dec, date: "2027-01-01" }], [dec])[0].duplicate).toBe("possible")
+    })
   })
 })
