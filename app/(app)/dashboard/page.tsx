@@ -1,8 +1,13 @@
+import Link from "next/link"
+import { SlidersHorizontal } from "lucide-react"
 import { DashboardCards } from "@/components/dashboard/cards"
 import { DashboardChart } from "@/components/dashboard/chart/chart"
 import { DashboardLastTransactions } from "@/components/dashboard/last-transactions"
 import { DashboardInsights } from "@/components/dashboard/insights"
 import { MonthNavigator } from "@/components/month-navigator"
+import { buttonVariants } from "@/components/ui/button"
+import { buildDashboardRows, type WidgetId } from "@/lib/dashboard-layout"
+import { getDashboardLayout } from "@/lib/preferences"
 import { createClient } from "@/lib/supabase/server"
 import {
   clampMonth,
@@ -41,6 +46,16 @@ export default async function Dashboard(props: PageProps<"/dashboard">) {
     today
   )
 
+  const rows = buildDashboardRows(await getDashboardLayout())
+
+  // Cada bloco do Dashboard, pelo id que o usuário escolhe em Personalizar.
+  const widgets: Record<WidgetId, React.ReactNode> = {
+    cards: <DashboardCards month={month} />,
+    insights: <DashboardInsights month={month} />,
+    chart: <DashboardChart month={month} week={week} chartRange={chartRange} />,
+    transactions: <DashboardLastTransactions month={month} />,
+  }
+
   return (
     <main className="flex min-h-screen flex-col">
       {/* Header */}
@@ -48,20 +63,45 @@ export default async function Dashboard(props: PageProps<"/dashboard">) {
         <h1 className="text-2xl font-bold tracking-tight text-foreground md:text-3xl">
           Dashboard
         </h1>
-        <MonthNavigator currentMonth={month} minMonth={minMonth} maxMonth={maxMonth} />
+        <div className="flex items-center gap-3">
+          <Link
+            href="/customize/dashboard"
+            className={buttonVariants({ variant: "outline", size: "sm" })}
+          >
+            <SlidersHorizontal className="size-4" />
+            Personalizar
+          </Link>
+          <MonthNavigator currentMonth={month} minMonth={minMonth} maxMonth={maxMonth} />
+        </div>
       </div>
 
       <div className="space-y-6 p-6 md:p-8">
-        <div>
-          <DashboardCards month={month} />
-        </div>
-        <DashboardInsights month={month} />
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-          <div className="lg:col-span-2">
-            <DashboardChart month={month} week={week} chartRange={chartRange} />
+        {rows.length === 0 ? (
+          <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed p-12 text-center">
+            <p className="font-medium">Todos os blocos do Dashboard estão ocultos</p>
+            <Link
+              href="/customize/dashboard"
+              className={buttonVariants({ variant: "outline", size: "sm" })}
+            >
+              Personalizar Dashboard
+            </Link>
           </div>
-          <DashboardLastTransactions month={month} />
-        </div>
+        ) : (
+          rows.map((row) =>
+            row.length === 1 ? (
+              <div key={row[0]}>{widgets[row[0]]}</div>
+            ) : (
+              // Gráfico e últimas transações lado a lado: o gráfico leva 2/3, as transações 1/3.
+              <div key={row.join("+")} className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+                {row.map((id) => (
+                  <div key={id} className={id === "chart" ? "lg:col-span-2" : undefined}>
+                    {widgets[id]}
+                  </div>
+                ))}
+              </div>
+            )
+          )
+        )}
       </div>
     </main>
   )
