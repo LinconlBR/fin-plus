@@ -50,10 +50,17 @@ describe("parseDate", () => {
     ["2026-10-10T08:30:00Z", "2026-10-10"],
     ["10/10/2026 14:22", "2026-10-10"],
     ["2026/1/5", "2026-01-05"],
+    ["11 oct 2026", "2026-10-11"],
+    ["09 OCT 2026", "2026-10-09"],
+    ["1 ene 2026", "2026-01-01"],
+    ["5 de março de 2026", "2026-03-05"],
+    ["15 dez. 2026", "2026-12-15"],
+    ["3 set 2026", "2026-09-03"],
+    ["20 agosto 2026", "2026-08-20"],
   ])("lê %j como %s", (raw, expected) => {
     expect(parseDate(raw)).toBe(expected)
   })
-  it.each(["", "31/02/2026", "32/01/2026", "10/13/2026", "ontem", "2026-13-01"])(
+  it.each(["", "31/02/2026", "32/01/2026", "10/13/2026", "ontem", "2026-13-01", "31 nov 2026", "11 xyz 2026"])(
     "rejeita %j",
     (raw) => {
       expect(parseDate(raw)).toBeNull()
@@ -85,7 +92,7 @@ describe("detectColumns", () => {
   })
   it("reconhece o formato exportado pelo Fin+", () => {
     expect(detectColumns(["Data", "Descrição", "Categoria", "Tipo", "Valor"])).toEqual({
-      date: 0, description: 1, type: 3, amount: 4,
+      date: 0, description: 1, category: 2, type: 3, amount: 4,
     })
   })
   it("não mapeia colunas desconhecidas", () => {
@@ -155,6 +162,12 @@ describe("buildImportRows", () => {
     expect(rows[0].description).toBe("muito espaço")
     expect(rows[1].description).toBe("Sem descrição")
     expect(rows[2].description).toHaveLength(200)
+  })
+  it("lê a coluna de categoria quando existe", () => {
+    const table = [["Data", "Desc", "Categoria", "Tipo", "Valor"], ["01/10/2026", "Café", " Alimentação ", "Despesa", "5,00"], ["02/10/2026", "Sal", "", "Receita", "9,00"]]
+    const { rows } = buildImportRows(table, 0, detectColumns(table[0]))
+    expect(rows[0].categoryName).toBe("Alimentação")
+    expect(rows[1].categoryName).toBeUndefined()
   })
   it("respeita o índice do cabeçalho", () => {
     const table = [["Banco X"], ["Data", "Desc", "Valor"], ["01/10/2026", "a", "1"]]

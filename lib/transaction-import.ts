@@ -11,6 +11,8 @@ export type ImportRow = {
   description: string
   amount: number // sempre positivo; o sinal vira "type"
   type: TransactionType
+  // Nome da categoria quando o próprio arquivo traz uma (ex.: exportação do Fin+).
+  categoryName?: string
 }
 
 // ---------- Valores ----------
@@ -97,12 +99,37 @@ export function parseDate(raw: string): string | null {
     return isRealDate(year, month, day) ? `${year}-${pad(month)}-${pad(day)}` : null
   }
 
+  // Mês por extenso/abreviado: "11 oct 2026", "11 de outubro de 2026", "Oct 11, 2026".
+  const named = /^(\d{1,2})\s+(?:de\s+)?([a-zà-ÿ]+)\.?\s+(?:de\s+)?(\d{4})$/i.exec(text)
+  if (named) {
+    const month = monthFromName(named[2])
+    const day = Number(named[1])
+    const year = Number(named[3])
+    if (month && isRealDate(year, month, day)) return `${year}-${pad(month)}-${pad(day)}`
+  }
+
   return null
+}
+
+// Prefixos de 3 letras de meses em espanhol, português e inglês.
+const MONTH_PREFIXES: Record<string, number> = {
+  ene: 1, jan: 1, feb: 2, fev: 2, mar: 3, abr: 4, apr: 4, may: 5, mai: 5,
+  jun: 6, jul: 7, ago: 8, aug: 8, sep: 9, set: 9, oct: 10, out: 10,
+  nov: 11, dic: 12, dez: 12, dec: 12,
+}
+
+function monthFromName(name: string): number | null {
+  const key = name
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .slice(0, 3)
+  return MONTH_PREFIXES[key] ?? null
 }
 
 // ---------- Colunas ----------
 
-export type ColumnField = "date" | "description" | "amount" | "debit" | "credit" | "type"
+export type ColumnField = "date" | "description" | "amount" | "debit" | "credit" | "type" | "category"
 
 export type ColumnMapping = Partial<Record<ColumnField, number>>
 
@@ -126,6 +153,7 @@ const HEADER_HINTS: Record<ColumnField, string[]> = {
   debit: ["debito", "debit", "saida", "saidas", "cargo", "retirada", "despesa"],
   credit: ["credito", "credit", "entrada", "entradas", "abono", "deposito", "receita"],
   type: ["tipo", "type", "natureza", "d c", "dc"],
+  category: ["categoria", "category", "categoria do gasto"],
 }
 
 function matchesHint(header: string, hints: string[]): number {
@@ -142,7 +170,7 @@ export function detectColumns(headers: string[]): ColumnMapping {
   const used = new Set<number>()
 
   // Ordem importa: campos mais específicos primeiro, para "tipo" não roubar "data".
-  const order: ColumnField[] = ["date", "amount", "debit", "credit", "description", "type"]
+  const order: ColumnField[] = ["date", "amount", "debit", "credit", "description", "type", "category"]
   for (const field of order) {
     let bestIndex = -1
     let bestScore = 0
@@ -241,11 +269,14 @@ export function buildImportRows(
 
     const description = cell(row, "description").replace(/\s+/g, " ").trim().slice(0, 200)
 
+    const categoryName = cell(row, "category").replace(/\s+/g, " ").trim().slice(0, 60)
+
     rows.push({
       date,
       description: description || "Sem descrição",
       amount: Math.round(Math.abs(signed) * 100) / 100,
       type,
+      ...(categoryName ? { categoryName } : {}),
     })
   }
 

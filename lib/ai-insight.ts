@@ -25,7 +25,9 @@ export async function runInsight(
   deps: InsightDeps,
   buildPrompt: (summary: string) => string,
   summary: unknown,
-  label: string
+  label: string,
+  // Resumos curtos usam o teto padrão; a leitura de extratos precisa de mais.
+  maxLength: number = MAX_SUMMARY_LENGTH
 ): Promise<string> {
   // Server Actions recebem JSON do cliente: o tipo declarado não é garantia.
   if (typeof summary !== "string" || summary.trim() === "") return ""
@@ -41,7 +43,7 @@ export async function runInsight(
     const allowed = await deps.consumeQuota(AI_CALLS_PER_HOUR)
     if (!allowed) return ""
 
-    return await deps.generate(buildPrompt(summary.slice(0, MAX_SUMMARY_LENGTH)))
+    return await deps.generate(buildPrompt(summary.slice(0, maxLength)))
   } catch (error) {
     deps.logError(`Erro ao gerar ${label} com IA:`, error)
     return ""
