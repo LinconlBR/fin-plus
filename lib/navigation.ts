@@ -12,6 +12,7 @@ const PAGE_LABELS: Record<string, string> = {
   "/reports/goals-evolution": "Evolução das metas",
   "/reports/balance-projection": "Projeção de saldo",
   "/tips": "Dicas financeiras",
+  "/settings": "Conta",
   "/customize": "Personalizar",
   "/customize/dashboard": "Dashboard",
   "/customize/categories": "Categorias",

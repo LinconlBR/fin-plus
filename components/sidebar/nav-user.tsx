@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { signOut  } from "@/lib/actions/auth"
 import {
   Avatar,
@@ -75,7 +76,7 @@ export function NavUser({
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem>
+              <DropdownMenuItem render={<Link href="/settings" />}>
                 <Settings
                 />
                 Conta
