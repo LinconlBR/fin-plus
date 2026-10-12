@@ -24,6 +24,8 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   // Não anuncia "X-Powered-By: Next.js" (informação útil só para quem ataca).
   poweredByHeader: false,
+  // jsPDF (exportação em PDF) roda direto no Node em vez de ser empacotado.
+  serverExternalPackages: ["jspdf"],
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },
